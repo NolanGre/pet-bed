@@ -1,3 +1,46 @@
 spring:
   application:
     name: pet-bed
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/petbed}
+    username: ${SPRING_DATASOURCE_USERNAME:petbed}
+    password: ${SPRING_DATASOURCE_PASSWORD:petbed_secret}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  liquibase:
+    change-log: classpath:db/changelog/master-changelog.xml
+    enabled: true
+
+
+aws:
+  s3:
+
+
+telegram:
+  bot:
+    token: ${TELEGRAM_BOT_TOKEN}
+    webhook-url: ${TELEGRAM_BOT_WEBHOOK_URL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus, info
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    root: info

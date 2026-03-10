@@ -58,17 +58,20 @@ dependencies {
     implementation 'org.locationtech.jts:jts-core:1.19.0'
 
     // Telegram Bot
-    implementation 'org.telegram:telegrambots-spring-boot-starter:6.9.7.1'
+    implementation 'org.telegram:telegrambots-springboot-webhook-starter:9.4.0'
+    implementation 'org.telegram:telegrambots-client:9.4.0'
 
     // AWS S3
-    implementation platform('software.amazon.awssdk:bom:2.25.0')
-    implementation 'software.amazon.awssdk:s3'
+    implementation platform("software.amazon.awssdk:bom:2.42.9")
+    implementation "software.amazon.awssdk:s3"
 
     // Testing
+    testImplementation platform("org.testcontainers:testcontainers-bom:2.0.3")
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'
-    testImplementation 'org.testcontainers:junit-jupiter'
-    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+    testImplementation 'org.testcontainers:testcontainers-postgresql'
     testImplementation 'org.springframework.modulith:spring-modulith-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

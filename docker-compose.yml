@@ -1,0 +1,152 @@
+services:
+  app:
+    build: .
+    container_name: petbed-app
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/petbed
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_BOT_WEBHOOK_URL: ${NGROK_URL}/webhook
+      AWS_S3_ENDPOINT: http://minio:9000
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
+      AWS_S3_REGION: eu-north-1
+      AWS_ACCESS_KEY_ID: ${MINIO_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_PASSWORD}
+    healthcheck:
+      test: [ "CMD", "wget", "-qO-", "http://localhost:8080/actuator/health" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    networks:
+      - petbed-net
+
+  postgres:
+    image: postgis/postgis:17-3.5-alpine
+    container_name: petbed-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: petbed
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d petbed" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - petbed-net
+
+  minio:
+    image: minio/minio:latest
+    container_name: petbed-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - petbed-net
+
+  minio-init:
+    image: minio/mc
+    container_name: petbed-minio-init
+    depends_on:
+      minio:
+        condition: service_started
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc alias set myminio http://minio:9000 ${MINIO_USER} ${MINIO_PASSWORD}) do echo 'Waiting for MinIO...' && sleep 1; done;
+      if ! /usr/bin/mc ls myminio/${AWS_S3_BUCKET} > /dev/null 2>&1; then
+        /usr/bin/mc mb myminio/${AWS_S3_BUCKET};
+        /usr/bin/mc anonymous set download myminio/${AWS_S3_BUCKET};
+        echo 'Bucket ${AWS_S3_BUCKET} created and policy set to download';
+      else
+        echo 'Bucket ${AWS_S3_BUCKET} already exists';
+      fi;
+      exit 0;
+      "
+    networks:
+      - petbed-net
+    restart: "no"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: petbed-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    networks:
+      - petbed-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: petbed-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - petbed-net
+
+  loki:
+    image: grafana/loki:latest
+    container_name: petbed-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./infra/loki/loki-config.yml:/etc/loki/local-config.yaml
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - petbed-net
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: petbed-promtail
+    group_add:
+      - "999"
+    volumes:
+      - ./infra/promtail/promtail-config.yml:/etc/promtail/config.yml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - petbed-net
+
+volumes:
+  postgres-data:
+  minio-data:
+  prometheus-data:
+  grafana-data:
+  loki-data:
+
+networks:
+  petbed-net:
+    driver: bridge
