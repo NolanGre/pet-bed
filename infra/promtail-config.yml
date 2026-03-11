@@ -8,7 +8,7 @@ clients:
   - url: http://loki:3100/loki/api/v1/push
 
 scrape_configs:
-  - job_name: docker
+  - job_name: spring-app-logs
     docker_sd_configs:
       - host: unix:///var/run/docker.sock
         refresh_interval: 5s

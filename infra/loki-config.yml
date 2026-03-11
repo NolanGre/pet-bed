@@ -4,12 +4,22 @@ server:
   http_listen_port: 3100
 
 common:
+  path_prefix: /loki
+  replication_factor: 1
   ring:
-    instance_addr: 127.0.0.1
     kvstore:
       store: inmemory
-  replication_factor: 1
-  path_prefix: /loki
+
+limits_config:
+  retention_period: 168h
+
+compactor:
+  working_directory: /loki/retention
+  compaction_interval: 1h
+  retention_enabled: true
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 10
+  delete_request_store: filesystem
 
 schema_config:
   configs:
