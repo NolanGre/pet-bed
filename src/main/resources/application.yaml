@@ -22,12 +22,19 @@ spring:
 
 aws:
   s3:
+    endpoint: ${AWS_S3_ENDPOINT}
+    bucket: ${AWS_S3_BUCKET}
+    region: ${AWS_S3_REGION}
+    credentials:
+      access-key: ${AWS_ACCESS_KEY_ID}
+      secret-key: ${AWS_SECRET_ACCESS_KEY}
 
 
 telegram:
   bot:
     token: ${TELEGRAM_BOT_TOKEN}
     webhook-url: ${TELEGRAM_BOT_WEBHOOK_URL}
+    path: webhook
 
 management:
   endpoints:
@@ -44,3 +51,4 @@ management:
 logging:
   level:
     root: info
+    org.telegram: DEBUG
