@@ -107,6 +107,8 @@ services:
     volumes:
       - grafana-data:/var/lib/grafana
       - ./infra/grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./infra/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards
     depends_on:
       prometheus:
         condition: service_started
