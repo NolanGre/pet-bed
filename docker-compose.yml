@@ -17,7 +17,7 @@ services:
       AWS_SECRET_ACCESS_KEY: ${MINIO_PASSWORD}
     healthcheck:
       test: [ "CMD", "wget", "-qO-", "http://localhost:8080/actuator/health" ]
-      interval: 30s
+      interval: 10s
       timeout: 5s
       retries: 3
       start_period: 40s

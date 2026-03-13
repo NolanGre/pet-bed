@@ -1,0 +1,77 @@
+services:
+  postgres:
+    image: postgis/postgis:17-3.5-alpine
+    container_name: petbed-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: petbed
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d petbed" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - petbed-net
+
+  minio:
+    image: minio/minio:latest
+    container_name: petbed-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - petbed-net
+
+  minio-init:
+    image: minio/mc
+    container_name: petbed-minio-init
+    depends_on:
+      minio:
+        condition: service_started
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc alias set myminio http://minio:9000 ${MINIO_USER} ${MINIO_PASSWORD}) do echo 'Waiting for MinIO...' && sleep 1; done;
+      if ! /usr/bin/mc ls myminio/${AWS_S3_BUCKET} > /dev/null 2>&1; then
+        /usr/bin/mc mb myminio/${AWS_S3_BUCKET};
+        /usr/bin/mc anonymous set download myminio/${AWS_S3_BUCKET};
+      else
+        echo 'Bucket already exists';
+      fi;
+      exit 0;
+      "
+    networks:
+      - petbed-net
+    restart: "no"
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: petbed-ngrok
+    restart: unless-stopped
+    command: http --url=${NGROK_URL} host.docker.internal:8080
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    ports:
+      - "4040:4040"
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    networks:
+      - petbed-net
+
+volumes:
+  postgres-data:
+  minio-data:
+
+networks:
+  petbed-net:
+    driver: bridge
