@@ -19,7 +19,7 @@ public class WebhookExceptionHandler {
             return buildMessage(chatId, petBedException.getErrorCode().getUserMessage());
         }
 
-        log.error("Unexpected error while processing update: {}", update.getUpdateId(), e);
+        log.error("Unexpected error while processing update: {}", update != null ? update.getUpdateId() : "null", e);
         return buildMessage(chatId, PetBedException.ErrorCode.INTERNAL_ERROR.getUserMessage());
     }
 
