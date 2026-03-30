@@ -1,0 +1,522 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.11.xsd">
+
+    <!-- ==================== EXTENSIONS ==================== -->
+
+    <changeSet id="0002-01-enable-postgis" author="NolanGre">
+        <sql>CREATE
+        EXTENSION IF NOT EXISTS postgis;</sql>
+        <sql>CREATE
+        EXTENSION IF NOT EXISTS pg_trgm;</sql>
+    </changeSet>
+
+    <!-- ==================== TABLES ==================== -->
+
+    <changeSet id="0002-02-create-users" author="NolanGre">
+        <createTable tableName="users">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="telegram_id" type="BIGINT">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="telegram_username" type="VARCHAR(255)"/>
+            <column name="type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="adoption_history_offset" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="fostering_history_offset" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="0002-03-create-pets" author="NolanGre">
+        <createTable tableName="pets">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="owner_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_pets_owner"
+                             references="users(id)"/>
+            </column>
+            <column name="name" type="VARCHAR(255)"/>
+            <column name="photo_url" type="VARCHAR(255)"/>
+            <column name="type" type="VARCHAR(50)"/>
+            <column name="breed" type="VARCHAR(100)"/>
+            <column name="color" type="VARCHAR(100)"/>
+            <column name="color_pattern" type="VARCHAR(100)"/>
+            <column name="age" type="INTEGER"/>
+            <column name="sex" type="VARCHAR(20)"/>
+            <column name="size" type="VARCHAR(50)"/>
+            <column name="special_marks" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="0002-04-create-lost-requests" author="NolanGre">
+        <createTable tableName="lost_requests">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="pet_id" type="BIGINT">
+                <constraints nullable="false" unique="true"
+                             foreignKeyName="fk_lost_requests_pet"
+                             references="pets(id)"/>
+            </column>
+            <column name="contact_phone" type="VARCHAR(30)"/>
+            <column name="photo_url" type="VARCHAR(255)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <sql>ALTER TABLE lost_requests
+            ADD COLUMN last_seen_location GEOGRAPHY(POINT, 4326);</sql>
+    </changeSet>
+
+    <changeSet id="0002-05-create-found-requests" author="NolanGre">
+        <createTable tableName="found_requests">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="finder_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_found_requests_finder"
+                             references="users(id)"/>
+            </column>
+            <column name="photo_url" type="VARCHAR(255)"/>
+            <column name="type" type="VARCHAR(50)"/>
+            <column name="breed" type="VARCHAR(100)"/>
+            <column name="color" type="VARCHAR(100)"/>
+            <column name="color_pattern" type="VARCHAR(100)"/>
+            <column name="sex" type="VARCHAR(20)"/>
+            <column name="special_marks" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <sql>ALTER TABLE found_requests
+            ADD COLUMN location GEOGRAPHY(POINT, 4326);</sql>
+    </changeSet>
+
+    <changeSet id="0002-06-create-match-queue" author="NolanGre">
+        <createTable tableName="match_queue">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="lost_request_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_match_queue_lost"
+                             references="lost_requests(id)"/>
+            </column>
+            <column name="found_request_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_match_queue_found"
+                             references="found_requests(id)"/>
+            </column>
+            <column name="score" type="NUMERIC(7, 4)"/>
+            <column name="viewing_status" type="VARCHAR(50)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="0002-07-create-feed-posts" author="NolanGre">
+        <createTable tableName="feed_posts">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="publisher_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_feed_posts_publisher"
+                             references="users(id)"/>
+            </column>
+            <column name="text" type="TEXT"/>
+            <column name="photo_url" type="VARCHAR(255)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <sql>ALTER TABLE feed_posts
+            ADD COLUMN location GEOGRAPHY(POINT, 4326);</sql>
+    </changeSet>
+
+    <changeSet id="0002-08-create-users-feed-history" author="NolanGre">
+        <createTable tableName="users_feed_history">
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_ufh_user"
+                             references="users(id)"/>
+            </column>
+            <column name="post_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_ufh_post"
+                             references="feed_posts(id)"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="users_feed_history"
+                       columnNames="user_id, post_id"
+                       constraintName="pk_users_feed_history"/>
+    </changeSet>
+
+    <changeSet id="0002-09-create-adoption-posts" author="NolanGre">
+        <createTable tableName="adoption_posts">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="pet_id" type="BIGINT">
+                <constraints nullable="false" unique="true"
+                             foreignKeyName="fk_adoption_posts_pet"
+                             references="pets(id)"/>
+            </column>
+            <column name="comment" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="0002-10-create-adoption-responses" author="NolanGre">
+        <createTable tableName="adoption_responses">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="adoption_post_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_adoption_responses_post"
+                             references="adoption_posts(id)"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_adoption_responses_user"
+                             references="users(id)"/>
+            </column>
+            <column name="comment" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="0002-11-create-adoption-saved-posts" author="NolanGre">
+        <createTable tableName="adoption_saved_posts">
+            <column name="post_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_asp_post"
+                             references="adoption_posts(id)"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_asp_user"
+                             references="users(id)"/>
+            </column>
+            <column name="saved_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="adoption_saved_posts"
+                       columnNames="post_id, user_id"
+                       constraintName="pk_adoption_saved_posts"/>
+    </changeSet>
+
+    <changeSet id="0002-12-create-adoption-view-history" author="NolanGre">
+        <createTable tableName="adoption_view_history">
+            <column name="post_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_avh_post"
+                             references="adoption_posts(id)"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_avh_user"
+                             references="users(id)"/>
+            </column>
+            <column name="viewed_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="adoption_view_history"
+                       columnNames="post_id, user_id"
+                       constraintName="pk_adoption_view_history"/>
+    </changeSet>
+
+    <changeSet id="0002-13-create-fostering-posts" author="NolanGre">
+        <createTable tableName="fostering_posts">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="pet_id" type="BIGINT">
+                <constraints nullable="false" unique="true"
+                             foreignKeyName="fk_fostering_posts_pet"
+                             references="pets(id)"/>
+            </column>
+            <column name="planned_duration_days" type="INTEGER"/>
+            <column name="comment" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="0002-14-create-fostering-responses" author="NolanGre">
+        <createTable tableName="fostering_responses">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_fostering_responses_user"
+                             references="users(id)"/>
+            </column>
+            <column name="fostering_post_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_fostering_responses_post"
+                             references="fostering_posts(id)"/>
+            </column>
+            <column name="comment" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="0002-15-create-fostering-saved-posts" author="NolanGre">
+        <createTable tableName="fostering_saved_posts">
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_fsp_user"
+                             references="users(id)"/>
+            </column>
+            <column name="post_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_fsp_post"
+                             references="fostering_posts(id)"/>
+            </column>
+            <column name="saved_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="fostering_saved_posts"
+                       columnNames="user_id, post_id"
+                       constraintName="pk_fostering_saved_posts"/>
+    </changeSet>
+
+    <changeSet id="0002-16-create-fostering-view-history" author="NolanGre">
+        <createTable tableName="fostering_view_history">
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_fvh_user"
+                             references="users(id)"/>
+            </column>
+            <column name="post_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_fvh_post"
+                             references="fostering_posts(id)"/>
+            </column>
+            <column name="viewed_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="fostering_view_history"
+                       columnNames="user_id, post_id"
+                       constraintName="pk_fostering_view_history"/>
+    </changeSet>
+
+    <changeSet id="0002-17-create-user-form-states" author="NolanGre">
+        <createTable tableName="user_form_states">
+            <column name="user_id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"
+                             foreignKeyName="fk_user_form_states_user"
+                             references="users(id)"/>
+            </column>
+            <column name="form_type" type="VARCHAR(100)"/>
+            <column name="current_step" type="VARCHAR(100)"/>
+            <column name="collected_data" type="JSONB"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- ==================== INDEXES ==================== -->
+
+    <changeSet id="0002-18-create-btree-indexes" author="NolanGre">
+
+        <!-- users -->
+        <createIndex tableName="users" indexName="idx_users_telegram_id" unique="true">
+            <column name="telegram_id"/>
+        </createIndex>
+
+        <!-- pets -->
+        <createIndex tableName="pets" indexName="idx_pets_owner_id">
+            <column name="owner_id"/>
+        </createIndex>
+        <createIndex tableName="pets" indexName="idx_pets_type">
+            <column name="type"/>
+        </createIndex>
+
+        <!-- lost_requests -->
+        <createIndex tableName="lost_requests" indexName="idx_lost_requests_pet_id">
+            <column name="pet_id"/>
+        </createIndex>
+
+        <!-- found_requests -->
+        <createIndex tableName="found_requests" indexName="idx_found_requests_finder_id">
+            <column name="finder_id"/>
+        </createIndex>
+        <createIndex tableName="found_requests" indexName="idx_found_requests_type">
+            <column name="type"/>
+        </createIndex>
+
+        <!-- match_queue -->
+        <createIndex tableName="match_queue" indexName="idx_match_queue_lost_request_id">
+            <column name="lost_request_id"/>
+        </createIndex>
+        <createIndex tableName="match_queue" indexName="idx_match_queue_found_request_id">
+            <column name="found_request_id"/>
+        </createIndex>
+        <createIndex tableName="match_queue" indexName="idx_match_queue_score">
+            <column name="score"/>
+        </createIndex>
+        <createIndex tableName="match_queue" indexName="idx_match_queue_viewing_status">
+            <column name="viewing_status"/>
+        </createIndex>
+
+        <!-- feed_posts -->
+        <createIndex tableName="feed_posts" indexName="idx_feed_posts_publisher_id">
+            <column name="publisher_id"/>
+        </createIndex>
+
+        <!-- users_feed_history -->
+        <createIndex tableName="users_feed_history" indexName="idx_ufh_user_id">
+            <column name="user_id"/>
+        </createIndex>
+
+        <!-- adoption_posts -->
+        <createIndex tableName="adoption_posts" indexName="idx_adoption_posts_pet_id">
+            <column name="pet_id"/>
+        </createIndex>
+
+        <!-- adoption_responses -->
+        <createIndex tableName="adoption_responses" indexName="idx_adoption_responses_post_id">
+            <column name="adoption_post_id"/>
+        </createIndex>
+        <createIndex tableName="adoption_responses" indexName="idx_adoption_responses_user_id">
+            <column name="user_id"/>
+        </createIndex>
+
+        <!-- adoption_saved_posts -->
+        <createIndex tableName="adoption_saved_posts" indexName="idx_asp_user_id">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex tableName="adoption_saved_posts" indexName="idx_asp_saved_at">
+            <column name="saved_at"/>
+        </createIndex>
+
+        <!-- adoption_view_history -->
+        <createIndex tableName="adoption_view_history" indexName="idx_avh_user_id">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex tableName="adoption_view_history" indexName="idx_avh_viewed_at">
+            <column name="viewed_at"/>
+        </createIndex>
+
+        <!-- fostering_posts -->
+        <createIndex tableName="fostering_posts" indexName="idx_fostering_posts_pet_id">
+            <column name="pet_id"/>
+        </createIndex>
+
+        <!-- fostering_responses -->
+        <createIndex tableName="fostering_responses" indexName="idx_fostering_responses_post_id">
+            <column name="fostering_post_id"/>
+        </createIndex>
+        <createIndex tableName="fostering_responses" indexName="idx_fostering_responses_user_id">
+            <column name="user_id"/>
+        </createIndex>
+
+        <!-- fostering_saved_posts -->
+        <createIndex tableName="fostering_saved_posts" indexName="idx_fsp_post_id">
+            <column name="post_id"/>
+        </createIndex>
+        <createIndex tableName="fostering_saved_posts" indexName="idx_fsp_saved_at">
+            <column name="saved_at"/>
+        </createIndex>
+
+        <!-- fostering_view_history -->
+        <createIndex tableName="fostering_view_history" indexName="idx_fvh_post_id">
+            <column name="post_id"/>
+        </createIndex>
+        <createIndex tableName="fostering_view_history" indexName="idx_fvh_viewed_at">
+            <column name="viewed_at"/>
+        </createIndex>
+
+    </changeSet>
+
+    <!-- Spatial GIST indexes (не підтримуються нативно Liquibase — через raw SQL) -->
+    <changeSet id="0002-19-create-spatial-indexes" author="NolanGre">
+        <sql>CREATE INDEX idx_lost_requests_location ON lost_requests USING GIST (last_seen_location);</sql>
+        <sql>CREATE INDEX idx_found_requests_location ON found_requests USING GIST (location);</sql>
+        <sql>CREATE INDEX idx_feed_posts_location ON feed_posts USING GIST (location);</sql>
+    </changeSet>
+
+    <changeSet id="0002-20-create-trigram-indexes" author="NolanGre">
+        <!-- Pets -->
+        <sql>CREATE INDEX idx_pets_special_marks_trgm ON pets USING GIN (special_marks gin_trgm_ops);</sql>
+
+        <!-- Lost_requests -->
+        <sql>CREATE INDEX idx_lost_requests_contact_phone_trgm ON lost_requests USING GIN (contact_phone gin_trgm_ops);</sql>
+        <sql>CREATE INDEX idx_lost_requests_photo_url_trgm ON lost_requests USING GIN (photo_url gin_trgm_ops);</sql>
+
+        <!-- Found_requests -->
+        <sql>CREATE INDEX idx_found_requests_type_trgm ON found_requests USING GIN (type gin_trgm_ops);</sql>
+        <sql>CREATE INDEX idx_found_requests_breed_trgm ON found_requests USING GIN (breed gin_trgm_ops);</sql>
+        <sql>CREATE INDEX idx_found_requests_color_trgm ON found_requests USING GIN (color gin_trgm_ops);</sql>
+        <sql>CREATE INDEX idx_found_requests_color_pattern_trgm ON found_requests USING GIN (color_pattern gin_trgm_ops);</sql>
+        <sql>CREATE INDEX idx_found_requests_special_marks_trgm ON found_requests USING GIN (special_marks gin_trgm_ops);</sql>
+    </changeSet>
+
+</databaseChangeLog>

@@ -3,7 +3,7 @@ package op.edu.ua.petbed.config;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import op.edu.ua.petbed.common.exceptions.PetBedConfigurationException;
-import op.edu.ua.petbed.telegram.UpdateHandlerService;
+import op.edu.ua.petbed.telegram.TelegramUpdateRouter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,7 +28,7 @@ public class TelegramBotConfig {
     @Value("${telegram.bot.webhook-url}")
     private String webhookUrl;
 
-    private final UpdateHandlerService updateHandlerService;
+    private final TelegramUpdateRouter telegramUpdateRouter;
 
     @Bean
     public TelegramClient telegramClient() {
@@ -43,7 +43,7 @@ public class TelegramBotConfig {
 
         return SpringTelegramWebhookBot.builder()
                 .botPath(botPath)
-                .updateHandler(updateHandlerService::handle)
+                .updateHandler(telegramUpdateRouter::route)
                 .setWebhook(registerWebhook(telegramClient, setWebhook))
                 .deleteWebhook(deleteWebhook(telegramClient))
                 .build();
