@@ -24,6 +24,7 @@ public class User extends AbstractAuditableEntity {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "users_seq")
     @SequenceGenerator(name = "users_seq", sequenceName = "users_seq", allocationSize = 50)
     @Column(nullable = false)
+    @Getter(AccessLevel.PRIVATE)
     private @Nullable Long id;
 
     @Column(name = "telegram_id", nullable = false, unique = true)
@@ -54,6 +55,13 @@ public class User extends AbstractAuditableEntity {
 
     public void switchType() {
         this.type = (this.type == UserType.REGULAR) ? UserType.VOLUNTEER : UserType.REGULAR;
+    }
+
+    public long getIdOrThrow() {
+        if (id == null) {
+            throw new PetBedException("User is not persisted yet", PetBedException.ErrorCode.USER_NOT_PERSISTED);
+        }
+        return id;
     }
 
     @Override

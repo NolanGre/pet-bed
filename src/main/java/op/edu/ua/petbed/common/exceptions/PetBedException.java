@@ -21,7 +21,8 @@ public class PetBedException extends RuntimeException {
         UNSUPPORTED_UPDATE("This type of update is not supported"),
         INTERNAL_ERROR("Something went wrong. Please try again later"),
         USER_TELEGRAM_ID_REQUIRED("Telegram ID is required to create a user"),
-        USER_TELEGRAM_USERNAME_REQUIRED("Telegram username is required to create a user");
+        USER_TELEGRAM_USERNAME_REQUIRED("Telegram username is required to create a user"),
+        USER_NOT_PERSISTED("User is not persisted yet");
 
         private final String userMessage;
     }

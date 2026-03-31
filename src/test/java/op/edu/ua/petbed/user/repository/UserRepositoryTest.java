@@ -11,7 +11,6 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -103,8 +102,8 @@ class UserRepositoryTest {
         em.clear();
 
         // then
-        assertThat(saved.getId()).isNotNull();
-        assertThat(underTest.findById(saved.getId())).isPresent();
+        assertThat(saved.getIdOrThrow()).isNotNull();
+        assertThat(underTest.findById(saved.getIdOrThrow())).isPresent();
     }
 
     @Test
