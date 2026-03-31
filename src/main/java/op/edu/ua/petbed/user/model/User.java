@@ -21,7 +21,8 @@ import java.util.Objects;
 public class User extends AbstractAuditableEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "users_seq")
+    @SequenceGenerator(name = "users_seq", sequenceName = "users_seq", allocationSize = 50)
     @Column(nullable = false)
     private @Nullable Long id;
 

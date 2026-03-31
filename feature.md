@@ -63,7 +63,25 @@ class [ClassName]Test {
 ```java
 // .methodName() -------------------------------------------------
 ```
+Піраміда тестів
+- E2E / Manual
+- Integration Tests          ← @SpringBootTest
+- Slice Tests]               ← @DataJpaTest
+- Unit Tests                 ← @ExtendWith(MockitoExtension)
+---
+Неймінг тестів
+methodName_scenario_expectedResult()
+```java
+// Добре
+findByTelegramId_existing_user_returns_user();
+create_null_telegram_id_throws_PetBedException();
+switchType_regular_user_becomes_volunteer();
 
+//  Погано
+testFind();
+shouldReturnUser();
+test1();
+```
 ---
 
 ### Що реалізувати (після тестів)

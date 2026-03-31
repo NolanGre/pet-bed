@@ -518,5 +518,37 @@
         <sql>CREATE INDEX idx_found_requests_color_pattern_trgm ON found_requests USING GIN (color_pattern gin_trgm_ops);</sql>
         <sql>CREATE INDEX idx_found_requests_special_marks_trgm ON found_requests USING GIN (special_marks gin_trgm_ops);</sql>
     </changeSet>
+    <changeSet id="0002-21-create-sequences" author="NolanGre">
+        <createSequence sequenceName="users_seq"
+                        startValue="1"
+                        incrementBy="50"/>
+        <createSequence sequenceName="pets_seq"
+                        startValue="1"
+                        incrementBy="50"/>
+        <createSequence sequenceName="lost_requests_seq"
+                        startValue="1"
+                        incrementBy="50"/>
+        <createSequence sequenceName="found_requests_seq"
+                        startValue="1"
+                        incrementBy="50"/>
+        <createSequence sequenceName="match_queue_seq"
+                        startValue="1"
+                        incrementBy="50"/>
+        <createSequence sequenceName="feed_posts_seq"
+                        startValue="1"
+                        incrementBy="50"/>
+        <createSequence sequenceName="adoption_posts_seq"
+                        startValue="1"
+                        incrementBy="50"/>
+        <createSequence sequenceName="adoption_responses_seq"
+                        startValue="1"
+                        incrementBy="50"/>
+        <createSequence sequenceName="fostering_posts_seq"
+                        startValue="1"
+                        incrementBy="50"/>
+        <createSequence sequenceName="fostering_responses_seq"
+                        startValue="1"
+                        incrementBy="50"/>
+    </changeSet>
 
 </databaseChangeLog>
