@@ -44,21 +44,15 @@ class UserServiceTest {
 
 ### 2. Integration Tests (Testcontainers)
 
-For repository tests with real database, use shared configuration:
+For repository tests with real database, use shared configuration via inheritance:
 
 ```java
-// Import shared Testcontainers config
-import op.edu.ua.petbed.testcontainers.PetBedTestcontainers;
+// Extend shared Testcontainers configuration class
+import op.edu.ua.petbed.testcontainers.PostgresTestContainer;
 
 @DataJpaTest
-@Testcontainers
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
-// Integration tests must have "Integration" in class name
-class UserRepositoryIntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = PetBedTestcontainers.postgres();
+class UserRepositoryTest extends PostgresTestContainer {
 
     @Autowired
     UserRepository underTest;
@@ -71,46 +65,44 @@ class UserRepositoryIntegrationTest {
 }
 ```
 
-**Testcontainers Configuration** (`src/test/java/.../testcontainers/PetBedTestcontainers.java`):
+**Testcontainers Configuration** (`src/test/java/.../testcontainers/PostgresTestContainer.java`):
 
 ```java
 package op.edu.ua.petbed.testcontainers;
 
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
-public final class PetBedTestcontainers {
+@Testcontainers
+public class PostgresTestContainer {
 
-    private static PostgreSQLContainer<?> postgres;
-
-    private PetBedTestcontainers() {}
-
-    public static synchronized PostgreSQLContainer<?> postgres() {
-        if (postgres == null) {
-            postgres = new PostgreSQLContainer<>(
-                DockerImageName.parse("postgis/postgis:17-3.5-alpine")
-                    .asCompatibleSubstituteFor("postgres")
-            );
-        }
-        return postgres;
-    }
-
-    public static synchronized void resetPostgres() {
-        postgres = null;
-    }
+    @Container
+    @ServiceConnection
+    public static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(
+        DockerImageName.parse("postgis/postgis:17-3.5-alpine")
+            .asCompatibleSubstituteFor("postgres")
+    );
 }
 ```
 
+**Why inheritance?**
+JUnit5 `@Testcontainers` works with `@Container` on **static fields in direct parent class** only. Alternative approaches don't work:
+- `@Import(Config.class)` — won't initialize static `@Container`
+- Configuration with `@TestConfiguration` — complex lifecycle management
+
 **Key principles:**
 - Use `@DataJpaTest` for slice testing
-- Use shared Testcontainers config to avoid starting new container per test
+- Extend `PostgresTestContainer` to inherit Testcontainers lifecycle
 - **Quality first** — reuse only when it doesn't affect test correctness
 - Reuse existing data from previous tests **only if**:
   - The test explicitly needs existing data
   - There's no risk of state leakage
   - Test isolation is preserved
 - Clean state between tests when in doubt
-- **"Integration"** keyword in class name signals integration test
+- **"Integration"** keyword in class name signals true integration test (not slice tests like `@DataJpaTest`)
 
 ### 3. Plain Java Class Tests
 
@@ -138,10 +130,10 @@ class UserDTOTest {
 ```
 src/test/java/op/edu/ua/petbed/
 ├── testcontainers/              # Shared testcontainers config
-│   └── PetBedTestcontainers.java
+│   └── PostgresTestContainer.java
 ├── user/
 │   ├── model/                   # Entity tests (Unit)
-│   ├── repository/              # Integration tests (UserRepositoryIntegrationTest)
+│   ├── repository/              # Slice tests (UserRepositoryTest with @DataJpaTest)
 │   ├── service/                 # Unit tests (UserServiceTest)
 │   └── dto/                     # DTO tests (Unit)
 ├── common/
@@ -151,7 +143,8 @@ src/test/java/op/edu/ua/petbed/
 
 **Naming convention:**
 - Unit tests: `ClassNameTest` (e.g., `UserServiceTest`)
-- Integration tests: `ClassNameIntegrationTest` (e.g., `UserRepositoryIntegrationTest`)
+- Slice tests: `ClassNameTest` (e.g., `UserRepositoryTest` with `@DataJpaTest`)
+- Integration tests: `ClassNameIntegrationTest` (e.g., full integration with multiple components)
 
 ## Test Organization
 

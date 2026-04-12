@@ -1,6 +1,45 @@
 # Testcontainers Configuration
 
-## Spring Boot 3.5+ `@ServiceConnection`
+## Recommended: Base Class with Inheritance
+
+Create a base class with `@Testcontainers`:
+
+```java
+package op.edu.ua.petbed.testcontainers;
+
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
+
+@Testcontainers
+public class PostgresTestContainer {
+
+    @Container
+    @ServiceConnection
+    public static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(
+        DockerImageName.parse("postgis/postgis:17-3.5-alpine")
+            .asCompatibleSubstituteFor("postgres")
+    );
+}
+```
+
+Extend in tests:
+
+```java
+@DataJpaTest
+class UserRepositoryIntegrationTest extends PostgresTestContainer {
+
+    @Autowired
+    UserRepository underTest;
+}
+```
+
+**Why inheritance?**
+JUnit5 `@Testcontainers` works with `@Container` on **static fields in direct parent class** only.
+
+## Spring Boot 3.5+ `@ServiceConnection` with `@Bean`
 
 ```java
 @TestConfiguration

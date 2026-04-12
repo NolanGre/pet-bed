@@ -1,5 +1,6 @@
 package op.edu.ua.petbed.user.repository;
 
+import op.edu.ua.petbed.testcontainers.PostgresTestContainer;
 import op.edu.ua.petbed.user.model.User;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,16 +9,8 @@ import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
-import org.testcontainers.utility.DockerImageName;
-import org.testcontainers.utility.TestcontainersConfiguration;
 
 import java.util.Optional;
 
@@ -25,15 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
-@Testcontainers
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
-class UserRepositoryTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres = new PostgreSQLContainer(DockerImageName
-            .parse("postgis/postgis:17-3.5-alpine")
-            .asCompatibleSubstituteFor("postgres"));
+class UserRepositoryTest extends PostgresTestContainer {
 
     @Autowired
     UserRepository underTest;
@@ -80,6 +66,7 @@ class UserRepositoryTest {
         boolean result = underTest.existsByTelegramId(savedUser.getTelegramId());
 
         // then
+
         assertThat(result).isTrue();
     }
 
