@@ -2,6 +2,7 @@
 
 ## Commit Rules
 
+- **ALWAYS show commit message first** — before running git commit, display the planned commit message for user approval
 - **NEVER create commits automatically** — only commit when explicitly requested by the user
 - **NEVER push to remote** without explicit user request
 - **NEVER force push** or run destructive git commands without explicit approval
