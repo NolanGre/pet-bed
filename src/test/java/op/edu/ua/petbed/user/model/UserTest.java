@@ -1,6 +1,7 @@
 package op.edu.ua.petbed.user.model;
 
 import op.edu.ua.petbed.common.exceptions.PetBedException;
+import op.edu.ua.petbed.common.model.UserType;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;

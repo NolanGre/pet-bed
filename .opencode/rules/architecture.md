@@ -169,3 +169,7 @@ throw new PetBedException("message", PetBedException.ErrorCode.CODE);
 ```
 
 Exceptions are handled by `@ControllerAdvice` or `WebhookExceptionHandler`.
+
+## Telegram Routing Rules
+
+See `.opencode/rules/telegram-routing.md` for detailed Telegram bot routing patterns and `docs/routing-guide.md` for usage examples.

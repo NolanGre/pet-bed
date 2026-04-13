@@ -1,9 +1,9 @@
 package op.edu.ua.petbed.user.service;
 
 import op.edu.ua.petbed.common.exceptions.PetBedException;
-import op.edu.ua.petbed.user.dto.UserDTO;
+import op.edu.ua.petbed.common.dto.UserDTO;
 import op.edu.ua.petbed.user.model.User;
-import op.edu.ua.petbed.user.model.UserType;
+import op.edu.ua.petbed.common.model.UserType;
 import op.edu.ua.petbed.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -30,7 +30,7 @@ class UserServiceTest {
     UserRepository userRepository;
 
     @InjectMocks
-    UserService underTest;
+    UserServiceImpl underTest;
 
     // .registerOrGet() -------------------------------------------------
 

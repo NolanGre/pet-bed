@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.AbstractAuditableEntity;
+import op.edu.ua.petbed.common.model.UserType;
 import org.hibernate.proxy.HibernateProxy;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;

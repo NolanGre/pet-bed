@@ -1,6 +1,6 @@
-package op.edu.ua.petbed.user.dto;
+package op.edu.ua.petbed.common.dto;
 
-import op.edu.ua.petbed.user.model.UserType;
+import op.edu.ua.petbed.common.model.UserType;
 import org.jspecify.annotations.NullMarked;
 
 @NullMarked

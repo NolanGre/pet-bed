@@ -65,6 +65,24 @@ class UserRepositoryTest extends PostgresTestContainer {
 }
 ```
 
+For full integration tests (`@SpringBootTest`), **always add** `@Transactional` to rollback changes:
+
+```java
+@SpringBootTest
+@Transactional  // IMPORTANT: rollback after each test
+@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
+class TelegramUpdateRouterImplIntegrationTest extends PostgresTestContainer {
+
+    @Autowired
+    TelegramUpdateRouter underTest;
+}
+```
+
+**Why @Transactional?**
+- Integration tests modify database (create users, etc.)
+- Without `@Transactional`, data persists between test classes
+- Next test class sees stale data → constraint violations
+
 **Testcontainers Configuration** (`src/test/java/.../testcontainers/PostgresTestContainer.java`):
 
 ```java
@@ -72,12 +90,10 @@ package op.edu.ua.petbed.testcontainers;
 
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
-@Testcontainers
-public class PostgresTestContainer {
+public abstract class PostgresTestContainer {
 
     @Container
     @ServiceConnection
@@ -87,6 +103,12 @@ public class PostgresTestContainer {
     );
 }
 ```
+
+**Key points:**
+- `abstract` class - cannot be instantiated directly
+- No `@Testcontainers` annotation - prevents JUnit from stopping container after each test class
+- `static` field - shared across all test classes that extend this base
+- `@ServiceConnection` - Spring Boot auto-configures datasource
 
 **Why inheritance?**
 JUnit5 `@Testcontainers` works with `@Container` on **static fields in direct parent class** only. Alternative approaches don't work:
@@ -125,12 +147,42 @@ class UserDTOTest {
 }
 ```
 
+## Telegram Bot Testing Utilities
+
+For testing Telegram bot updates (commands, callbacks, messages), **always use** `TelegramUpdateFixtureUtil`:
+
+```java
+import op.edu.ua.petbed.telegram.testutil.TelegramUpdateFixtureUtil;
+
+// Command updates
+Update update = TelegramUpdateFixtureUtil.withCommand("/start", 123L, "username");
+Update update = TelegramUpdateFixtureUtil.withCommand("/start", 123L, "username", 456L);
+
+// Callback updates
+Update update = TelegramUpdateFixtureUtil.withCallback("CONFIRM", 123L);
+Update update = TelegramUpdateFixtureUtil.withPaginationCallback(10, "item1", 123L);
+
+// Text messages
+Update update = TelegramUpdateFixtureUtil.withTextMessage("hello", 123L, 456L);
+```
+
+**Location:** `src/test/java/op/edu/ua/petbed/telegram/testutil/TelegramUpdateFixtureUtil.java`
+
+**Why use this utility:**
+- Creates real Telegram Update objects (not mocks)
+- Follows Telegram Bot API structure exactly
+- All tests use consistent fixture format
+- Easy to extend for new update types
+
 ## Test Structure
 
 ```
 src/test/java/op/edu/ua/petbed/
 ├── testcontainers/              # Shared testcontainers config
 │   └── PostgresTestContainer.java
+├── telegram/
+│   └── testutil/               # Test utilities (TelegramUpdateFixtureUtil)
+│       └── TelegramUpdateFixtureUtil.java
 ├── user/
 │   ├── model/                   # Entity tests (Unit)
 │   ├── repository/              # Slice tests (UserRepositoryTest with @DataJpaTest)
@@ -238,3 +290,35 @@ Aim for high coverage on:
 4. **Test error paths** — exceptions, invalid input
 5. **Keep tests isolated** — no dependencies between tests
 6. **Use descriptive names** — explain what is tested
+
+## Common Issues
+
+### Testcontainers conflict: multiple containers started
+
+**Problem:** Each test class starts its own PostgreSQL container.
+
+**Solution:** Use `abstract` base class without `@Testcontainers`:
+
+```java
+// Wrong - @Testcontainers stops container after each class
+@Testcontainers
+public class PostgresTestContainer { }
+
+// Correct - abstract + static field = shared container
+public abstract class PostgresTestContainer {
+    @Container
+    public static PostgreSQLContainer<?> postgres = ...;
+}
+```
+
+### Test pollution: data persists between test classes
+
+**Problem:** Integration test creates user → next test class sees duplicate.
+
+**Solution:** Add `@Transactional` to integration tests:
+
+```java
+@SpringBootTest
+@Transactional  // Rolls back after each test
+class MyIntegrationTest extends PostgresTestContainer { }
+```

@@ -22,7 +22,9 @@ public class PetBedException extends RuntimeException {
         INTERNAL_ERROR("Something went wrong. Please try again later"),
         USER_TELEGRAM_ID_REQUIRED("Telegram ID is required to create a user"),
         USER_TELEGRAM_USERNAME_REQUIRED("Telegram username is required to create a user"),
-        USER_NOT_PERSISTED("User is not persisted yet");
+        USER_NOT_PERSISTED("User is not persisted yet"),
+        AUTHORIZATION_REQUIRED("This action requires volunteer status"),
+        UNKNOWN_COMMAND("Unknown command. Use /help");
 
         private final String userMessage;
     }
