@@ -1,4 +1,5 @@
 local.properties
+test.log
 .env
 HELP.md
 .gradle
