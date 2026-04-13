@@ -108,7 +108,7 @@ class TelegramUpdateRouterImplTest {
         assertThat(result).isNotNull();
         assertThat(result).isInstanceOf(SendMessage.class);
         SendMessage sendMessage = (SendMessage) result;
-        assertThat(sendMessage.getText()).contains("Use /help for available commands");
+        assertThat(sendMessage.getText()).contains("HandleTextMessage: default response");
     }
 
     @Test
@@ -173,6 +173,6 @@ class TelegramUpdateRouterImplTest {
         assertThat(result).isNotNull();
         assertThat(result).isInstanceOf(SendMessage.class);
         SendMessage sendMessage = (SendMessage) result;
-        assertThat(sendMessage.getText()).contains("Use /help for available commands");
+        assertThat(sendMessage.getText()).contains("HandleTextMessage: default response");
     }
 }

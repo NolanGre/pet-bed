@@ -21,7 +21,7 @@ public class DefaultHandler implements CommandHandler {
     public BotApiMethod<?> handle(CommandContext context) {
         return SendMessage.builder()
                 .chatId(context.chatId())
-                .text("Unknown command. Use /help for available commands.")
+                .text("Unknown command.")
                 .build();
     }
 }

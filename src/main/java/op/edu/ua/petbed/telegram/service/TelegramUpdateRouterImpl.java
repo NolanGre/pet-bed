@@ -126,7 +126,7 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
     private SendMessage defaultResponse(Long chatId) {
         return SendMessage.builder()
                 .chatId(chatId)
-                .text("Use /help for available commands")
+                .text("HandleTextMessage: default response")
                 .build();
     }
 }

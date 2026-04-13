@@ -16,7 +16,6 @@ This guide explains how to use the Telegram bot routing system.
 // src/main/java/op/edu/ua/petbed/telegram/command/Command.java
 public enum Command {
     START("/start"),
-    HELP("/help"),
     MENU("/menu"),
     MY_COMMAND("/my_command"),  // new command
     DEFAULT;

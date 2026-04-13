@@ -91,7 +91,7 @@ class TelegramUpdateRouterImplIntegrationTest extends PostgresTestContainer {
         org.telegram.telegrambots.meta.api.methods.send.SendMessage sendMessage =
                 (org.telegram.telegrambots.meta.api.methods.send.SendMessage) result;
         assertThat(sendMessage.getText())
-                .contains("Use /help for available commands");
+                .contains("Unknown command.");
     }
 
     @Test
@@ -109,7 +109,7 @@ class TelegramUpdateRouterImplIntegrationTest extends PostgresTestContainer {
         org.telegram.telegrambots.meta.api.methods.send.SendMessage sendMessage =
                 (org.telegram.telegrambots.meta.api.methods.send.SendMessage) result;
         assertThat(sendMessage.getText())
-                .contains("Use /help for available commands");
+                .contains("HandleTextMessage: default response");
     }
 
     @Test
