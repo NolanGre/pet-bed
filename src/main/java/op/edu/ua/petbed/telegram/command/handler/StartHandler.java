@@ -1,21 +1,16 @@
 package op.edu.ua.petbed.telegram.command.handler;
 
-import lombok.RequiredArgsConstructor;
-import op.edu.ua.petbed.telegram.auth.TelegramAuthService;
 import op.edu.ua.petbed.telegram.command.Command;
 import op.edu.ua.petbed.telegram.command.CommandContext;
 import op.edu.ua.petbed.telegram.command.CommandHandler;
+import op.edu.ua.petbed.telegram.response.ResponseBuilder;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
 @NullMarked
 @Component
-@RequiredArgsConstructor
 public class StartHandler implements CommandHandler {
-
-    private final TelegramAuthService authService;
 
     @Override
     public Command getCommand() {
@@ -24,7 +19,7 @@ public class StartHandler implements CommandHandler {
 
     @Override
     public BotApiMethod<?> handle(CommandContext context) {
-        return SendMessage.builder()
+        return ResponseBuilder.telegram()
                 .chatId(context.chatId())
                 .text("""
                         Welcome to PetBed Bot! 🐾
