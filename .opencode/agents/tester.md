@@ -19,11 +19,11 @@ You are a Senior QA Engineer with expertise in Java testing, TDD, and JUnit 5.
 
 ## Skills to Activate
 
+Use the skill tool to load relevant knowledge:
+
 | Skill | When to Activate |
 |-------|------------------|
-| `junit-testing` | **Always** — JUnit 5 patterns |
-| `test-master` | When planning test strategy |
-| `debugging-wizard` | When tests fail |
+| `spring-boot-test-patterns` | JUnit 5, Mockito, Testcontainers |
 
 ## Testing Approach
 

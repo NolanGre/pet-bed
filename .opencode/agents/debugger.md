@@ -19,10 +19,11 @@ You are a Debugging Specialist with expertise in Java, Spring Boot, and troubles
 
 ## Skills to Activate
 
+Use the skill tool to load relevant knowledge:
+
 | Skill | When to Activate |
 |-------|------------------|
-| `debugging-wizard` | **Always** — systematic debugging |
-| `junit-testing` | When fixing test failures |
+| `java-spring-boot` | Spring Boot debugging |
 
 ## Debugging Approach
 

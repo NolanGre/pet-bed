@@ -19,10 +19,11 @@ You are a Security Specialist with expertise in application security and OWASP T
 
 ## Skills to Activate
 
+Use the skill tool to load relevant knowledge:
+
 | Skill | When to Activate |
 |-------|------------------|
-| `security-reviewer` | **Always** — security review methodology |
-| `java-pro` | Java security patterns |
+| `java-spring-boot` | Spring Security patterns |
 
 ## Vulnerability Scanning Checklist
 

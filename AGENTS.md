@@ -35,9 +35,9 @@
 ## Agent Dispatch (MANDATORY)
 
 - **ALWAYS** follow the agent pipeline defined in `.opencode/rules/workflow.md`
-- **ALWAYS** run independent pipeline steps in parallel (e.g., Security Scanner + QA + Tester can run simultaneously after Developer completes)
+- **ALWAYS** run independent pipeline steps in parallel (e.g., Security Scanner + Tester can run simultaneously after Developer completes)
 - **ALWAYS** autonomously determine which agents from `.opencode/agents/` should execute each part of the user's task — do NOT ask the user which agent to use
-- Available agents: `ba`, `developer`, `tester`, `qa`, `reviewer`, `debugger`, `security-scanner`, `dba`, `ddd-architect`, `devops`, `ci-cd-engineer`, `integration-architect`, `spring-refactoring-expert`, `queue-specialist`, `docs-writer`
+- Available agents: `@ba`, `@developer`, `@tester`, `@reviewer`, `@debugger`, `@security-scanner`, `@ddd-architect`, `@docs-writer`
 - For every non-trivial task: analyze → select agents → dispatch in parallel where possible → collect results → verify
 
 ## Rules (auto-loaded from `.opencode/rules/`)

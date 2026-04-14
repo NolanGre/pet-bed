@@ -1,22 +1,6 @@
 ---
 name: java-spring-boot
 description: Build production Spring Boot applications - REST APIs, Security, Data, Actuator
-sasmp_version: "1.3.0"
-version: "3.0.0"
-bonded_agent: 03-java-spring
-bond_type: PRIMARY_BOND
-allowed-tools: Read, Write, Bash, Glob, Grep
-
-# Parameter Validation
-parameters:
-  spring_version:
-    type: string
-    default: "3.2"
-    description: Spring Boot version
-  module:
-    type: string
-    enum: [web, security, data, actuator, cloud]
-    description: Spring module focus
 ---
 
 # Java Spring Boot Skill

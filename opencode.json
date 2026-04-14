@@ -1,0 +1,53 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    ".opencode/rules/*.md"
+  ],
+  "permission": {
+    "skill": {
+      "*": "allow"
+    }
+  },
+  "agent": {
+    "developer": {
+      "description": "Full-stack Spring Boot + Telegram Bot specialist for implementing features",
+      "mode": "subagent",
+      "color": "green"
+    },
+    "tester": {
+      "description": "Tester agent for writing unit and integration tests",
+      "mode": "subagent",
+      "color": "yellow"
+    },
+    "reviewer": {
+      "description": "Code review agent for checking quality and standards",
+      "mode": "subagent",
+      "color": "blue"
+    },
+    "debugger": {
+      "description": "Debug agent for investigating bugs and issues",
+      "mode": "subagent",
+      "color": "red"
+    },
+    "security-scanner": {
+      "description": "Security scanner for identifying vulnerabilities",
+      "mode": "subagent",
+      "color": "error"
+    },
+    "ddd-architect": {
+      "description": "DDD architect for domain-driven design decisions",
+      "mode": "subagent",
+      "color": "accent"
+    },
+    "docs-writer": {
+      "description": "Documentation writer for PR descriptions and change summaries",
+      "mode": "subagent",
+      "color": "info"
+    },
+    "ba": {
+      "description": "Business analyst for requirements engineering, feature planning, task decomposition",
+      "mode": "subagent",
+      "color": "blue"
+    }
+  }
+}

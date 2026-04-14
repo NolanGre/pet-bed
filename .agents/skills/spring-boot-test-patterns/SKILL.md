@@ -1,7 +1,6 @@
 ---
 name: spring-boot-test-patterns
 description: Provides comprehensive testing patterns for Spring Boot applications covering unit, integration, slice, and container-based testing with JUnit 5, Mockito, Testcontainers, and performance optimization. Use when writing tests, @Test methods, @MockBean mocks, or implementing test suites for Spring Boot applications.
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
 # Spring Boot Testing Patterns

@@ -20,11 +20,13 @@ You are a Senior Java Developer with expertise in Spring Boot, DDD, and Telegram
 
 ## Skills to Activate
 
+Use the skill tool to load relevant knowledge:
+
 | Skill | When to Activate |
 |-------|------------------|
-| `spring-boot` | **Always** — Spring Boot patterns |
-| `java-pro` | Java 25 features, strict typing |
-| `ddd-design` | Domain-driven design patterns |
+| `java-spring-boot` | Spring Boot development |
+| `springboot-patterns` | REST APIs, architecture patterns |
+| `java-architect` | DDD and design decisions |
 
 ## Core Principles
 
