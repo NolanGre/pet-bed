@@ -6,48 +6,51 @@
   "permission": {
     "skill": {
       "*": "allow"
-    }
+    },
+	"read": {
+	  "*.env": "deny"
+	}
   },
   "agent": {
     "developer": {
-      "description": "Full-stack Spring Boot + Telegram Bot specialist for implementing features",
+      "description": "Full-stack Spring Boot + Telegram Bot specialist",
       "mode": "subagent",
-      "color": "green"
+      "color": "#4CAF50"
     },
     "tester": {
       "description": "Tester agent for writing unit and integration tests",
       "mode": "subagent",
-      "color": "yellow"
+      "color": "#FFEB3B"
     },
     "reviewer": {
       "description": "Code review agent for checking quality and standards",
       "mode": "subagent",
-      "color": "blue"
+      "color": "#2196F3"
     },
     "debugger": {
       "description": "Debug agent for investigating bugs and issues",
       "mode": "subagent",
-      "color": "red"
+      "color": "#F44336"
     },
     "security-scanner": {
       "description": "Security scanner for identifying vulnerabilities",
       "mode": "subagent",
-      "color": "error"
+      "color": "#9C27B0"
     },
     "ddd-architect": {
       "description": "DDD architect for domain-driven design decisions",
       "mode": "subagent",
-      "color": "accent"
+      "color": "#FF9800"
     },
     "docs-writer": {
-      "description": "Documentation writer for PR descriptions and change summaries",
+      "description": "Documentation writer for PR descriptions",
       "mode": "subagent",
-      "color": "info"
+      "color": "#00BCD4"
     },
     "ba": {
-      "description": "Business analyst for requirements engineering, feature planning, task decomposition",
+      "description": "Business analyst for requirements engineering",
       "mode": "subagent",
-      "color": "blue"
+      "color": "#3F51B5"
     }
   }
 }
