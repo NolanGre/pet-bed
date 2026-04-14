@@ -32,10 +32,10 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
 
     public TelegramUpdateRouterImpl(TelegramAuthService authService, List<CommandHandler> commandHandlers, List<CallbackHandler> callbackHandlers) {
         this.authService = authService;
-        this.commandHandlerMap = commandHandlers.stream()
-                .collect(Collectors.toMap(CommandHandler::getCommand, Function.identity()));
-        this.callbackHandlerMap = callbackHandlers.stream()
-                .collect(Collectors.toMap(CallbackHandler::getCallbackAction, Function.identity()));
+        this.commandHandlerMap = Map.copyOf(commandHandlers.stream()
+                        .collect(Collectors.toMap(CommandHandler::getCommand, Function.identity())));
+        this.callbackHandlerMap = Map.copyOf(callbackHandlers.stream()
+                        .collect(Collectors.toMap(CallbackHandler::getCallbackAction, Function.identity())));
 
         log.debug("Registered command handlers: {}", commandHandlerMap.keySet());
         log.debug("Registered callback handlers: {}", callbackHandlerMap.keySet());
