@@ -24,7 +24,8 @@ public class PetBedException extends RuntimeException {
         USER_TELEGRAM_USERNAME_REQUIRED("Telegram username is required to create a user"),
         USER_NOT_PERSISTED("User is not persisted yet"),
         AUTHORIZATION_REQUIRED("This action requires volunteer status"),
-        UNKNOWN_COMMAND("Unknown command. Use /help");
+        UNKNOWN_COMMAND("Unknown command. Use /help"),
+        INVALID_CALLBACK("Invalid callback data");
 
         private final String userMessage;
     }

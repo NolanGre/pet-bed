@@ -1,7 +1,7 @@
 package op.edu.ua.petbed.telegram.callback;
 
+import op.edu.ua.petbed.common.exceptions.PetBedException;
 import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
@@ -16,50 +16,24 @@ import org.telegram.telegrambots.meta.api.objects.Update;
  *     <li>{@link #messageId()} - message containing the button</li>
  * </ul>
  *
- * <b>Accessing callback data:</b>
- * <pre>
- * context.callbackData().action()     // CallbackAction enum
- * context.callbackData().payload()   // optional string payload
- * context.callbackData().offset()     // optional pagination offset
- * </pre>
- *
- * @see CallbackData
- * @see CallbackAction
  */
 @NullMarked
 public record CallbackQueryContext(
-    CallbackData callbackData,
-    Update update,
-    CallbackQuery callbackQuery,
-    Long chatId,
-    Long userId,
-    @Nullable String username,
-    @Nullable Integer messageId
+        CallbackData callbackData,
+        Update update,
+        CallbackQuery callbackQuery,
+        Long chatId,
+        Long userId,
+        String username,
+        Integer messageId
 ) {
     public static CallbackQueryContext from(Update update) {
         var cb = update.getCallbackQuery();
         var data = CallbackData.from(cb.getData());
         var msg = cb.getMessage();
-        return new CallbackQueryContext(
-            data,
-            update,
-            cb,
-            msg != null ? msg.getChatId() : null,
-            cb.getFrom().getId(),
-            cb.getFrom().getUserName(),
-            msg != null ? msg.getMessageId() : null
-        );
-    }
-
-    public int callbackId() {
-        return callbackData.callbackId();
-    }
-
-    public @Nullable Long entityId() {
-        return callbackData.entityId();
-    }
-
-    public @Nullable Integer offset() {
-        return callbackData.offset();
+        if (msg == null) {
+            throw new PetBedException("Message is null in CallbackQuery", PetBedException.ErrorCode.INTERNAL_ERROR);
+        }
+        return new CallbackQueryContext(data, update, cb, msg.getChatId(), cb.getFrom().getId(), cb.getFrom().getUserName(), msg.getMessageId());
     }
 }

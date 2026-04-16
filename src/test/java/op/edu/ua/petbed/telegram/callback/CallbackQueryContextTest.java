@@ -1,5 +1,6 @@
 package op.edu.ua.petbed.telegram.callback;
 
+import op.edu.ua.petbed.common.exceptions.PetBedException;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Nested;
@@ -9,6 +10,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -43,9 +45,9 @@ class CallbackQueryContextTest {
             assertThat(result.callbackData().callbackId()).isEqualTo(110);
             assertThat(result.callbackData().entityId()).isEqualTo(42L);
             assertThat(result.callbackData().offset()).isEqualTo(5);
-            assertThat(result.callbackId()).isEqualTo(110);
-            assertThat(result.entityId()).isEqualTo(42L);
-            assertThat(result.offset()).isEqualTo(5);
+            assertThat(result.callbackData().callbackId()).isEqualTo(110);
+            assertThat(result.callbackData().entityId()).isEqualTo(42L);
+            assertThat(result.callbackData().offset()).isEqualTo(5);
             assertThat(result.chatId()).isEqualTo(456L);
             assertThat(result.userId()).isEqualTo(123L);
             assertThat(result.username()).isEqualTo("testuser");
@@ -54,7 +56,7 @@ class CallbackQueryContextTest {
         }
 
         @Test
-        void updateWithNullMessage_returnsNullChatId() {
+        void updateWithNullMessage_throws() {
             User user = mock(User.class);
             when(user.getId()).thenReturn(123L);
             when(user.getUserName()).thenReturn("testuser");
@@ -67,17 +69,13 @@ class CallbackQueryContextTest {
             Update update = mock(Update.class);
             when(update.getCallbackQuery()).thenReturn(callbackQuery);
 
-            CallbackQueryContext result = CallbackQueryContext.from(update);
-
-            assertThat(result.chatId()).isNull();
-            assertThat(result.messageId()).isNull();
-            assertThat(result.callbackId()).isEqualTo(110);
-            assertThat(result.entityId()).isNull();
-            assertThat(result.offset()).isNull();
+            assertThatThrownBy(() -> CallbackQueryContext.from(update))
+                    .isInstanceOf(PetBedException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", PetBedException.ErrorCode.INTERNAL_ERROR);
         }
 
         @Test
-        void emptyData_returnsDefaults() {
+        void emptyData_throws() {
             User user = mock(User.class);
             when(user.getId()).thenReturn(123L);
 
@@ -88,11 +86,9 @@ class CallbackQueryContextTest {
             Update update = mock(Update.class);
             when(update.getCallbackQuery()).thenReturn(callbackQuery);
 
-            CallbackQueryContext result = CallbackQueryContext.from(update);
-
-            assertThat(result.callbackId()).isZero();
-            assertThat(result.entityId()).isNull();
-            assertThat(result.offset()).isNull();
+            assertThatThrownBy(() -> CallbackQueryContext.from(update))
+                    .isInstanceOf(PetBedException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", PetBedException.ErrorCode.INVALID_CALLBACK);
         }
     }
 }

@@ -1,11 +1,13 @@
 package op.edu.ua.petbed.telegram.callback;
 
+import op.edu.ua.petbed.common.exceptions.PetBedException;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class CallbackIdTest {
@@ -65,44 +67,19 @@ class CallbackIdTest {
     }
 
     @Nested
-    class Navigation {
-        @Test
-        void hasParent_returns_true_for_non_root() {
-            assertThat(CallbackId.PROFILE.hasParent()).isTrue();
-            assertThat(CallbackId.MENU.hasParent()).isFalse();
-        }
-
-        @Test
-        void backButtonLabel_returns_back_with_label() {
-            var profile = CallbackId.PROFILE;
-
-            assertThat(profile.backButtonLabel()).isEqualTo("⬅️ Меню");
-        }
-
-        @Test
-        void root_has_default_back_label() {
-            var menu = CallbackId.MENU;
-
-            assertThat(menu.backButtonLabel()).isEqualTo("⬅️ Повернутись");
-        }
-    }
-
-    @Nested
     class Parsing {
         @Test
         void fromId_returns_correct_enum() {
             var result = CallbackId.fromId(110);
 
-            assertThat(result)
-                    .isPresent()
-                    .contains(CallbackId.PROFILE);
+            assertThat(result).isEqualTo(CallbackId.PROFILE);
         }
 
         @Test
-        void fromId_returns_empty_for_unknown() {
-            var result = CallbackId.fromId(999);
-
-            assertThat(result).isEmpty();
+        void fromId_throws_for_unknown() {
+            assertThatThrownBy(() -> CallbackId.fromId(999))
+                    .isInstanceOf(PetBedException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", PetBedException.ErrorCode.INVALID_CALLBACK);
         }
     }
 

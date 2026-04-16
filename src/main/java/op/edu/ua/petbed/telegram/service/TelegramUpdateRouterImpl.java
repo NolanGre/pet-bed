@@ -102,13 +102,9 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
     private BotApiMethod<?> handleCallback(Update update) {
         CallbackQueryContext context = CallbackQueryContext.from(update);
 
-        CallbackId callbackId = context.callbackData().callbackIdEnum().orElse(null);
-        if (callbackId == null) {
-            log.error("Unknown callback id: {}", context.callbackData().callbackId());
-            return null;
-        }
+        CallbackId callbackId = context.callbackData().callbackIdEnum();
 
-        log.debug("Handling callback id: {}, entityId: {}, offset: {}", callbackId, context.entityId(), context.offset());
+        log.debug("Handling callback id: {}, entityId: {}, offset: {}", callbackId, context.callbackData().entityId(), context.callbackData().offset());
 
         CallbackHandler handler = callbackHandlerMap.get(callbackId);
 

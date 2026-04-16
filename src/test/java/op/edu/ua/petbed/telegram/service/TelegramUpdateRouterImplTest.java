@@ -1,5 +1,6 @@
 package op.edu.ua.petbed.telegram.service;
 
+import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.UserType;
 import op.edu.ua.petbed.telegram.auth.TelegramAuthService;
 import op.edu.ua.petbed.telegram.auth.UserAuthContext;
@@ -24,6 +25,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
@@ -162,14 +164,14 @@ class TelegramUpdateRouterImplTest {
     }
 
     @Test
-    void route_unknownCallback_returnsNull() {
+    void route_unknownCallback_returnsErrorMessage() {
         // given
         Update update = TelegramUpdateFixtureUtil.withCallback("999,,0", 123L, "testuser", 123L, 1);
 
         // when
         BotApiMethod<?> result = underTest.route(update);
 
-        // then
-        assertThat(result).isNull();
+        // then - exception is caught by WebhookExceptionHandler and returns error message
+        assertThat(result).isNotNull();
     }
 }

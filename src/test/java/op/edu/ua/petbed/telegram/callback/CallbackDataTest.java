@@ -1,11 +1,13 @@
 package op.edu.ua.petbed.telegram.callback;
 
+import op.edu.ua.petbed.common.exceptions.PetBedException;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class CallbackDataTest {
@@ -40,37 +42,30 @@ class CallbackDataTest {
         }
 
         @Test
-        void from_emptyString_returnsDefault() {
-            var result = CallbackData.from("");
-
-            assertThat(result.callbackId()).isZero();
-            assertThat(result.entityId()).isNull();
-            assertThat(result.offset()).isNull();
+        void from_emptyString_throws() {
+            assertThatThrownBy(() -> CallbackData.from(""))
+                    .isInstanceOf(PetBedException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", PetBedException.ErrorCode.INVALID_CALLBACK);
         }
 
         @Test
-        void from_null_returnsDefault() {
-            var result = CallbackData.from(null);
-
-            assertThat(result.callbackId()).isZero();
-            assertThat(result.entityId()).isNull();
-            assertThat(result.offset()).isNull();
+        void from_null_throws() {
+            assertThatThrownBy(() -> CallbackData.from(null))
+                    .isInstanceOf(PetBedException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", PetBedException.ErrorCode.INVALID_CALLBACK);
         }
 
         @Test
-        void from_invalid_returnsDefault() {
-            var result = CallbackData.from("abc");
-
-            assertThat(result.callbackId()).isZero();
-            assertThat(result.entityId()).isNull();
-            assertThat(result.offset()).isNull();
+        void from_invalid_throws() {
+            assertThatThrownBy(() -> CallbackData.from("abc"))
+                    .isInstanceOf(NumberFormatException.class);
         }
 
         @Test
-        void from_whitespaceOnly_returnsDefault() {
-            var result = CallbackData.from("   ");
-
-            assertThat(result.callbackId()).isZero();
+        void from_whitespaceOnly_throws() {
+            assertThatThrownBy(() -> CallbackData.from("   "))
+                    .isInstanceOf(PetBedException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", PetBedException.ErrorCode.INVALID_CALLBACK);
         }
     }
 
@@ -127,17 +122,16 @@ class CallbackDataTest {
 
             var result = data.callbackIdEnum();
 
-            assertThat(result).isPresent()
-                    .contains(CallbackId.PROFILE);
+            assertThat(result).isEqualTo(CallbackId.PROFILE);
         }
 
         @Test
-        void callbackIdEnum_returnsEmptyForUnknown() {
+        void callbackIdEnum_throwsForUnknown() {
             var data = CallbackData.from("999,,");
 
-            var result = data.callbackIdEnum();
-
-            assertThat(result).isEmpty();
+            assertThatThrownBy(() -> data.callbackIdEnum())
+                    .isInstanceOf(PetBedException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", PetBedException.ErrorCode.INVALID_CALLBACK);
         }
     }
 }

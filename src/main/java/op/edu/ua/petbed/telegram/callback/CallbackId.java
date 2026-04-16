@@ -2,8 +2,9 @@ package op.edu.ua.petbed.telegram.callback;
 
 import org.jspecify.annotations.Nullable;
 
+import op.edu.ua.petbed.common.exceptions.PetBedException;
+
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,7 +28,7 @@ public enum CallbackId {
     PET_LIST(122, "Список тварин", MY_PETS),
 
     // PET_LIST -> PET_DETAIL chain
-    PET_DETAIL(123, "Тварина", PET_LIST),
+    PET_DETAIL(123, "", PET_LIST),    // List element
     PET_UPDATE(124, "Оновити анкету", PET_DETAIL),
     PET_DELETE_CONFIRM(125, "Видалити анкету", PET_DETAIL),
 
@@ -93,10 +94,10 @@ public enum CallbackId {
     FOSTER_MY_RESPONSES(183, "Мої відгуки", FOSTER),
     FOSTER_MY_POSTS(184, "Мої оголошення", FOSTER);
 
+    public static final String BACK_BUTTON_LABEL = "⬅️ Повернутись";
     private final int id;
     private final String label;
     private final @Nullable CallbackId parent;
-    private volatile List<CallbackId> children;
 
     CallbackId(int id, String label, @Nullable CallbackId parent) {
         this.id = id;
@@ -105,16 +106,9 @@ public enum CallbackId {
     }
 
     public List<CallbackId> children() {
-        if (children == null) {
-            synchronized (this) {
-                if (children == null) {
-                    children = Arrays.stream(values())
-                            .filter(e -> e.parent == this)
-                            .toList();
-                }
-            }
-        }
-        return Collections.unmodifiableList(children);
+        return Arrays.stream(values())
+                .filter(e -> e.parent == this)
+                .toList();
     }
 
     public int id() {
@@ -134,26 +128,24 @@ public enum CallbackId {
     }
 
     public String backButtonLabel() {
-        if (parent == null) {
-            return "⬅️ Повернутись";
-        }
-        return "⬅️ " + parent.label;
+        return BACK_BUTTON_LABEL;
     }
 
-    public static Optional<CallbackId> fromId(int id) {
+    public static CallbackId fromId(int id) {
         return Arrays.stream(values())
                 .filter(e -> e.id == id)
-                .findFirst();
+                .findFirst()
+                .orElseThrow(() -> new PetBedException("Unknown callback id: " + id, PetBedException.ErrorCode.INVALID_CALLBACK));
     }
 
-    public static Optional<CallbackId> fromId(String id) {
+    public static CallbackId fromId(String id) {
         if (id == null || id.isBlank()) {
-            return Optional.empty();
+            throw new PetBedException("Callback id is required", PetBedException.ErrorCode.INVALID_CALLBACK);
         }
         try {
             return fromId(Integer.parseInt(id));
         } catch (NumberFormatException e) {
-            return Optional.empty();
+            throw new PetBedException("Invalid callback id format: " + id, PetBedException.ErrorCode.INVALID_CALLBACK);
         }
     }
 

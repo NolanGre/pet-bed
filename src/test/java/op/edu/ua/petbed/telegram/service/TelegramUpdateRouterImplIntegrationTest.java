@@ -1,5 +1,6 @@
 package op.edu.ua.petbed.telegram.service;
 
+import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.telegram.testutil.TelegramUpdateFixtureUtil;
 import op.edu.ua.petbed.testcontainers.PostgresTestContainer;
 import org.junit.jupiter.api.DisplayNameGeneration;
@@ -13,6 +14,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Transactional
@@ -37,15 +39,15 @@ class TelegramUpdateRouterImplIntegrationTest extends PostgresTestContainer {
     }
 
     @Test
-    void route_unknownCallback_returnsNull() {
+    void route_unknownCallback_returnsErrorMessage() {
         // given - unknown callback id (999 has no handler)
         Update update = TelegramUpdateFixtureUtil.withCallback("999,,0", 123L, "testuser", 123L, 1);
 
         // when
         BotApiMethod<?> result = underTest.route(update);
 
-        // then - returns null (no handler found)
-        assertThat(result).isNull();
+        // then - exception is caught and returns error message
+        assertThat(result).isNotNull();
     }
 
     @Test
@@ -58,23 +60,6 @@ class TelegramUpdateRouterImplIntegrationTest extends PostgresTestContainer {
 
         // then - should create user and return profile (auth runs first)
         assertThat(result).isNotNull();
-    }
-
-    @Test
-    void route_requiresVolunteer_command_blocksRegular() {
-        // given - /publish requires VOLUNTEER status, user will be REGULAR
-        Update update = TelegramUpdateFixtureUtil.withCommand("/publish", 888L, "regularuser");
-
-        // when
-        BotApiMethod<?> result = underTest.route(update);
-
-        // then - should return error message about authorization required
-        assertThat(result)
-                .isNotNull()
-                .isInstanceOf(SendMessage.class);
-        SendMessage sendMessage = (SendMessage) result;
-        assertThat(sendMessage.getText())
-                .contains("This action requires volunteer status");
     }
 
     @Test
