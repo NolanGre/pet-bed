@@ -1,74 +1,51 @@
 package op.edu.ua.petbed.telegram.callback;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-/**
- * Record representing parsed callback_data from inline keyboard button.
- * <p>
- * Telegram buttons send JSON in callback_data field. This record parses it:
- * <b>JSON format:</b>
- * <pre>
- * {"a":"ACTION_NAME", "p":"optional_payload", "o":10}
- * </pre>
- *
- * <b>Fields:</b>
- * <ul>
- *     <li>{@code a} - action name (becomes enum)</li>
- *     <li>{@code p} - optional payload string</li>
- *     <li>{@code o} - optional offset integer</li>
- * </ul>
- *
- * @see CallbackAction
- */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+import java.util.Optional;
+
 public record CallbackData(
-        /* Action name (maps to CallbackAction enum). */
-        @JsonProperty("a") String action,
-
-        /* Optional payload string (e.g., item ID). */
-        @JsonProperty("p") @Nullable String payload,
-
-        /* Optional offset for pagination. */
-        @JsonProperty("o") @Nullable Integer offset
+        int callbackId,
+        @Nullable Long entityId,
+        @Nullable Integer offset
 ) {
-    private static final ObjectMapper MAPPER = new ObjectMapper();
-
-    /**
-     * Parses JSON string to CallbackData.
-     *
-     * @param json raw callback_data from Telegram button
-     * @return parsed CallbackData with action as string
-     */
-    public static CallbackData from(@Nullable String json) {
-        if (StringUtils.isBlank(json)) {
-            return new CallbackData("unknown", null, null);
+    public static CallbackData from(@Nullable String data) {
+        if (StringUtils.isBlank(data)) {
+            return new CallbackData(0, null, null);
         }
+        String[] parts = data.split(",", -1);
         try {
-            JsonNode node = MAPPER.readTree(json);
-            String action = node.has("a") ? node.get("a").asText() : "unknown";
-            String payload = node.has("p") ? node.get("p").asText() : null;
-            Integer offset = node.has("o") ? node.get("o").asInt() : null;
-            return new CallbackData(action, payload, offset);
-        } catch (Exception e) {
-            return new CallbackData("unknown", null, null);
+            int id = Integer.parseInt(parts[0].trim());
+            Long entity = parts.length > 1 && !parts[1].isBlank() ? Long.parseLong(parts[1].trim()) : null;
+            Integer off = parts.length > 2 && !parts[2].isBlank() ? Integer.parseInt(parts[2].trim()) : null;
+            return new CallbackData(id, entity, off);
+        } catch (NumberFormatException e) {
+            return new CallbackData(0, null, null);
         }
     }
 
-    /**
-     * Converts to JSON string for button callback_data.
-     *
-     * @return JSON string
-     */
-    public String toJson() {
-        try {
-            return MAPPER.writeValueAsString(this);
-        } catch (Exception e) {
-            return "{\"a\":\"error\"}";
+    public static CallbackData of(CallbackId callbackId, @Nullable Long entityId, @Nullable Integer offset) {
+        return new CallbackData(callbackId.id(), entityId, offset);
+    }
+
+    public Optional<CallbackId> callbackIdEnum() {
+        return CallbackId.fromId(callbackId);
+    }
+
+    @Override
+    public @NonNull String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(callbackId);
+        sb.append(",");
+        if (entityId != null) {
+            sb.append(entityId);
         }
+        sb.append(",");
+        if (offset != null) {
+            sb.append(offset);
+        }
+        return sb.toString();
     }
 }

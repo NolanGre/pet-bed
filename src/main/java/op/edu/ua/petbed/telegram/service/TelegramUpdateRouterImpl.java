@@ -5,8 +5,8 @@ import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.exceptions.WebhookExceptionHandler;
 import op.edu.ua.petbed.telegram.TelegramUpdateRouter;
 import op.edu.ua.petbed.telegram.auth.TelegramAuthService;
-import op.edu.ua.petbed.telegram.callback.CallbackAction;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
+import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
 import op.edu.ua.petbed.telegram.command.Command;
 import op.edu.ua.petbed.telegram.command.CommandContext;
@@ -28,14 +28,14 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
 
     private final TelegramAuthService authService;
     private final Map<Command, CommandHandler> commandHandlerMap;
-    private final Map<CallbackAction, CallbackHandler> callbackHandlerMap;
+    private final Map<CallbackId, CallbackHandler> callbackHandlerMap;
 
     public TelegramUpdateRouterImpl(TelegramAuthService authService, List<CommandHandler> commandHandlers, List<CallbackHandler> callbackHandlers) {
         this.authService = authService;
         this.commandHandlerMap = Map.copyOf(commandHandlers.stream()
-                        .collect(Collectors.toMap(CommandHandler::getCommand, Function.identity())));
+                .collect(Collectors.toMap(CommandHandler::getCommand, Function.identity())));
         this.callbackHandlerMap = Map.copyOf(callbackHandlers.stream()
-                        .collect(Collectors.toMap(CallbackHandler::getCallbackAction, Function.identity())));
+                .collect(Collectors.toMap(CallbackHandler::getCallbackId, Function.identity())));
 
         log.debug("Registered command handlers: {}", commandHandlerMap.keySet());
         log.debug("Registered callback handlers: {}", callbackHandlerMap.keySet());
@@ -102,19 +102,23 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
     private BotApiMethod<?> handleCallback(Update update) {
         CallbackQueryContext context = CallbackQueryContext.from(update);
 
-        CallbackAction action = CallbackAction.fromString(context.callbackData().action());
-        log.debug("Handling callback action: {}, payload: {}, offset: {}",
-                action, context.callbackData().payload(), context.callbackData().offset());
+        CallbackId callbackId = context.callbackData().callbackIdEnum().orElse(null);
+        if (callbackId == null) {
+            log.error("Unknown callback id: {}", context.callbackData().callbackId());
+            return null;
+        }
 
-        CallbackHandler handler = callbackHandlerMap.get(action);
+        log.debug("Handling callback id: {}, entityId: {}, offset: {}", callbackId, context.entityId(), context.offset());
+
+        CallbackHandler handler = callbackHandlerMap.get(callbackId);
 
         if (handler == null) {
-            log.warn("No handler for callback action: {}", action);
-            return defaultResponse(context.chatId());
+            log.error("No handler for callback id: {}", callbackId);
+            return null;
         }
 
         BotApiMethod<?> response = handler.handle(context);
-        log.debug("Callback {} handled, response sent to chat: {}", action, context.chatId());
+        log.debug("Callback {} handled, response sent to chat: {}", callbackId, context.chatId());
         return response;
     }
 

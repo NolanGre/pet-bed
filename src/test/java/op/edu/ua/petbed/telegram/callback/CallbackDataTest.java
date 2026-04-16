@@ -2,6 +2,7 @@ package op.edu.ua.petbed.telegram.callback;
 
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -9,75 +10,134 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class CallbackDataTest {
 
-    @Test
-    void from_validJson_returnsParsedData() {
-        // given
-        String json = "{\"a\":\"CONFIRM\",\"p\":\"item1\"}";
+    @Nested
+    class Parsing {
+        @Test
+        void from_validCallbackData_parsesCorrectly() {
+            var result = CallbackData.from("123,42,10");
 
-        // when
-        CallbackData result = CallbackData.from(json);
+            assertThat(result.callbackId()).isEqualTo(123);
+            assertThat(result.entityId()).isEqualTo(42L);
+            assertThat(result.offset()).isEqualTo(10);
+        }
 
-        // then
-        assertThat(result.action()).isEqualTo("CONFIRM");
-        assertThat(result.payload()).isEqualTo("item1");
-        assertThat(result.offset()).isNull();
+        @Test
+        void from_callbackIdOnly_parsesCorrectly() {
+            var result = CallbackData.from("110,,5");
+
+            assertThat(result.callbackId()).isEqualTo(110);
+            assertThat(result.entityId()).isNull();
+            assertThat(result.offset()).isEqualTo(5);
+        }
+
+        @Test
+        void from_callbackIdAndEntity_parsesCorrectly() {
+            var result = CallbackData.from("123,42,");
+
+            assertThat(result.callbackId()).isEqualTo(123);
+            assertThat(result.entityId()).isEqualTo(42L);
+            assertThat(result.offset()).isNull();
+        }
+
+        @Test
+        void from_emptyString_returnsDefault() {
+            var result = CallbackData.from("");
+
+            assertThat(result.callbackId()).isZero();
+            assertThat(result.entityId()).isNull();
+            assertThat(result.offset()).isNull();
+        }
+
+        @Test
+        void from_null_returnsDefault() {
+            var result = CallbackData.from(null);
+
+            assertThat(result.callbackId()).isZero();
+            assertThat(result.entityId()).isNull();
+            assertThat(result.offset()).isNull();
+        }
+
+        @Test
+        void from_invalid_returnsDefault() {
+            var result = CallbackData.from("abc");
+
+            assertThat(result.callbackId()).isZero();
+            assertThat(result.entityId()).isNull();
+            assertThat(result.offset()).isNull();
+        }
+
+        @Test
+        void from_whitespaceOnly_returnsDefault() {
+            var result = CallbackData.from("   ");
+
+            assertThat(result.callbackId()).isZero();
+        }
     }
 
-    @Test
-    void from_jsonWithOffset_returnsParsedData() {
-        // given
-        String json = "{\"a\":\"PAGINATION\",\"o\":10}";
+    @Nested
+    class Factory {
+        @Test
+        void of_createsWithCallbackId() {
+            var result = CallbackData.of(CallbackId.PROFILE, null, null);
 
-        // when
-        CallbackData result = CallbackData.from(json);
+            assertThat(result.callbackId()).isEqualTo(110);
+            assertThat(result.entityId()).isNull();
+            assertThat(result.offset()).isNull();
+        }
 
-        // then
-        assertThat(result.action()).isEqualTo("PAGINATION");
-        assertThat(result.payload()).isNull();
-        assertThat(result.offset()).isEqualTo(10);
+        @Test
+        void of_withEntityAndOffset() {
+            var result = CallbackData.of(CallbackId.PET_DETAIL, 42L, 5);
+
+            assertThat(result.callbackId()).isEqualTo(123);
+            assertThat(result.entityId()).isEqualTo(42L);
+            assertThat(result.offset()).isEqualTo(5);
+        }
     }
 
-    @Test
-    void from_blankJson_returnsUnknown() {
-        // when
-        CallbackData result = CallbackData.from("");
+    @Nested
+    class ToString {
+        @Test
+        void toString_withAllFields() {
+            var data = new CallbackData(123, 42L, 10);
 
-        // then
-        assertThat(result.action()).isEqualTo("unknown");
+            assertThat(data.toString()).hasToString("123,42,10");
+        }
+
+        @Test
+        void toString_withNullFields() {
+            var data = new CallbackData(110, null, null);
+
+            assertThat(data.toString()).hasToString("110,,");
+        }
+
+        @Test
+        void toString_withEntityOnly() {
+            var data = new CallbackData(123, 42L, null);
+
+            assertThat(data.toString()).hasToString("123,42,");
+        }
     }
 
-    @Test
-    void from_invalidJson_returnsUnknown() {
-        // when
-        CallbackData result = CallbackData.from("not valid json");
+    @Nested
+    class CallbackIdEnum {
+        @Test
+        void callbackIdEnum_returnsCorrectEnum() {
+            var data = CallbackData.from("110,,");
 
-        // then
-        assertThat(result.action()).isEqualTo("unknown");
-    }
+            var result = data.callbackIdEnum();
 
-    @Test
-    void toJson_validData_returnsJson() {
-        // given
-        CallbackData data = new CallbackData("CONFIRM", "item1", null);
+            assertThat(result).isPresent()
+                    .contains(CallbackId.PROFILE);
+        }
 
-        // when
-        String result = data.toJson();
+        @Test
+        void callbackIdEnum_returnsEmptyForUnknown() {
+            var data = CallbackData.from("999,,");
 
-        // then
-        assertThat(result).contains("\"a\":\"CONFIRM\"");
-        assertThat(result).contains("\"p\":\"item1\"");
-    }
+            var result = data.callbackIdEnum();
 
-    @Test
-    void toJson_withOffset_returnsJson() {
-        // given
-        CallbackData data = new CallbackData("PAGINATION", null, 20);
-
-        // when
-        String result = data.toJson();
-
-        // then
-        assertThat(result).contains("\"a\":\"PAGINATION\"");
-        assertThat(result).contains("\"o\":20");
+            assertThat(result).isEmpty();
+        }
     }
 }

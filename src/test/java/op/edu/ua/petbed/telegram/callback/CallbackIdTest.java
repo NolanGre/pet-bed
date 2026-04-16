@@ -107,41 +107,6 @@ class CallbackIdTest {
     }
 
     @Nested
-    class Serialization {
-        @Test
-        void toCallbackData_creates_string_with_all_fields() {
-            var callbackId = CallbackId.PROFILE;
-            var result = callbackId.toCallbackData(null, null);
-
-            assertThat(result).isEqualTo("110,,");
-        }
-
-        @Test
-        void toCallbackData_includes_entityId() {
-            var callbackId = CallbackId.PET_DETAIL;
-            var result = callbackId.toCallbackData(42L, null);
-
-            assertThat(result).isEqualTo("123,42,");
-        }
-
-        @Test
-        void toCallbackData_includes_offset() {
-            var callbackId = CallbackId.FEED_VIEW;
-            var result = callbackId.toCallbackData(null, 10);
-
-            assertThat(result).isEqualTo("135,,10");
-        }
-
-        @Test
-        void toCallbackData_includes_all_fields() {
-            var callbackId = CallbackId.PET_DETAIL;
-            var result = callbackId.toCallbackData(42L, 5);
-
-            assertThat(result).isEqualTo("123,42,5");
-        }
-    }
-
-    @Nested
     class Graphviz {
         @Test
         void toMermaidGraph_returns_valid_mermaid() {

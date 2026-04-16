@@ -96,7 +96,7 @@ public enum CallbackId {
     private final int id;
     private final String label;
     private final @Nullable CallbackId parent;
-    private List<CallbackId> children;
+    private volatile List<CallbackId> children;
 
     CallbackId(int id, String label, @Nullable CallbackId parent) {
         this.id = id;
@@ -106,9 +106,13 @@ public enum CallbackId {
 
     public List<CallbackId> children() {
         if (children == null) {
-            children = Arrays.stream(values())
-                    .filter(e -> e.parent == this)
-                    .toList();
+            synchronized (this) {
+                if (children == null) {
+                    children = Arrays.stream(values())
+                            .filter(e -> e.parent == this)
+                            .toList();
+                }
+            }
         }
         return Collections.unmodifiableList(children);
     }
@@ -151,20 +155,6 @@ public enum CallbackId {
         } catch (NumberFormatException e) {
             return Optional.empty();
         }
-    }
-
-    public String toCallbackData(@Nullable Long entityId, @Nullable Integer offset) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(id);
-        sb.append(",");
-        if (entityId != null) {
-            sb.append(entityId);
-        }
-        sb.append(",");
-        if (offset != null) {
-            sb.append(offset);
-        }
-        return sb.toString();
     }
 
     public static String toMermaidGraph() {

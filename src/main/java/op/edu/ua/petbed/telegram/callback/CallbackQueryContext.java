@@ -36,12 +36,6 @@ public record CallbackQueryContext(
     @Nullable String username,
     @Nullable Integer messageId
 ) {
-    /**
-     * Creates context from Telegram Update containing CallbackQuery.
-     *
-     * @param update with CallbackQuery
-     * @return parsed CallbackQueryContext
-     */
     public static CallbackQueryContext from(Update update) {
         var cb = update.getCallbackQuery();
         var data = CallbackData.from(cb.getData());
@@ -55,5 +49,17 @@ public record CallbackQueryContext(
             cb.getFrom().getUserName(),
             msg != null ? msg.getMessageId() : null
         );
+    }
+
+    public int callbackId() {
+        return callbackData.callbackId();
+    }
+
+    public @Nullable Long entityId() {
+        return callbackData.entityId();
+    }
+
+    public @Nullable Integer offset() {
+        return callbackData.offset();
     }
 }

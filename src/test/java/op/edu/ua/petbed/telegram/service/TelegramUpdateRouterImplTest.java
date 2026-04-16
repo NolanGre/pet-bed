@@ -3,8 +3,8 @@ package op.edu.ua.petbed.telegram.service;
 import op.edu.ua.petbed.common.model.UserType;
 import op.edu.ua.petbed.telegram.auth.TelegramAuthService;
 import op.edu.ua.petbed.telegram.auth.UserAuthContext;
-import op.edu.ua.petbed.telegram.callback.CallbackAction;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
+import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.command.Command;
 import op.edu.ua.petbed.telegram.command.CommandHandler;
 import op.edu.ua.petbed.telegram.testutil.TelegramUpdateFixtureUtil;
@@ -61,7 +61,7 @@ class TelegramUpdateRouterImplTest {
         given(defaultHandler.getCommand()).willReturn(Command.DEFAULT);
         given(profileHandler.getCommand()).willReturn(Command.PROFILE);
         given(publishHandler.getCommand()).willReturn(Command.PUBLISH);
-        given(callbackHandler.getCallbackAction()).willReturn(CallbackAction.PAGINATION);
+        given(callbackHandler.getCallbackId()).willReturn(CallbackId.FEED_VIEW);
 
         underTest = new TelegramUpdateRouterImpl(authService, commandHandlers, callbackHandlers);
     }
@@ -84,7 +84,7 @@ class TelegramUpdateRouterImplTest {
     @Test
     void route_callbackQuery_routesToHandler() {
         // given
-        Update update = TelegramUpdateFixtureUtil.withCallback("{\"a\":\"PAGINATION\",\"p\":\"test\",\"o\":0}", 123L, "testuser", 123L, 1);
+        Update update = TelegramUpdateFixtureUtil.withCallback("135,,0", 123L, "testuser", 123L, 1);
         BotApiMethod<?> handlerResponse = mock(BotApiMethod.class);
         doReturn(handlerResponse).when(callbackHandler).handle(any());
 
@@ -105,8 +105,8 @@ class TelegramUpdateRouterImplTest {
         BotApiMethod<?> result = underTest.route(update);
 
         // then
-        assertThat(result).isNotNull();
-        assertThat(result).isInstanceOf(SendMessage.class);
+        assertThat(result).isNotNull()
+                .isInstanceOf(SendMessage.class);
         SendMessage sendMessage = (SendMessage) result;
         assertThat(sendMessage.getText()).contains("HandleTextMessage: default response");
     }
@@ -162,17 +162,14 @@ class TelegramUpdateRouterImplTest {
     }
 
     @Test
-    void route_unknownCallback_returnsDefault() {
+    void route_unknownCallback_returnsNull() {
         // given
-        Update update = TelegramUpdateFixtureUtil.withCallback("{\"a\":\"UNKNOWN\",\"p\":\"test\",\"o\":0}", 123L, "testuser", 123L, 1);
+        Update update = TelegramUpdateFixtureUtil.withCallback("999,,0", 123L, "testuser", 123L, 1);
 
         // when
         BotApiMethod<?> result = underTest.route(update);
 
         // then
-        assertThat(result).isNotNull();
-        assertThat(result).isInstanceOf(SendMessage.class);
-        SendMessage sendMessage = (SendMessage) result;
-        assertThat(sendMessage.getText()).contains("HandleTextMessage: default response");
+        assertThat(result).isNull();
     }
 }

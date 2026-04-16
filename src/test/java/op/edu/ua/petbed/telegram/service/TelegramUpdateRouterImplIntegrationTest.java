@@ -7,12 +7,12 @@ import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
-import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @Transactional
@@ -32,20 +32,20 @@ class TelegramUpdateRouterImplIntegrationTest extends PostgresTestContainer {
 
         // then
         assertThat(result).isNotNull();
-        assertThat(((org.telegram.telegrambots.meta.api.methods.send.SendMessage) result).getText())
+        assertThat(((SendMessage) result).getText())
                 .contains("Welcome to PetBed Bot");
     }
 
     @Test
-    void route_callbackQuery_routesToHandler() {
-        // given
-        Update update = TelegramUpdateFixtureUtil.withPaginationCallback(0, "item1", 123L);
+    void route_unknownCallback_returnsNull() {
+        // given - unknown callback id (999 has no handler)
+        Update update = TelegramUpdateFixtureUtil.withCallback("999,,0", 123L, "testuser", 123L, 1);
 
         // when
         BotApiMethod<?> result = underTest.route(update);
 
-        // then
-        assertThat(result).isNotNull();
+        // then - returns null (no handler found)
+        assertThat(result).isNull();
     }
 
     @Test
@@ -69,10 +69,10 @@ class TelegramUpdateRouterImplIntegrationTest extends PostgresTestContainer {
         BotApiMethod<?> result = underTest.route(update);
 
         // then - should return error message about authorization required
-        assertThat(result).isNotNull();
-        assertThat(result).isInstanceOf(org.telegram.telegrambots.meta.api.methods.send.SendMessage.class);
-        org.telegram.telegrambots.meta.api.methods.send.SendMessage sendMessage =
-                (org.telegram.telegrambots.meta.api.methods.send.SendMessage) result;
+        assertThat(result)
+                .isNotNull()
+                .isInstanceOf(SendMessage.class);
+        SendMessage sendMessage = (SendMessage) result;
         assertThat(sendMessage.getText())
                 .contains("This action requires volunteer status");
     }
@@ -86,30 +86,11 @@ class TelegramUpdateRouterImplIntegrationTest extends PostgresTestContainer {
         BotApiMethod<?> result = underTest.route(update);
 
         // then - should return default help message
-        assertThat(result).isNotNull();
-        assertThat(result).isInstanceOf(org.telegram.telegrambots.meta.api.methods.send.SendMessage.class);
-        org.telegram.telegrambots.meta.api.methods.send.SendMessage sendMessage =
-                (org.telegram.telegrambots.meta.api.methods.send.SendMessage) result;
+        assertThat(result).isNotNull()
+                .isInstanceOf(SendMessage.class);
+        SendMessage sendMessage = (SendMessage) result;
         assertThat(sendMessage.getText())
                 .contains("Unknown command.");
-    }
-
-    @Test
-    void route_unknownCallback_returnsDefault() {
-        // given
-        Update update = TelegramUpdateFixtureUtil.withCallback(
-                "{\"a\":\"UNKNOWN\",\"p\":\"test\",\"o\":0}", 123L, "testuser", 123L, 1);
-
-        // when
-        BotApiMethod<?> result = underTest.route(update);
-
-        // then - should return default help message
-        assertThat(result).isNotNull();
-        assertThat(result).isInstanceOf(org.telegram.telegrambots.meta.api.methods.send.SendMessage.class);
-        org.telegram.telegrambots.meta.api.methods.send.SendMessage sendMessage =
-                (org.telegram.telegrambots.meta.api.methods.send.SendMessage) result;
-        assertThat(sendMessage.getText())
-                .contains("HandleTextMessage: default response");
     }
 
     @Test

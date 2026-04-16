@@ -49,16 +49,16 @@
 
 ### Етап 1: Основа
 
-- [ ] 1. Створити `CallbackId` enum з ієрархією
+- [x] 1. Створити `CallbackId` enum з ієрархією
   - Поля: `id`, `parent`, `label`
   - Метод: `children()` — повертає нащадків
   - Валідація: перевірка на цикли
-- [ ] 2. Модифікувати `CallbackData`
+- [x] 2. Модифікувати `CallbackData`
   - Поля: `callbackId` (int), `@Nullable Long entityId`, `@Nullable Integer offset`
   - Формат: `callbackId,entityId,offset` (komm separated, порожні = null)
   - Factory: `of(CallbackId, entityId, offset)`
   - Парсинг: `parse(String)` з `split(",")`
-- [ ] 3. Оновити `CallbackQueryContext`
+- [x] 3. Оновити `CallbackQueryContext`
   - Методи: `callbackId()`, `entityId()`, `offset()`
 
 ### Етап 2: InlineKeyboardBuilder
@@ -72,23 +72,12 @@
 
 ### Етап 3: Хендлери
 
-- [ ] 5. Оновити `CallbackHandler` інтерфейс
+- [x] 5. Оновити `CallbackHandler` інтерфейс
   - `CallbackId getCallbackId()` замість `CallbackAction`
   - `BotApiMethod<?> handle(CallbackQueryContext context)`
-- [ ] 6. Оновити `TelegramUpdateRouterImpl`
+- [x] 6. Оновити `TelegramUpdateRouterImpl`
   - Маршрутизація за `CallbackId`
 - [ ] 7. Видалити `CallbackAction` enum (або залишити для CONFIRM/CANCEL)
-
-### Етап 4: Тестування
-
-- [ ] 8. Написати unit тести для нових компонентів
-
-### Етап 5: Візуалізація графа
-
-- [ ] 9. Створити ендпоінт `/api/callback-graph`
-  - Повертає Mermaid діаграму з текстовими label (не ID)
-  - Формат: `graph TD\n MENU["Меню"] --> SEARCH["Пошук"]\n SEARCH --> FOUND_PET["Я знайшов тварину"]`
-  - Посилання для перегляду: `https://mermaid.live/edit#pako{BASE64}`
 
 ---
 
@@ -101,3 +90,9 @@
 ## Виконано
 
 - [x] Створено план рефакторингу
+- [x] CallbackId enum з ієрархією (50+ скрінів)
+- [x] CallbackData comma-separated формат
+- [x] CallbackQueryContext з callbackId(), entityId(), offset()
+- [x] CallbackHandler інтерфейс оновлено
+- [x] TelegramUpdateRouterImpl маршрутизує по CallbackId
+- [x] /api/callback-graph redirect to mermaid.live
