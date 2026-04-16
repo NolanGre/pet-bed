@@ -44,6 +44,8 @@
 
 - `code-style.md` — Java 25, Spring Boot conventions, JSpecify, code quality tools
 - `architecture.md` — Spring Modulith, DDD patterns, domain organization
+- `docs/callback-tree.md` — повний список CallbackId та ієрархія екранів Telegram бота
+- `docs/callback-business-rules.md` — бізнес-логіка, специфічна поведінка та деталі реалізації екранів
 - `testing.md` — JUnit 5, Mockito, Testcontainers, test structure, naming conventions
 - `exceptions.md` — PetBedException with ErrorCode pattern
 - `git-operations.md` — Commit/push rules, PR description format

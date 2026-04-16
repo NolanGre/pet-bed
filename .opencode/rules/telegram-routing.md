@@ -81,3 +81,5 @@ private BotApiMethod<?> mapToResponse(UserDTO dto) {
 
 See `docs/routing-guide.md` for detailed usage.
 See `docs/ui-response-mapping.md` for ResponseBuilder usage examples.
+See `docs/callback-tree.md` for complete CallbackId hierarchy.
+See `docs/callback-business-rules.md` for business logic and behavior details.

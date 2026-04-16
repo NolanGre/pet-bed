@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jspecify.annotations.NullMarked;
+import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -25,17 +25,16 @@ import org.jspecify.annotations.Nullable;
  *
  * @see CallbackAction
  */
-@NullMarked
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record CallbackData(
-    /* Action name (maps to CallbackAction enum). */
-    @JsonProperty("a") String action,
+        /* Action name (maps to CallbackAction enum). */
+        @JsonProperty("a") String action,
 
-    /* Optional payload string (e.g., item ID). */
-    @JsonProperty("p") @Nullable String payload,
+        /* Optional payload string (e.g., item ID). */
+        @JsonProperty("p") @Nullable String payload,
 
-    /* Optional offset for pagination. */
-    @JsonProperty("o") @Nullable Integer offset
+        /* Optional offset for pagination. */
+        @JsonProperty("o") @Nullable Integer offset
 ) {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -45,8 +44,8 @@ public record CallbackData(
      * @param json raw callback_data from Telegram button
      * @return parsed CallbackData with action as string
      */
-    public static CallbackData from(String json) {
-        if (json == null || json.isBlank()) {
+    public static CallbackData from(@Nullable String json) {
+        if (StringUtils.isBlank(json)) {
             return new CallbackData("unknown", null, null);
         }
         try {

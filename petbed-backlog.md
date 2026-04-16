@@ -1,7 +1,5 @@
 # PetBed — Беклог проєкту (GitHub Projects)
 
-> **Стек:** Java 21, Spring Boot, Spring Modulith, Spring Data JPA, Hibernate, PostgreSQL + PostGIS + pg_trgm, Liquibase, Gradle, Docker / Docker Compose, TelegramBots, AWS S3 / MinIO, Ngrok, Prometheus, Grafana, Loki, Promtail, JUnit 5, Mockito, Testcontainers, Lombok
-
 ---
 
 ## Епіки
@@ -23,57 +21,12 @@
 | E13 | 📊 Моніторинг та логування | Prometheus, Grafana, Loki, Promtail |
 | E14 | ✅ Тестування | Unit, Integration, E2E тести |
 
----
-
-## Беклог із послідовністю виконання
-
-> **Пріоритет виконання:** E1 → E2 → E3 → E4 → E10 (базовий) → E12 → E5 → E6 → E7 → E8 → E9 → E11 → E10 (повний) → E13 → E14
-
----
-
-## E1 — 🏗️ Інфраструктура та налаштування проєкту
-
-| ID | Задача | Деталі | Пріоритет |
-|----|--------|--------|-----------|
-| E1-1 | Ініціалізувати Gradle-проєкт | Spring Initializr, Java 21, налаштувати `build.gradle`, підключити Lombok, Spring Boot | 🔴 Critical |
-| E1-2 | Налаштувати багатомодульну структуру (Spring Modulith) | Визначити пакети-модулі: `user`, `pet`, `lost`, `found`, `matching`, `adoption`, `fostering`, `feed`, `telegram`, `notification` | 🔴 Critical |
-| E1-3 | Налаштувати Docker та Docker Compose | Контейнери: `app`, `postgres`, `minio`, `prometheus`, `grafana`, `loki`, `promtail` | 🔴 Critical |
-| E1-4 | Налаштувати Ngrok для локальної розробки | Отримати статичний домен, прописати webhook URL для Telegram Bot API | 🟠 High |
-| E1-5 | Налаштувати Git та `.gitignore` | Ігнорувати `.env`, secrets, build-директорії | 🔴 Critical |
-| E1-6 | Налаштувати `.env` та конфігурацію через `application.yml` | Токен бота, credentials БД, S3 ключі, Ngrok URL | 🔴 Critical |
-| E1-7 | Підключити Actuator + Micrometer для Prometheus | Ендпоінт `/actuator/prometheus`, базові метрики | 🟡 Medium |
-
----
-
-## E2 — 🗄️ База даних та міграції (Liquibase)
-
-| ID | Задача | Деталі | Пріоритет |
-|----|--------|--------|-----------|
-| E2-1 | Підключити PostgreSQL + PostGIS + pg_trgm розширення | `CREATE EXTENSION postgis; CREATE EXTENSION pg_trgm;` у першій міграції | 🔴 Critical |
-| E2-2 | Міграція: таблиця `users` | Поля: `id`, `telegram_id`, `telegram_username`, `type`, `adoption_history_offset`, `fostering_history_offset`, `created_at`, `updated_at` | 🔴 Critical |
-| E2-3 | Міграція: таблиця `pets` | Поля: `id`, `owner_id` (FK), `name`, `photo_url`, `type`, `breed`, `color`, `color_pattern`, `age`, `sex`, `size`, `special_marks`, timestamps | 🔴 Critical |
-| E2-4 | Міграція: таблиці `lost_request` та `found_request` | `last_seen_location` / `location` типу `GEOGRAPHY(Point, 4326)` | 🔴 Critical |
-| E2-5 | Міграція: таблиця `match_queue` | Поля: `id`, `lost_request_id` (FK), `found_request_id` (FK), `score NUMERIC(7,4)`, `viewing_status`, timestamps | 🔴 Critical |
-| E2-6 | Міграція: таблиці `adoption_posts`, `adoption_responses`, `adoption_saved_posts`, `adoption_view_history` | Зв'язки, композитні PK для history/saved | 🟠 High |
-| E2-7 | Міграція: таблиці `fostering_posts`, `fostering_responses`, `fostering_saved_posts`, `fostering_view_history` | Аналогічно adoption + поле `planned_duration_days` | 🟠 High |
-| E2-8 | Міграція: таблиця `feed_posts` | `location GEOGRAPHY(Point, 4326)`, `publisher_id` (FK), `text`, `photo_url` | 🟠 High |
-| E2-9 | Міграція: таблиця `users_feed_history` | Композитний PK `(user_id, post_id)` | 🟠 High |
-| E2-10 | Міграція: таблиця `user_form_states` | Поля: `user_id` (PK/FK), `form_type`, `current_step`, `collected_data JSONB`, timestamps | 🟠 High |
-| E2-11 | Додати просторові індекси (GiST) на location-поля | `CREATE INDEX ... USING GIST (location)` для `lost_request`, `found_request`, `feed_posts` | 🟠 High |
-| E2-12 | Додати триграмні індекси (GIN) на текстові поля | `CREATE INDEX ... USING GIN (special_marks gin_trgm_ops)` для `pets`, `found_request`, `lost_request` | 🟡 Medium |
-
----
 
 ## E3 — 👤 User Module
 
 | ID | Задача | Деталі | Пріоритет |
 |----|--------|--------|-----------|
-| E3-1 | Створити доменну сутність `User` + JPA entity | Поля згідно з таблицею 2.1, анотації Lombok (`@Builder`, `@Data`) | 🔴 Critical |
-| E3-2 | Створити `UserRepository` (Spring Data JPA) | Методи: `findByTelegramId`, `existsByTelegramId` | 🔴 Critical |
-| E3-3 | Реалізувати `UserService.registerOrGet` | Автоматична реєстрація при першій взаємодії з ботом (FR 1.1); повертає існуючого або створює нового | 🔴 Critical |
 | E3-4 | Реалізувати зміну типу акаунту (USER ↔ VOLUNTEER) | FR 1.3; перевірка прав | 🟠 High |
-| E3-5 | Реалізувати перегляд статистики користувача | Кількість знайдених/загублених/переданих тварин | 🟡 Medium |
-| E3-6 | Unit-тести для `UserService` | Mockito, покриття `registerOrGet`, зміна типу | 🟠 High |
 
 ---
 
