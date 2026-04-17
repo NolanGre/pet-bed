@@ -18,7 +18,6 @@ public enum Command {
     START("/start"),
     MENU("/menu"),
     PROFILE("/profile"),
-    PUBLISH("/publish"),
     DEFAULT("");
 
     private final String label;
@@ -40,10 +39,6 @@ public enum Command {
 
     public boolean requiresAuth() {
         return this == START || this == PROFILE;
-    }
-
-    public boolean requiresVolunteer() {
-        return this == PUBLISH;
     }
 
     /**

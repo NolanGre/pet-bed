@@ -2,9 +2,10 @@ package op.edu.ua.petbed.telegram.callback;
 
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import org.apache.commons.lang3.StringUtils;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
+@NullMarked
 public record CallbackData(
         int callbackId,
         @Nullable Long entityId,
@@ -25,12 +26,26 @@ public record CallbackData(
         return new CallbackData(callbackId.id(), entityId, offset);
     }
 
+    public static CallbackData of(CallbackId callbackId) {
+        return new CallbackData(callbackId.id(), null, null);
+    }
+
+    public CallbackData withPrevPage() {
+        int newOffset = (offset != null ? offset : 0) - 1;
+        return new CallbackData(callbackId, entityId, newOffset);
+    }
+
+    public CallbackData withNextPage() {
+        int newOffset = (offset != null ? offset : 0) + 1;
+        return new CallbackData(callbackId, entityId, newOffset);
+    }
+
     public CallbackId callbackIdEnum() {
         return CallbackId.fromId(callbackId);
     }
 
     @Override
-    public @NonNull String toString() {
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(callbackId);
         sb.append(",");

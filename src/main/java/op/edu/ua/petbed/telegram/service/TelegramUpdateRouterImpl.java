@@ -78,10 +78,7 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
 
         var from = update.getMessage().getFrom();
         Long userId = from.getId();
-        if (command.requiresVolunteer()) {
-            log.debug("Command {} requires volunteer, authenticating user: {}", command, userId);
-            authService.requireVolunteer(userId, from.getUserName());
-        } else if (command.requiresAuth()) {
+        if (command.requiresAuth()) {
             log.debug("Command {} requires auth, authenticating user: {}", command, userId);
             authService.authenticate(userId, from.getUserName());
         }

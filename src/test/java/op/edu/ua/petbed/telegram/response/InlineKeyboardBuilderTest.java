@@ -1,107 +1,391 @@
 package op.edu.ua.petbed.telegram.response;
 
-import org.junit.jupiter.api.DisplayNameGenerator;
+import op.edu.ua.petbed.common.exceptions.PetBedException;
+import op.edu.ua.petbed.telegram.callback.CallbackData;
+import op.edu.ua.petbed.telegram.callback.CallbackId;
 import org.junit.jupiter.api.DisplayNameGeneration;
+import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class InlineKeyboardBuilderTest {
 
     @Test
-    void builder_single_row_single_button() {
-        InlineKeyboardMarkup result = InlineKeyboardBuilder.builder()
-                .row(row -> {
-                    row.button("Click", "ACTION_1");
-                })
-                .build();
+    void navButtonsFor_with_non_blank_children_creates_buttons() {
+        var builder = InlineKeyboardBuilder.builder();
+        var result = builder.navButtonsFor(CallbackId.PROFILE).build();
 
         assertThat(result.getKeyboard()).hasSize(1);
-        assertThat(result.getKeyboard().getFirst().get(0).getText()).isEqualTo("Click");
-        assertThat(result.getKeyboard().getFirst().get(0).getCallbackData()).isEqualTo("ACTION_1");
+        var row = result.getKeyboard().getFirst();
+        assertThat(row).hasSize(1);
     }
 
     @Test
-    void builder_multiple_rows_multiple_buttons() {
-        InlineKeyboardMarkup result = InlineKeyboardBuilder.builder()
-                .row(row -> {
-                    row.button("Take", "TAKE_1");
-                    row.button("Save", "SAVE_1");
-                })
-                .row(row -> {
-                    row.button("Next", "NEXT_10");
-                })
+    void navButtonsFor_chain_build_returns_valid_InlineKeyboardMarkup() {
+        var markup = InlineKeyboardBuilder.builder()
+                .navButtonsFor(CallbackId.PROFILE)
                 .build();
 
-        assertThat(result.getKeyboard()).hasSize(2);
-        assertThat(result.getKeyboard().get(0)).hasSize(2);
-        assertThat(result.getKeyboard().get(1)).hasSize(1);
+        assertThat(markup).isNotNull();
+        assertThat(markup.getKeyboard()).isNotNull();
     }
 
     @Test
-    void builder_url_button() {
-        InlineKeyboardMarkup result = InlineKeyboardBuilder.builder()
-                .row(row -> {
-                    row.urlButton("Open", "https://example.com");
-                })
+    void navButtonsFor_MENU_has_6_children_creates_6_buttons() {
+        var markup = InlineKeyboardBuilder.builder()
+                .navButtonsFor(CallbackId.MENU)
                 .build();
 
-        InlineKeyboardButton button = result.getKeyboard().getFirst().getFirst();
-        assertThat(button.getText()).isEqualTo("Open");
-        assertThat(button.getUrl()).isEqualTo("https://example.com");
+        assertThat(markup.getKeyboard()).hasSize(1);
+        var row = markup.getKeyboard().getFirst();
+        assertThat(row).hasSize(6);
     }
 
     @Test
-    void simple_single_button() {
-        InlineKeyboardMarkup result = InlineKeyboardBuilder.simple()
-                .button("Click", "ACTION_1")
+    void navButtonsFor_with_some_blank_labels_creates_only_non_blank() {
+        var markup = InlineKeyboardBuilder.builder()
+                .navButtonsFor(CallbackId.PET_LIST)
                 .build();
 
-        assertThat(result.getKeyboard()).hasSize(1);
-        assertThat(result.getKeyboard().getFirst()).hasSize(1);
+        assertThat(markup.getKeyboard()).isEmpty();
     }
 
     @Test
-    void simple_multiple_buttons_same_row() {
-        InlineKeyboardMarkup result = InlineKeyboardBuilder.simple()
-                .button("Take", "TAKE_1")
-                .button("Save", "SAVE_1")
-                .button("Next", "NEXT_10")
+    void navButtonsFor_PET_DETAIL_creates_buttons() {
+        var markup = InlineKeyboardBuilder.builder()
+                .navButtonsFor(CallbackId.PET_DETAIL)
                 .build();
 
-        assertThat(result.getKeyboard()).hasSize(1);
-        assertThat(result.getKeyboard().getFirst()).hasSize(3);
+        assertThat(markup.getKeyboard()).hasSize(1);
+
+        var row = markup.getKeyboard().getFirst();
+        assertThat(row).hasSize(2);
     }
 
     @Test
-    void simple_url_button() {
-        InlineKeyboardMarkup result = InlineKeyboardBuilder.simple()
-                .urlButton("Website", "https://example.com")
+    void navButtonsFor_null_argument_throws_PetBedException() {
+        var builder = InlineKeyboardBuilder.builder();
+
+        assertThatThrownBy(() -> builder.navButtonsFor(null))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void navButtonsFor_empty_children_list_nothing_added() {
+        var markup = InlineKeyboardBuilder.builder()
                 .build();
 
-        InlineKeyboardButton button = result.getKeyboard().getFirst().getFirst();
-        assertThat(button.getText()).isEqualTo("Website");
-        assertThat(button.getUrl()).isEqualTo("https://example.com");
+        assertThat(markup.getKeyboard()).isEmpty();
     }
 
     @Test
-    void simple_mixed_buttons_and_url() {
-        InlineKeyboardMarkup result = InlineKeyboardBuilder.simple()
-                .button("Take", "TAKE_1")
-                .urlButton("Website", "https://example.com")
+    void backButtonFor_with_parent_adds_back_button() {
+        var markup = InlineKeyboardBuilder.builder()
+                .backButtonFor(CallbackId.PROFILE)
                 .build();
 
-        assertThat(result.getKeyboard()).hasSize(1);
-        assertThat(result.getKeyboard().getFirst()).hasSize(2);
+        assertThat(markup.getKeyboard()).hasSize(1);
+        var row = markup.getKeyboard().getFirst();
+        assertThat(row).hasSize(1);
+        assertThat(row.getFirst().getText()).isEqualTo(CallbackId.BACK_BUTTON_LABEL);
     }
 
     @Test
-    void builder_empty_keyboard() {
-        InlineKeyboardMarkup result = InlineKeyboardBuilder.builder().build();
+    void backButtonFor_chain_build_returns_valid_InlineKeyboardMarkup() {
+        var markup = InlineKeyboardBuilder.builder()
+                .backButtonFor(CallbackId.PROFILE)
+                .build();
 
-        assertThat(result.getKeyboard()).isEmpty();
+        assertThat(markup).isNotNull();
+        assertThat(markup.getKeyboard()).isNotNull();
+    }
+
+    @Test
+    void backButtonFor_PROFILE_parent_LEADS_to_MENU() {
+        var markup = InlineKeyboardBuilder.builder()
+                .backButtonFor(CallbackId.PROFILE)
+                .build();
+
+        var row = markup.getKeyboard().getFirst();
+        assertThat(row.getFirst().getCallbackData())
+                .startsWith(String.valueOf(CallbackId.PROFILE.parent().id()));
+    }
+
+    @Test
+    void backButtonFor_MENU_parent_null_nothing_added() {
+        var markup = InlineKeyboardBuilder.builder()
+                .backButtonFor(CallbackId.MENU)
+                .build();
+
+        assertThat(markup.getKeyboard()).isEmpty();
+    }
+
+    @Test
+    void backButtonFor_after_navButtonsFor() {
+        var markup = InlineKeyboardBuilder.builder()
+                .navButtonsFor(CallbackId.PROFILE)
+                .backButtonFor(CallbackId.PROFILE)
+                .build();
+
+        assertThat(markup.getKeyboard()).hasSize(2);
+    }
+
+    @Test
+    void backButtonFor_null_argument_throws_exception() {
+        var builder = InlineKeyboardBuilder.builder();
+
+        assertThatThrownBy(() -> builder.backButtonFor(null))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void backButtonTo_any_callbackId_adds_button() {
+        var markup = InlineKeyboardBuilder.builder()
+                .backButtonTo(CallbackId.MENU)
+                .build();
+
+        assertThat(markup.getKeyboard()).hasSize(1);
+        var row = markup.getKeyboard().getFirst();
+        assertThat(row.getFirst().getText()).isEqualTo(CallbackId.BACK_BUTTON_LABEL);
+    }
+
+    @Test
+    void backButtonTo_MENU_always_adds_button() {
+        var markup = InlineKeyboardBuilder.builder()
+                .backButtonTo(CallbackId.MENU)
+                .build();
+
+        assertThat(markup.getKeyboard()).hasSize(1);
+    }
+
+    @Test
+    void backButtonTo_chain_build_returns_valid_InlineKeyboardMarkup() {
+        var markup = InlineKeyboardBuilder.builder()
+                .backButtonTo(CallbackId.PROFILE)
+                .build();
+
+        assertThat(markup).isNotNull();
+        assertThat(markup.getKeyboard()).isNotNull();
+    }
+
+    @Test
+    void backButtonTo_root_MENU_adds_button() {
+        var markup = InlineKeyboardBuilder.builder()
+                .backButtonTo(CallbackId.MENU)
+                .build();
+
+        assertThat(markup.getKeyboard()).hasSize(1);
+    }
+
+    @Test
+    void backButtonTo_chain_with_other_methods() {
+        var markup = InlineKeyboardBuilder.builder()
+                .navButtonsFor(CallbackId.MENU)
+                .backButtonTo(CallbackId.PROFILE)
+                .build();
+
+        assertThat(markup.getKeyboard()).hasSize(2);
+    }
+
+    @Test
+    void backButtonTo_null_argument_throws_exception() {
+        var builder = InlineKeyboardBuilder.builder();
+
+        assertThatThrownBy(() -> builder.backButtonTo(null))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void paginatedList_with_content_1_page() {
+        Page<CallbackListItem> page = new PageImpl<>(List.of(
+                new CallbackListItem(CallbackId.PET_DETAIL, 1L, "Барсик")
+        ), PageRequest.of(0, 1), 1);
+        var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber());
+
+        var markup = InlineKeyboardBuilder.builder()
+                .paginatedList(page, currentCallback)
+                .build();
+
+        assertThat(markup.getKeyboard()).hasSize(2);
+    }
+
+    @Test
+    void paginatedList_with_more_than_1_page() {
+        Page<CallbackListItem> page = new PageImpl<>(List.of(
+                new CallbackListItem(CallbackId.PET_DETAIL, 1L, "Барсик"),
+                new CallbackListItem(CallbackId.PET_DETAIL, 2L, "Мурчик")
+        ), PageRequest.of(1, 1), 2);
+        var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber());
+
+        var markup = InlineKeyboardBuilder.builder()
+                .paginatedList(page, currentCallback)
+                .build();
+
+        assertThat(markup.getKeyboard()).hasSize(2);
+        var paginationRow = markup.getKeyboard().get(1);
+        assertThat(paginationRow).hasSize(2);
+    }
+
+    @Test
+    void paginatedList_first_page_no_prev_button() {
+        Page<CallbackListItem> page = new PageImpl<>(List.of(
+                new CallbackListItem(CallbackId.PET_DETAIL, 1L, "Барсик")
+        ), PageRequest.of(0, 1), 1);
+        var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber());
+
+        var markup = InlineKeyboardBuilder.builder()
+                .paginatedList(page, currentCallback)
+                .build();
+
+        var paginationRow = markup.getKeyboard().get(1);
+        boolean hasPrev = paginationRow.stream()
+                .anyMatch(b -> b.getText().equals("◀️"));
+        assertThat(hasPrev).isFalse();
+    }
+
+    @Test
+    void paginatedList_last_page_no_next_button() {
+        Page<CallbackListItem> page = new PageImpl<>(List.of(
+                new CallbackListItem(CallbackId.PET_DETAIL, 2L, "Мурчик")
+        ), PageRequest.of(0, 1), 1);
+        var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber());
+
+        var markup = InlineKeyboardBuilder.builder()
+                .paginatedList(page, currentCallback)
+                .build();
+
+        var paginationRow = markup.getKeyboard().get(1);
+        boolean hasNext = paginationRow.stream()
+                .anyMatch(b -> b.getText().equals("▶️"));
+        assertThat(hasNext).isFalse();
+    }
+
+    @Test
+    void paginatedList_middle_page_one_navigation_buttons() {
+        Page<CallbackListItem> page = new PageImpl<>(List.of(
+                new CallbackListItem(CallbackId.PET_DETAIL, 1L, "Барсик")
+        ), PageRequest.of(1, 1), 1);
+        var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber());
+
+        var markup = InlineKeyboardBuilder.builder()
+                .paginatedList(page, currentCallback)
+                .build();
+
+        var paginationRow = markup.getKeyboard().get(1);
+        boolean hasPrev = paginationRow.stream().anyMatch(b -> b.getText().equals("◀️"));
+        boolean hasNext = paginationRow.stream().anyMatch(b -> b.getText().equals("▶️"));
+        assertThat(hasPrev).isTrue();
+        assertThat(hasNext).isFalse();
+    }
+
+    @Test
+    void paginatedList_chain_build_returns_valid_InlineKeyboardMarkup() {
+        List<CallbackListItem> items = List.of(
+                new CallbackListItem(CallbackId.PET_DETAIL, 1L, "Барсик")
+        );
+        Page<CallbackListItem> page = new PageImpl<>(items, PageRequest.of(0, 1), 1);
+        var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber()); // Root
+        var markup = InlineKeyboardBuilder.builder()
+                .paginatedList(page, currentCallback)
+                .build();
+        assertThat(markup).isNotNull();
+    }
+
+    @Test
+    void paginatedList_page_without_content_nothing_added() {
+        List<CallbackListItem> items = List.of();
+        Page<CallbackListItem> page = new PageImpl<>(items, PageRequest.of(0, 1), 0);
+        var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber()); // Root
+        var markup = InlineKeyboardBuilder.builder()
+                .paginatedList(page, currentCallback)
+                .build();
+        assertThat(markup.getKeyboard()).isEmpty();
+    }
+
+    @Test
+    void paginatedList_page_with_0_items() {
+        Page<CallbackListItem> page = Page.empty(PageRequest.of(0, 1));
+        var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber()); // Root
+        var markup = InlineKeyboardBuilder.builder()
+                .paginatedList(page, currentCallback)
+                .build();
+        assertThat(markup.getKeyboard()).isEmpty();
+    }
+
+    @Test
+    void paginatedList_null_page_throws_NullPointerException() {
+        var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, 0); // Root
+        var builder = InlineKeyboardBuilder.builder();
+        assertThatThrownBy(() -> builder.paginatedList(null, currentCallback))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void combined_navButtonsFor_backButtonFor_build() {
+        var markup = InlineKeyboardBuilder.builder()
+                .navButtonsFor(CallbackId.PROFILE)
+                .backButtonFor(CallbackId.PROFILE)
+                .build();
+
+        assertThat(markup.getKeyboard()).hasSizeGreaterThanOrEqualTo(1);
+    }
+
+    @Test
+    void combined_navButtonsFor_paginatedList_build() {
+        List<CallbackListItem> items = List.of(
+                new CallbackListItem(CallbackId.PET_DETAIL, 1L, "Барсик")
+        );
+        Page<CallbackListItem> page = new PageImpl<>(items, PageRequest.of(0, 1), 1);
+        var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber()); // Root
+        var markup = InlineKeyboardBuilder.builder()
+                .navButtonsFor(CallbackId.MENU)
+                .paginatedList(page, currentCallback)
+                .build();
+        assertThat(markup.getKeyboard()).hasSizeGreaterThanOrEqualTo(2);
+    }
+
+    @Test
+    void combined_backButtonFor_paginatedList_build() {
+        List<CallbackListItem> items = List.of(
+                new CallbackListItem(CallbackId.PET_DETAIL, 1L, "Барсик")
+        );
+        Page<CallbackListItem> page = new PageImpl<>(items, PageRequest.of(0, 1), 1);
+        var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber()); // Root
+        var markup = InlineKeyboardBuilder.builder()
+                .backButtonFor(CallbackId.PROFILE)
+                .paginatedList(page, currentCallback)
+                .build();
+        assertThat(markup.getKeyboard()).hasSize(3);
+    }
+
+    @Test
+    void combined_navButtonsFor_backButtonFor_paginatedList_build() {
+        List<CallbackListItem> items = List.of(
+                new CallbackListItem(CallbackId.PET_DETAIL, 1L, "Барсик")
+        );
+        Page<CallbackListItem> page = new PageImpl<>(items, PageRequest.of(0, 1), 1);
+        var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber()); // Root
+        var markup = InlineKeyboardBuilder.builder()
+                .navButtonsFor(CallbackId.PROFILE)
+                .backButtonFor(CallbackId.PROFILE)
+                .paginatedList(page, currentCallback)
+                .build();
+        assertThat(markup.getKeyboard()).hasSize(4);
+    }
+
+    @Test
+    void combined_multiple_navButtonsFor_throws_exception() {
+        var builder = InlineKeyboardBuilder.builder();
+
+        assertThatThrownBy(() -> builder.navButtonsFor(CallbackId.MENU).navButtonsFor(CallbackId.PROFILE).build())
+                .isInstanceOf(PetBedException.class);
     }
 }

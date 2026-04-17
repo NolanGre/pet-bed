@@ -129,9 +129,52 @@ class CallbackDataTest {
         void callbackIdEnum_throwsForUnknown() {
             var data = CallbackData.from("999,,");
 
-            assertThatThrownBy(() -> data.callbackIdEnum())
+            assertThatThrownBy(data::callbackIdEnum)
                     .isInstanceOf(PetBedException.class)
                     .hasFieldOrPropertyWithValue("errorCode", PetBedException.ErrorCode.INVALID_CALLBACK);
+        }
+    }
+
+    @Nested
+    class Pagination {
+        @Test
+        void withPrevPage_decrementsOffset() {
+            var data = CallbackData.of(CallbackId.PET_LIST, null, 3);
+            assertThat(data.withPrevPage().offset()).isEqualTo(2);
+        }
+
+        @Test
+        void withNextPage_incrementsOffset() {
+            var data = CallbackData.of(CallbackId.PET_LIST, null, 3);
+            assertThat(data.withNextPage().offset()).isEqualTo(4);
+        }
+
+        @Test
+        void withPrevPage_nullOffset_treatsAsZero() {
+            var data = CallbackData.of(CallbackId.PET_LIST, null, null);
+            assertThat(data.withPrevPage().offset()).isEqualTo(-1);
+        }
+
+        @Test
+        void withNextPage_nullOffset_treatsAsZero() {
+            var data = CallbackData.of(CallbackId.PET_LIST, null, null);
+            assertThat(data.withNextPage().offset()).isEqualTo(1);
+        }
+
+        @Test
+        void withPrevPage_preservesCallbackIdAndEntityId() {
+            var data = CallbackData.of(CallbackId.PET_LIST, 42L, 2);
+            var result = data.withPrevPage();
+            assertThat(result.callbackId()).isEqualTo(data.callbackId());
+            assertThat(result.entityId()).isEqualTo(42L);
+        }
+
+        @Test
+        void withNextPage_preservesCallbackIdAndEntityId() {
+            var data = CallbackData.of(CallbackId.PET_LIST, 42L, 2);
+            var result = data.withNextPage();
+            assertThat(result.callbackId()).isEqualTo(data.callbackId());
+            assertThat(result.entityId()).isEqualTo(42L);
         }
     }
 }

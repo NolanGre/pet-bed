@@ -1,15 +1,12 @@
 package op.edu.ua.petbed.telegram.callback;
 
-import org.jspecify.annotations.Nullable;
-
 import op.edu.ua.petbed.common.exceptions.PetBedException;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 public enum CallbackId {
-    // Root
     MENU(100, "Меню", null),
 
     // MENU children
@@ -30,7 +27,8 @@ public enum CallbackId {
     // PET_LIST -> PET_DETAIL chain
     PET_DETAIL(123, "", PET_LIST),    // List element
     PET_UPDATE(124, "Оновити анкету", PET_DETAIL),
-    PET_DELETE_CONFIRM(125, "Видалити анкету", PET_DETAIL),
+    PET_DELETE(125, "Видалити анкету", PET_DETAIL),
+    PET_DELETE_CONFIRM(126, "Підтвердити видалення", PET_DELETE),
 
     // FEED children
     FEED_RADIUS(131, "Обрати радіус", FEED),
@@ -92,7 +90,10 @@ public enum CallbackId {
     FOSTER_GIVE(181, "Віддати тварину", FOSTER),
     FOSTER_GET(182, "Отримати тварину", FOSTER),
     FOSTER_MY_RESPONSES(183, "Мої відгуки", FOSTER),
-    FOSTER_MY_POSTS(184, "Мої оголошення", FOSTER);
+    FOSTER_MY_POSTS(184, "Мої оголошення", FOSTER),
+
+    // PAGINATION STUBS
+    PAGINATION_PAGE_INDICATOR(300, "", null);
 
     public static final String BACK_BUTTON_LABEL = "⬅️ Повернутись";
     private final int id;

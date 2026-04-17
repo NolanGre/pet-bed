@@ -55,8 +55,7 @@ class CommandTest {
         assertThat(Command.START.getLabel()).isEqualTo("/start");
         assertThat(Command.MENU.getLabel()).isEqualTo("/menu");
         assertThat(Command.PROFILE.getLabel()).isEqualTo("/profile");
-        assertThat(Command.PUBLISH.getLabel()).isEqualTo("/publish");
-        assertThat(Command.DEFAULT.getLabel()).isEqualTo("");
+        assertThat(Command.DEFAULT.getLabel()).isEmpty();
     }
 
     @Test
@@ -65,17 +64,6 @@ class CommandTest {
         assertThat(Command.START.requiresAuth()).isTrue();
         assertThat(Command.PROFILE.requiresAuth()).isTrue();
         assertThat(Command.MENU.requiresAuth()).isFalse();
-        assertThat(Command.PUBLISH.requiresAuth()).isFalse();
         assertThat(Command.DEFAULT.requiresAuth()).isFalse();
-    }
-
-    @Test
-    void requiresVolunteer_returnsTrueForPUBLISH() {
-        // then
-        assertThat(Command.PUBLISH.requiresVolunteer()).isTrue();
-        assertThat(Command.START.requiresVolunteer()).isFalse();
-        assertThat(Command.MENU.requiresVolunteer()).isFalse();
-        assertThat(Command.PROFILE.requiresVolunteer()).isFalse();
-        assertThat(Command.DEFAULT.requiresVolunteer()).isFalse();
     }
 }

@@ -1,6 +1,5 @@
 package op.edu.ua.petbed.telegram.service;
 
-import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.UserType;
 import op.edu.ua.petbed.telegram.auth.TelegramAuthService;
 import op.edu.ua.petbed.telegram.auth.UserAuthContext;
@@ -25,7 +24,6 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
@@ -56,13 +54,12 @@ class TelegramUpdateRouterImplTest {
 
     @BeforeEach
     void setUp() {
-        List<CommandHandler> commandHandlers = List.of(startHandler, defaultHandler, profileHandler, publishHandler);
+        List<CommandHandler> commandHandlers = List.of(startHandler, defaultHandler, profileHandler);
         List<CallbackHandler> callbackHandlers = List.of(callbackHandler);
 
         given(startHandler.getCommand()).willReturn(Command.START);
         given(defaultHandler.getCommand()).willReturn(Command.DEFAULT);
         given(profileHandler.getCommand()).willReturn(Command.PROFILE);
-        given(publishHandler.getCommand()).willReturn(Command.PUBLISH);
         given(callbackHandler.getCallbackId()).willReturn(CallbackId.FEED_VIEW);
 
         underTest = new TelegramUpdateRouterImpl(authService, commandHandlers, callbackHandlers);
@@ -129,24 +126,6 @@ class TelegramUpdateRouterImplTest {
         // then
         assertThat(result).isSameAs(handlerResponse);
         verify(authService).authenticate(123L, "testuser");
-    }
-
-    @Test
-    void route_requiresVolunteer_command_callsAuth() {
-        // given
-        Update update = TelegramUpdateFixtureUtil.withCommand("/publish", 123L, "testuser");
-        BotApiMethod<?> handlerResponse = mock(BotApiMethod.class);
-        UserAuthContext authContext = new UserAuthContext(1L, UserType.VOLUNTEER);
-
-        doReturn(handlerResponse).when(publishHandler).handle(any());
-        given(authService.requireVolunteer(123L, "testuser")).willReturn(authContext);
-
-        // when
-        BotApiMethod<?> result = underTest.route(update);
-
-        // then
-        assertThat(result).isSameAs(handlerResponse);
-        verify(authService).requireVolunteer(123L, "testuser");
     }
 
     @Test
