@@ -19,7 +19,7 @@ public enum Command {
     MENU("/menu"),
     MY_COMMAND("/my_command"),  // new command
     DEFAULT;
-    
+
     // ... rest of code
 }
 ```
@@ -57,225 +57,81 @@ public class MyCommandHandler implements CommandHandler {
 
 **That's it!** Spring will automatically register it.
 
-### Requiring Volunteer Status
-
-If a command should only be available to volunteers:
-
-```java
-// In Command enum:
-MY_VOLUNTEER_COMMAND("/volunteer_command") {
-    @Override
-    public boolean requiresVolunteer() {
-        return true;
-    }
-},
-```
-
-The router automatically checks volunteer status before executing the handler.
-
 ---
 
 ## Working with Callbacks
 
 ### How It Works
 
-1. **Bot sends inline keyboard with callback data**
+1. **Bot sends inline keyboard with callback data for each button** (CallbackId + entityId + offset)
 2. **User clicks button**
 3. **Telegram sends CallbackQuery to bot**
-4. **Router parses action and calls appropriate handler**
+4. **Router parses CallbackData and calls appropriate handler**
 
-### Creating Callback Buttons
+### CallbackId Hierarchy
 
-**Method 1: Simple action with payload**
+UI hierarchy is defined in `CallbackId` enum (see `docs/callback-tree.md`).
 
-```java
-import op.edu.ua.petbed.telegram.callback.CallbackAction;
-import org.telegram.telegrambots.meta.api.objects.replygrid.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replygrid.InlineKeyboardButton;
+### Creating Callback Buttons via InlineKeyboardBuilder API
 
-InlineKeyboardButton button = InlineKeyboardButton.builder()
-        .text("Click me!")
-        .callbackData("CONFIRM")  // becomes CallbackAction.CONFIRM
-        .build();
+| Method                                       | Description                                          |
+|----------------------------------------------|------------------------------------------------------|
+| `navButtonsFor(CallbackId)`                  | Creates buttons from all of children                 |
+| `backButtonFor(CallbackId)`                  | Adds back button to parent                           |
+| `backButtonTo(CallbackId)`                   | Adds back button to specific id                      |
+| `paginatedList(Page<CallbackListItem> page)` | Creates pagination list with buttons and page number |
 
-InlineKeyboardMarkup markup = InlineKeyboardMarkup.builder()
-        .keyboardRow(List.of(button))
-        .build();
-```
+### Examples
 
-**Method 2: Action with pagination offset**
+TODO
+---
 
-```java
-// Build callback data manually for offset pagination
-InlineKeyboardButton nextButton = InlineKeyboardButton.builder()
-        .text("Next ▶️")
-        .callbackData("{\"a\":\"PAGINATION\",\"o\":10}")
-        .build();
-```
-
-### Available Callback Actions (Enum)
+## Working with Callbacks (Handler)
 
 ```java
-// src/main/java/op/edu/ua/petbed/telegram/callback/CallbackAction.java
-public enum CallbackAction {
-    PAGINATION,   // pagination navigation
-    CONFIRM,     // confirm action
-    CANCEL,     // cancel action
-    DEFAULT;    // unknown/fallback
-}
-```
-
-### Adding a New Callback Handler
-
-**Step 1:** Add action to enum (if needed)
-
-```java
-// src/main/java/op/edu/ua/petbed/telegram/callback/CallbackAction.java
-public enum CallbackAction {
-    PAGINATION,
-    CONFIRM,
-    CANCEL,
-    NEW_ACTION,  // new action
-    DEFAULT;
-}
-```
-
-**Step 2:** Create handler
-
-```java
-// src/main/java/op/edu/ua/petbed/telegram/callback/handler/ConfirmCallbackHandler.java
-package op.edu.ua.petbed.telegram.callback.handler;
-
-import op.edu.ua.petbed.telegram.callback.CallbackAction;
-import op.edu.ua.petbed.telegram.callback.CallbackHandler;
-import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
-import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.answereditcallback.EditMessageText;
 
 @Component
-public class ConfirmCallbackHandler implements CallbackHandler {
+public class PetDetailHandler implements CallbackHandler {
 
     @Override
-    public CallbackAction getCallbackAction() {
-        return CallbackAction.CONFIRM;
+    public CallbackId getCallbackId() {
+        return CallbackId.PET_DETAIL;
     }
 
     @Override
     public BotApiMethod<?> handle(CallbackQueryContext context) {
-        // Access callback data with payload:
-        String payload = context.callbackData().payload();
-        Integer offset = context.callbackData().offset();
-        
-        // Get useful context info:
-        Long userId = context.userId();
-        Long chatId = context.chatId();
-        Integer messageId = context.messageId();
-        
-        // Build response
-        return EditMessageText.builder()
-                .chatId(chatId)
-                .messageId(messageId)
-                .text("You confirmed: " + payload)
-                .build();
+        PetDTO pet = petService.findById(entityId);
+        return mapToResponse(context, pet);
     }
-}
-```
 
-### Callbacks with Offset (Pagination)
-
-```java
-// When building buttons for paginated list:
-int currentOffset = 0;
-int nextOffset = currentOffset + 10;
-
-String callbackData = String.format("{\"a\":\"PAGINATION\",\"o\":%d}", nextOffset);
-
-InlineKeyboardButton nextButton = InlineKeyboardButton.builder()
-        .text("Next ▶️")
-        .callbackData(callbackData)
-        .build();
-```
-
-```java
-// Handler receives offset:
-public BotApiMethod<?> handle(CallbackQueryContext context) {
-    Integer offset = context.callbackData().offset();  // 10
-    
-    // Fetch next page of items with offset
-    List<Item> items = fetchItems(offset);
-    
-    // Build response with new pagination buttons
-    return buildPaginatedMessage(items, offset);
-}
-```
-
----
-
-## Auth System
-
-### How It Works
-
-1. User sends any message
-2. Router calls `authService.authenticate(telegramId, username)`
-3. System finds or creates user in database
-4. Returns `UserAuthContext` with userId and type
-
-### Checking Volunteer Status
-
-**Option 1:** Via Command.requiresVolunteer()
-
-```java
-// Command enum
-MY_VOLUNTEER_CMD("/volunteer") {
-    @Override
-    public boolean requiresVolunteer() {
-        return true;
-    }
-},
-```
-
-**Option 2:** Manual check in handler
-
-```java
-public BotApiMethod<?> handle(CommandContext context) {
-    // Already have auth context from router
-    UserAuthContext auth = ...;  // router passes context
-    
-    if (!auth.isVolunteer()) {
-        return SendMessage.builder()
+    private BotApiMethod<?> mapToResponse(CallbackQueryContext context, PetDTO pet) {
+        return ResponseBuilder.telegram()
                 .chatId(context.chatId())
-                .text("This command requires volunteer status")
+                .text(formatPetInfo(pet))
+                .keyboard(petKeyboard(pet))
+                .editMessage(context.messageId())
                 .build();
     }
-    
-    // Continue with logic
 }
-```
-
-**Option 3:** Manual require
-
-```java
-// In handler:
-authService.requireVolunteer(auth);  // throws if not VOLUNTEER
 ```
 
 ---
 
 ## Key Files
 
-| File | Purpose |
-|------|--------|
-| `telegram/command/Command.java` | Command enum |
-| `telegram/command/CommandHandler.java` | Command handler interface |
-| `telegram/command/CommandContext.java` | Command context record |
-| `telegram/callback/CallbackAction.java` | Callback action enum |
-| `telegram/callback/CallbackHandler.java` | Callback handler interface |
-| `telegram/callback/CallbackQueryContext.java` | Callback context record |
-| `telegram/callback/CallbackData.java` | JSON parsing for callback data |
-| `telegram/auth/TelegramAuthService.java` | Auth service |
-| `telegram/auth/UserAuthContext.java` | Auth context record |
-| `telegram/service/TelegramUpdateRouterImpl.java` | Main router |
+| File                                             | Purpose                    |
+|--------------------------------------------------|----------------------------|
+| `telegram/command/Command.java`                  | Command enum               |
+| `telegram/command/CommandHandler.java`           | Command handler interface  |
+| `telegram/command/CommandContext.java`           | Command context record     |
+| `telegram/callback/CallbackId.java`              | Callback hierarchy enum    |
+| `telegram/callback/CallbackData.java`            | Callback data format       |
+| `telegram/callback/CallbackHandler.java`         | Callback handler interface |
+| `telegram/callback/CallbackQueryContext.java`    | Callback context record    |
+| `telegram/auth/TelegramAuthService.java`         | Auth service               |
+| `telegram/auth/UserAuthContext.java`             | Auth context record        |
+| `telegram/service/TelegramUpdateRouterImpl.java` | Main router                |
+| `telegram/response/InlineKeyboardBuilder.java`   | Keyboard builder           |
 
 ---
 
@@ -283,7 +139,7 @@ authService.requireVolunteer(auth);  // throws if not VOLUNTEER
 
 ### SendMessage (text reply)
 
-```java
+```
 SendMessage.builder()
         .chatId(chatId)
         .text("Hello!")
@@ -292,7 +148,7 @@ SendMessage.builder()
 
 ### SendMessage with Keyboard
 
-```java
+```
 SendMessage.builder()
         .chatId(chatId)
         .text("Choose option:")
@@ -302,19 +158,10 @@ SendMessage.builder()
 
 ### EditMessageText (edit callback response)
 
-```java
+```
 EditMessageText.builder()
         .chatId(chatId)
         .messageId(messageId)
         .text("Updated text!")
-        .build();
-```
-
-### AnswerCallbackQuery (just acknowledge)
-
-```java
-AnswerCallbackQuery.builder()
-        .callbackQueryId(callbackQueryId)
-        .text("Processed!")
         .build();
 ```

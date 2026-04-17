@@ -2,12 +2,13 @@
 
 ## Overview
 
-The UI layer maps domain DTOs into Telegram Bot API responses using a Builder Pattern. Handlers use private methods to build responses and return `BotApiMethod<?>`.
+The UI layer maps domain DTOs into Telegram Bot API responses using a Builder Pattern. Handlers use private methods to
+build responses and return `BotApiMethod<?>`.
 
 ## Architecture
 
 ```
-Handler (receives DTO) → mapToResponse() → BotApiMethod<?>
+Handler (receives DTO from service) → mapToResponse() → BotApiMethod<?>
 ```
 
 ### Flow
@@ -24,14 +25,23 @@ All responses use Builder Pattern for flexible composition.
 
 ```java
 public BotApiMethod<?> handle(CommandContext context) {
-    List<PetDTO> pets = petService.findAdoptable(page);
-    return mapToResponse(pets, page);
+    Page<PetDTO> pets = petService.findAdoptable(page, userId);
+    return mapToResponse(context, pets);
 }
 
-private BotApiMethod<?> mapToResponse(List<PetDTO> pets, int page) {
+private BotApiMethod<?> mapToResponse(CommandContext context, Page<PetDTO> pets) {
     return ResponseBuilder.telegram()
-            .text(formatPetList(pets))
-            .keyboard(paginationKeyboard(page, pets.size()))
+            .chatId(context.chatId())
+            .text(message)
+            .keyboard(petListKeyboard(pets))
+            .build();
+}
+
+private InlineKeyboardMarkup petListKeyboard(Page<PetDTO> pets) {
+    return InlineKeyboardBuilder.builder()
+            .navButtonsFor(CallbackId.PET_LIST)
+            .backButtonFor(CallbackId.PET_LIST)
+            .paginatedList(pets)
             .build();
 }
 ```
@@ -43,7 +53,7 @@ private BotApiMethod<?> mapToResponse(PetDTO pet) {
     return ResponseBuilder.telegram()
             .text(formatPetInfo(pet))
             .photo(pet.photoUrl())
-            .keyboard(petActionKeyboard(pet.id()))
+            .keyboard(petActionKeyboard(pet))
             .build();
 }
 ```
@@ -55,107 +65,60 @@ private BotApiMethod<?> mapToResponse(CallbackQueryContext context, PetDTO pet) 
     return ResponseBuilder.telegram()
             .editMessage(context.messageId())
             .text(formatPetInfo(pet))
-            .keyboard(petActionKeyboard(pet.id()))
+            .keyboard(petActionKeyboard(pet))
             .build();
 }
 ```
 
-## Response Types
+---
 
-### Builder Methods
+## InlineKeyboardBuilder API
 
-| Method | Description |
-|--------|--------------|
-| `.text(String)` | Set message text |
-| `.photo(String url)` | Add photo |
-| `.keyboard(InlineKeyboardMarkup)` | Add inline keyboard |
-| `.editMessage(Integer messageId)` | Edit existing message |
-| `.chatId(Long)` | Target chat (required) |
-| `.build()` | Build BotApiMethod |
+All keyboards are built using `InlineKeyboardBuilder`.
 
-### Keyboard Examples
+### Navigation Methods
 
-```java
-// Simple buttons
-InlineKeyboardMarkup keyboard = InlineKeyboardBuilder.builder()
-        .row(row -> row.button("Take to Foster", "PET_TAKE_" + petId))
-        .row(row -> row.button("Save to Favorites", "PET_FAV_" + petId))
+| Method                                       | Description                                                            |
+|----------------------------------------------|------------------------------------------------------------------------|
+| `navButtonsFor(CallbackId)`                  | Creates buttons for all children                                       |
+| `backButtonFor(CallbackId)`                  | Adds back button to parent                                             |
+| `backButtonTo(CallbackId)`                   | Adds back button to specific id                                        |
+| `paginatedList(Page<CallbackListItem> page)` | Creates pagination buttons: "<", "1/n", ">", and show list of elements |
+
+### Usage Examples
+
+```
+// Menu with back button
+InlineKeyboardBuilder.builder()
+        .navButtonsFor(getCallbackId())
+        .backButtonFor(getCallbackId())
         .build();
 
-// Pagination
-InlineKeyboardMarkup paginationKeyboard(int page, int total) {
-    return InlineKeyboardBuilder.builder()
-            .row(row -> {
-                if (page > 0) {
-                    row.button("◀️ Previous", "LIST_" + (page - 1));
-                }
-                if (total >= PAGE_SIZE) {
-                    row.button("Next ▶️", "LIST_" + (page + 1));
-                }
-            })
-            .build();
-}
+// Pet list 
+InlineKeyboardBuilder.builder()
+        .navButtonsFor(getCallbackId())
+        .backButtonFor(getCallbackId())
+        .paginatedList(pets)
+        .build();
+
+// Pet detail with back to list
+InlineKeyboardBuilder.builder()
+        .navButtonsFor(getCallbackId())
+        .backButtonFor(getCallbackId())
+        .build();
+
 ```
 
-## Handler Template
+---
 
-```java
-@Component
-@RequiredArgsConstructor
-public class PetsHandler implements CommandHandler {
+## CallbackData Format
 
-    private final PetService petService;
+Format: `callbackId,entityId,offset` (comma-separated, empty = null)
 
-    @Override
-    public Command getCommand() {
-        return Command.PETS;
-    }
-
-    @Override
-    public BotApiMethod<?> handle(CommandContext context) {
-        int page = parsePage(context.args());
-        List<PetDTO> pets = petService.findAdoptable(page);
-        return mapToResponse(pets, page);
-    }
-
-    private BotApiMethod<?> mapToResponse(List<PetDTO> pets, int page) {
-        return ResponseBuilder.telegram()
-                .text(formatPetList(pets))
-                .keyboard(paginationKeyboard(page, pets.size()))
-                .build();
-    }
-
-    private String formatPetList(List<PetDTO> pets) {
-        StringBuilder sb = new StringBuilder("🐾 Available Pets:\n\n");
-        for (PetDTO pet : pets) {
-            sb.append("%d. %s (%s) - %s, %d years%n"
-                    .formatted(pet.name(), pet.species(), pet.breed(), pet.age()));
-        }
-        return sb.toString();
-    }
-
-    private InlineKeyboardMarkup paginationKeyboard(int page, int total) {
-        return InlineKeyboardBuilder.builder()
-                .row(row -> {
-                    if (page > 0) {
-                        row.button("◀️ Previous", "PETS_" + (page - 1));
-                    }
-                    if (total >= PAGE_SIZE) {
-                        row.button("Next ▶️", "PETS_" + (page + 1));
-                    }
-                })
-                .build();
-    }
-
-    private int parsePage(String[] args) {
-        if (args == null || args.length == 0) return 0;
-        try {
-            return Integer.parseInt(args[0]);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-}
+```
+123,111,222  → callbackId=123, entityId=111, offset=222
+123,,2       → callbackId=123, entityId=null, offset=2
+123           → callbackId=123
 ```
 
 ## Class Structure
@@ -164,11 +127,18 @@ public class PetsHandler implements CommandHandler {
 src/main/java/op/edu/ua/petbed/telegram/
 ├── response/
 │   ├── ResponseBuilder.java      # Main builder
-│   └── InlineKeyboardBuilder.java # Keyboard builder
+│   └── InlineKeyboardBuilder.java  # Keyboard builder
+├── callback/
+│   ├── CallbackId.java          # Hierarchy enum
+│   ├── CallbackData.java        # Data format
+│   ├── CallbackQueryContext.java
+│   └── CallbackHandler.java
 └── command/
     └── handler/
-        └── PetHandler.java       # Example handler
+        └── PetHandler.java     # Example handler
 ```
+
+---
 
 ## Key Principles
 
@@ -176,3 +146,4 @@ src/main/java/op/edu/ua/petbed/telegram/
 2. **Builder Pattern** — flexible composition of text/photo/keyboard
 3. **Return BotApiMethod<?>** — router expects this type
 4. **EditMessage for callbacks** — update existing message on button click
+5. **Use InlineKeyboardBuilder** — all keyboards use this builder

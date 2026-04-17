@@ -1,6 +1,5 @@
 package op.edu.ua.petbed.telegram.service;
 
-import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.telegram.testutil.TelegramUpdateFixtureUtil;
 import op.edu.ua.petbed.testcontainers.PostgresTestContainer;
 import org.junit.jupiter.api.DisplayNameGeneration;
@@ -14,7 +13,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Transactional

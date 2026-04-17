@@ -1,4 +1,6 @@
 package op.edu.ua.petbed.telegram.response;
 
-public record CallbackListItem() {
+import op.edu.ua.petbed.telegram.callback.CallbackId;
+
+public record CallbackListItem(CallbackId callbackId, Long entityId, String label) {
 }

@@ -16,28 +16,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
  *   <li>EditMessageText - editing existing message</li>
  * </ul>
  * <p>
- * Usage:
- * <pre>{@code
- * // Simple text
- * ResponseBuilder.telegram()
- *     .chatId(123L)
- *     .text("Hello")
- *     .build();
- *
- * // Text with keyboard
- * ResponseBuilder.telegram()
- *     .chatId(123L)
- *     .text("Choose:")
- *     .keyboard(keyboard)
- *     .build();
- *
- * // Edit existing message
- * ResponseBuilder.telegram()
- *     .editMessage(10)
- *     .text("Updated")
- *     .keyboard(keyboard)
- *     .build();
- * }</pre>
  */
 @NullMarked
 public class ResponseBuilder {
