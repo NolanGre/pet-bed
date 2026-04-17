@@ -96,6 +96,7 @@ public enum CallbackId {
     PAGINATION_PAGE_INDICATOR(300, "", null);
 
     public static final String BACK_BUTTON_LABEL = "⬅️ Повернутись";
+
     private final int id;
     private final String label;
     private final @Nullable CallbackId parent;
