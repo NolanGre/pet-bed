@@ -147,3 +147,4 @@ src/main/java/op/edu/ua/petbed/telegram/
 3. **Return BotApiMethod<?>** — router expects this type
 4. **EditMessage for callbacks** — update existing message on button click
 5. **Use InlineKeyboardBuilder** — all keyboards use this builder
+6. **Always provide text for new messages** — Telegram will NOT deliver callbacks if message has no text (only keyboard). This rule does NOT apply for editMessage.

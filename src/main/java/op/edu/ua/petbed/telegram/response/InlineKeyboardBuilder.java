@@ -10,13 +10,21 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 @NullMarked
 public class InlineKeyboardBuilder {
 
+    private enum AddedMethod {
+        NAV_BUTTONS, BACK_BUTTON, PAGINATION
+    }
+
+    private static final String PREV_PAGE = "◀️";
+    private static final String NEXT_PAGE = "▶️";
+
     private final List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-    private boolean navButtonsAdded = false;
+    private final EnumSet<AddedMethod> added = EnumSet.noneOf(AddedMethod.class);
 
     private InlineKeyboardBuilder() {
     }
@@ -26,21 +34,49 @@ public class InlineKeyboardBuilder {
     }
 
     public InlineKeyboardMarkup build() {
-        List<InlineKeyboardRow> keyboardRows = new ArrayList<>();
-        for (List<InlineKeyboardButton> row : rows) {
-            keyboardRows.add(new InlineKeyboardRow(row));
-        }
+        List<InlineKeyboardRow> keyboardRows = rows.stream()
+                .map(InlineKeyboardRow::new)
+                .toList();
         return InlineKeyboardMarkup.builder()
                 .keyboard(keyboardRows)
                 .build();
     }
 
     public InlineKeyboardBuilder navButtonsFor(CallbackId currentCallbackId) {
-        if (navButtonsAdded) {
-            throw new PetBedException("navButtonsFor can only be called once", PetBedException.ErrorCode.INTERNAL_ERROR);
-        }
-        navButtonsAdded = true;
+        checkNotAdded(AddedMethod.NAV_BUTTONS, "navButtonsFor");
+        addNavigationButtons(currentCallbackId);
+        return this;
+    }
 
+    public InlineKeyboardBuilder backButtonFor(CallbackId currentCallbackId) {
+        checkNotAdded(AddedMethod.BACK_BUTTON, "backButtonFor");
+        CallbackId parent = currentCallbackId.parent();
+        if (parent != null) {
+            addBackButton(parent);
+        }
+        return this;
+    }
+
+    public InlineKeyboardBuilder backButtonTo(CallbackId callbackId) {
+        addBackButton(callbackId);
+        return this;
+    }
+
+    public InlineKeyboardBuilder paginatedList(Page<CallbackListItem> page, CallbackData currentCallbackData) {
+        checkNotAdded(AddedMethod.PAGINATION, "paginatedList");
+        addItemButtons(page);
+        addPaginationRow(page, currentCallbackData);
+        return this;
+    }
+
+    private void checkNotAdded(AddedMethod method, String name) {
+        if (added.contains(method)) {
+            throw new PetBedException("%s can only be called once".formatted(name), PetBedException.ErrorCode.INTERNAL_ERROR);
+        }
+        added.add(method);
+    }
+
+    private void addNavigationButtons(CallbackId currentCallbackId) {
         List<CallbackId> children = currentCallbackId.children();
         List<InlineKeyboardButton> buttons = new ArrayList<>();
         for (CallbackId child : children) {
@@ -53,61 +89,47 @@ public class InlineKeyboardBuilder {
         if (!buttons.isEmpty()) {
             rows.add(buttons);
         }
-        return this;
     }
 
-    public InlineKeyboardBuilder backButtonFor(CallbackId currentCallbackId) {
-        CallbackId parent = currentCallbackId.parent();
-        if (parent != null) {
-            String callbackData = CallbackData.of(parent, null, null).toString();
-            rows.add(List.of(createButton(CallbackId.BACK_BUTTON_LABEL, callbackData)));
-        }
-        return this;
-    }
-
-    public InlineKeyboardBuilder backButtonTo(CallbackId callbackId) {
-        String callbackData = CallbackData.of(callbackId, null, null).toString();
+    private void addBackButton(CallbackId target) {
+        String callbackData = CallbackData.of(target, null, null).toString();
         rows.add(List.of(createButton(CallbackId.BACK_BUTTON_LABEL, callbackData)));
-        return this;
     }
 
-    public InlineKeyboardBuilder paginatedList(Page<CallbackListItem> page, CallbackData currentCallbackData) {
-        // Add list items as buttons
-        if (page.hasContent()) {
-            List<InlineKeyboardButton> itemButtons = new ArrayList<>();
-            for (CallbackListItem item : page.getContent()) {
-                String callbackData = CallbackData.of(item.callbackId(), item.entityId(), null).toString();
-                itemButtons.add(createButton(item.label(), callbackData));
-            }
-            if (!itemButtons.isEmpty()) {
-                rows.add(itemButtons);
-            }
+    private void addItemButtons(Page<CallbackListItem> page) {
+        if (!page.hasContent()) {
+            return;
+        }
+        List<InlineKeyboardButton> itemButtons = new ArrayList<>();
+        for (CallbackListItem item : page.getContent()) {
+            String callbackData = CallbackData.of(item.callbackId(), item.entityId(), null).toString();
+            itemButtons.add(createButton(item.label(), callbackData));
+        }
+        if (!itemButtons.isEmpty()) {
+            rows.add(itemButtons);
+        }
+    }
+
+    private void addPaginationRow(Page<CallbackListItem> page, CallbackData currentCallbackData) {
+        if (!page.hasContent()) {
+            return;
+        }
+        List<InlineKeyboardButton> paginationButtons = new ArrayList<>();
+
+        if (!page.isFirst()) {
+            String prevCallbackData = currentCallbackData.withPrevPage().toString();
+            paginationButtons.add(createButton(PREV_PAGE, prevCallbackData));
         }
 
-        // Add pagination row if there are pages
-        if (page.hasContent()) {
-            List<InlineKeyboardButton> paginationButtons = new ArrayList<>();
+        String pageIndicator = (page.getNumber() + 1) + "/" + page.getTotalPages();
+        paginationButtons.add(createButton(pageIndicator, ""));
 
-            // Previous button (only if not first)
-            if (!page.isFirst()) {
-                String prevCallbackData = currentCallbackData.withPrevPage().toString();
-                paginationButtons.add(createButton("◀️", prevCallbackData));
-            }
-
-            // Page indicator
-            String pageIndicator = (page.getNumber() + 1) + "/" + page.getTotalPages();
-            paginationButtons.add(createButton(pageIndicator, CallbackData.of(CallbackId.PAGINATION_PAGE_INDICATOR).toString()));
-
-            // Next button (only if not last)
-            if (!page.isLast()) {
-                String nextCallbackData = currentCallbackData.withNextPage().toString();
-                paginationButtons.add(createButton("▶️", nextCallbackData));
-            }
-
-            rows.add(paginationButtons);
+        if (!page.isLast()) {
+            String nextCallbackData = currentCallbackData.withNextPage().toString();
+            paginationButtons.add(createButton(NEXT_PAGE, nextCallbackData));
         }
 
-        return this;
+        rows.add(paginationButtons);
     }
 
     private static InlineKeyboardButton createButton(String text, String callbackData) {
@@ -117,6 +139,4 @@ public class InlineKeyboardBuilder {
         button.setCallbackData(callbackData);
         return button;
     }
-
-
 }
