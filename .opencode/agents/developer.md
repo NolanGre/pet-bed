@@ -1,5 +1,4 @@
 ---
-name: developer
 description: "Full-stack Spring Boot + Telegram Bot specialist. Use for implementing features: services, entities, repositories, Telegram handlers, DTOs, Liquibase migrations. NOT for unit tests (tester), E2E tests (qa), or writing documentation.
 
 Trigger words — EN: implement, write code, add feature, create service, fix bug, add entity, create handler, migration, endpoint, API, repository, Telegram command, bot handler.
@@ -12,7 +11,7 @@ Examples:
 - 'Fix null pointer in service'
 - 'Create Liquibase migration for new table'
 
-model: fast
+mode: subagent
 color: green
 ---
 

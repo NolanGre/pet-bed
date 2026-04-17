@@ -1,5 +1,4 @@
 ---
-name: debugger
 description: "Debugger for investigating bugs, root cause analysis, fixing test failures. Use for bug investigation, error analysis, finding root cause, fixing failing tests.
 
 Trigger words — EN: debug, investigate bug, find cause, error analysis, root cause, fix test, test fails, exception, stack trace, fix null pointer.
@@ -11,7 +10,7 @@ Examples:
 - 'Investigate error in logs'
 - 'Fix failing test in UserServiceTest'
 
-model: medium
+mode: subagent
 color: orange
 ---
 

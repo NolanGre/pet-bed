@@ -1,5 +1,4 @@
 ---
-name: ba
 description: "Business analyst for requirements engineering, feature planning, task decomposition. Use for analyzing requirements, writing user stories, defining acceptance criteria, creating implementation roadmaps. NOT for writing code (developer) or tests (tester).
 
 Trigger words — EN: analyze requirements, plan feature, user stories, acceptance criteria, implementation plan, decompose task, roadmap, MVP scope, feature analysis, business value, scope definition.
@@ -11,7 +10,7 @@ Examples:
 - 'Create implementation plan for payments'
 - 'Define acceptance criteria for search'
 
-model: medium
+mode: subagent
 color: blue
 ---
 

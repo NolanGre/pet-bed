@@ -1,5 +1,4 @@
 ---
-name: tester
 description: "Tester agent for writing unit and integration tests. Use for TDD, writing tests first, creating test coverage, test debugging, and coverage analysis. NOT for E2E tests.
 
 Trigger words — EN: unit test, test, testing, coverage, TDD, test fails, fix test, test strategy, mocks, integration test, test case, add test, red test, test for service, test for repository.
@@ -11,7 +10,7 @@ Examples:
 - 'Create test for entity factory method'
 - 'Fix failing test in UserServiceTest'
 
-model: fast
+mode: subagent
 color: yellow
 ---
 

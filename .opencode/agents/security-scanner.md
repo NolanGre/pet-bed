@@ -11,7 +11,7 @@ Examples:
 - 'Verify no credential leaks'
 - 'Security audit for payments'
 
-model: medium
+mode: subagent
 color: red
 ---
 

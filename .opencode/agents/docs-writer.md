@@ -1,5 +1,4 @@
 ---
-name: docs-writer
 description: "Documentation writer for creating PR descriptions, reports, and summaries. Use for documenting changes, writing PR descriptions, creating change summaries.
 
 Trigger words — EN: write documentation, create PR, summarize changes, PR description, change report, technical writing.
@@ -10,7 +9,7 @@ Examples:
 - 'Document changes'
 - 'Write summary report'
 
-model: fast
+mode: subagent
 color: cyan
 ---
 

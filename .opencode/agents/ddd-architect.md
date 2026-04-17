@@ -1,5 +1,4 @@
 ---
-name: ddd-architect
 description: "Domain-Driven Design architect for business logic organization. Use for designing domain models, bounded contexts, entities, value objects, domain services, and deciding where business logic belongs. NOT for implementation (developer) or tests (tester).
 
 Trigger words — EN: domain, DDD, bounded context, aggregate, value object, entity, domain service, business logic, where to put logic, architecture decision, domain model, invariant, aggregate root, domain rule, separation of concerns, layer responsibility.
@@ -11,7 +10,7 @@ Examples:
 - 'Design new domain area'
 - 'Decide: Action vs Service vs Entity method'
 
-model: medium
+mode: subagent
 color: purple
 ---
 

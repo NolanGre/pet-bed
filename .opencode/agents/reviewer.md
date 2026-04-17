@@ -1,5 +1,4 @@
 ---
-name: reviewer
 description: "Code reviewer and quality auditor. Use for reviewing code changes, PR reviews, code quality checks, convention compliance, finding bugs or technical debt. Read-only — analyzes and reports, does NOT write code.
 
 Trigger words — EN: review, code review, audit, check code, find bugs, code quality, refactor suggestions, architecture review, security review, best practices, code smell, technical debt, convention check, improve code, review changes.
@@ -11,7 +10,7 @@ Examples:
 - 'Review UserService implementation'
 - 'Check for SOLID violations'
 
-model: medium
+mode: subagent
 color: purple
 ---
 
