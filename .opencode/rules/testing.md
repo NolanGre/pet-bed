@@ -7,6 +7,15 @@ Follow the Netflix testing recommendations:
 - **Unit tests** for plain Java classes — test behavior directly
 - **Integration tests** — use Testcontainers for database-dependent tests
 
+### Test Pyramid
+
+```
+E2E / Manual
+Integration Tests     ← @SpringBootTest
+Slice Tests           ← @DataJpaTest
+Unit Tests            ← @ExtendWith(MockitoExtension)
+```
+
 ## Test Types
 
 ### 1. Unit Tests (Mockito)

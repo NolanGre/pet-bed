@@ -1,5 +1,14 @@
 # Agent Workflow
 
+## BEFORE STARTING ANY TASK
+1. Read this file
+2. Classify task: simple / non-trivial (see criteria below)
+3. If non-trivial → announce "Starting full pipeline" and follow steps
+
+## Session Start
+1. Read `./docs/lessons.md`
+2. Read `./docs/todo.md` for pending tasks
+
 ## When to Use Pipeline
 
 Use the full pipeline only for **non-trivial** tasks:
