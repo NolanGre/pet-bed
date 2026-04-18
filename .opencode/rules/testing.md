@@ -304,6 +304,73 @@ Aim for high coverage on:
 5. **Keep tests isolated** — no dependencies between tests
 6. **Use descriptive names** — explain what is tested
 
+## Test Clarity
+
+### Use `underTest` Field Name
+
+Always use `underTest` as the field name for the class being tested:
+
+```java
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
+
+    @Mock
+    UserRepository userRepository;
+
+    @InjectMocks
+    UserService underTest;  // Good - clearly identifies what is being tested
+
+    // ...
+}
+```
+
+This makes tests more readable and explicitly shows what is being tested.
+
+### Keep Tests Clean
+
+Extract setup, mocks, and context creation into **helper methods** — don't clutter test bodies:
+
+```java
+@ExtendWith(MockitoExtension.class)
+class PetServiceTest {
+
+    @Mock
+    PetRepository petRepository;
+
+    @InjectMocks
+    PetService underTest;
+
+    @Test
+    void findById_existing_pet_returns_pet() {
+        // given
+        Pet pet = existingPet();
+        given(petRepository.findById(pet.getId())).willReturn(Optional.of(pet));
+
+        // when
+        PetDTO result = underTest.findById(pet.getId());
+
+        // then
+        assertThat(result.id()).isEqualTo(pet.getId());
+    }
+
+    // Helper methods - extract setup to keep tests clean
+    private Pet existingPet() {
+        return Pet.builder()
+            .id(1L)
+            .name("Max")
+            .build();
+    }
+}
+```
+
+**Benefits:**
+- Test body focuses on test logic, not boilerplate
+- Reusable setup across tests
+- Easier to read and maintain
+- Changes to setup only in one place
+
+---
+
 ## Common Issues
 
 ### Testcontainers conflict: multiple containers started
@@ -335,3 +402,17 @@ public abstract class PostgresTestContainer {
 @Transactional  // Rolls back after each test
 class MyIntegrationTest extends PostgresTestContainer { }
 ```
+## JSpecify + NullAway
+
+NullAway enforces null safety at **compile time** — do not write null-rejection tests for `@NonNull` parameters, they are guaranteed by the compiler.
+
+```java
+// ❌ Redundant — NullAway already prevents null being passed here
+@Test
+void save_null_pet_throws() {
+    assertThatThrownBy(() -> underTest.save(null))
+        .isInstanceOf(NullPointerException.class);
+}
+```
+
+> Skip null-path tests unless the parameter is explicitly `@Nullable`.
