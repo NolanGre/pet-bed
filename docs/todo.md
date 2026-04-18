@@ -1,142 +1,79 @@
-# InlineKeyboardBuilder — Тест-кейси
+# План: Реалізація функціоналу зміни профілю
 
-> Повний перелік тест-кейсів для API `InlineKeyboardBuilder`.
-> Дата створення: 2026-04-17
+## Мета
+Створити 3 коллбек-хендлери в модулі `callback/handler` для зміни типу профілю користувача.
 
----
+## Завдання
 
-## Метод 1: navButtonsFor(CallbackId)
+### 1. Розширити InlineKeyboardBuilder ✅ ВИКОНАНО
+**Файл**: `src/main/java/op/edu/ua/petbed/telegram/response/InlineKeyboardBuilder.java`
 
-Створює кнопки для всіх children CallbackId.
-
-### Happy Path
-
-| #   | Пріоритет | Опис кейсу                                 | Очікуваний результат                                   |
-|-----|-----------|--------------------------------------------|--------------------------------------------------------|
-| 1.1 | HIGH      | CallbackId з children з непорожніми labels | Створюється рядок кнопок (одна кнопка на одного child) |
-| 1.2 | HIGH      | chain викликів: navButtonsFor + build      | Повертає валідний InlineKeyboardMarkup                 |
-| 1.3 | HIGH      | MENU — має 6 children                      | 6 кнопок в одному рядку                                |
-
-### Edge Cases
-
-| #   | Пріоритет | Опис кейсу                                     | Очікуваний результат                       |
-|-----|-----------|------------------------------------------------|--------------------------------------------|
-| 1.4 | MEDIUM    | CallbackId з children, деякі мають blank label | Створюються кнопки тільки для не-blank     |
-| 1.5 | MEDIUM    | PET_DETAIL — child з blank label ("")          | Кнопка НЕ створюється                      |
-| 1.6 | LOW       | CallbackId з children, всі з blank label       | Порожній результат (кнопки не створюються) |
-| 1.7 | LOW       | chain: navButtonsFor + backButtonFor + build   | Коректно додаються обидва типи кнопок      |
-
-### Negative Cases
-
-| #   | Пріоритет | Опис кейсу                       | Очікуваний результат                 |
-|-----|-----------|----------------------------------|--------------------------------------|
-| 1.8 | HIGH      | Передає null                     | PetBedException                      |
-| 1.9 | MEDIUM    | CallbackId з empty children list | Порожній рядок (нічого не додається) |
+Додати перевантажений метод `navButtonsFor` з параметром `entityId`:
+```java
+public InlineKeyboardBuilder navButtonsFor(CallbackId currentCallbackId, Long entityId)
+```
+Це дозволить передавати `entityId` в автоматично згенеровані кнопки навігації.
 
 ---
 
-## Метод 2: backButtonFor(CallbackId)
-
-Додає кнопку "Повернутись" до parent CallbackId.
-
-### Happy Path
-
-| #   | Пріоритет | Опис кейсу            | Очікуваний результат                                       |
-|-----|-----------|-----------------------|------------------------------------------------------------|
-| 2.1 | HIGH      | CallbackId з parent   | Додається кнопка "⬅️ Повернутись" з callbackData на parent |
-| 2.2 | HIGH      | chain: build          | Повертає валідний InlineKeyboardMarkup                     |
-| 2.3 | HIGH      | PROFILE — parent MENU | Кнопка веде до MENU                                        |
-
-### Edge Cases
-
-| #   | Пріоритет | Опис кейсу                           | Очікуваний результат                                        |
-|-----|-----------|--------------------------------------|-------------------------------------------------------------|
-| 2.4 | MEDIUM    | MENU — parent = null                 | Нічого не додається (метод не кидає виключення)             |
-| 2.5 | LOW       | chain: navButtonsFor + backButtonFor | Кидаємо виключення, кнопка повернення можу бути тільки одна |
-
-### Negative Cases
-
-| #   | Пріоритет | Опис кейсу   | Очікуваний результат |
-|-----|-----------|--------------|----------------------|
-| 2.6 | HIGH      | Передає null | кастомне виключення  |
+### 2. (Пропущено — UserService вже існує)
 
 ---
 
-## Метод 3: backButtonTo(CallbackId)
+### 3. Створити ProfileCallbackHandler (PROFILE: 110) ✅ ВИКОНАНО + ТЕСТИ
+**Новий файл**: `src/main/java/op/edu/ua/petbed/telegram/callback/handler/profile/ProfileCallbackHandler.java`
+**Тести**: `src/test/java/.../callback/handler/profile/ProfileCallbackHandlerTest.java`
 
-Додає кнопку "Повернутись" до конкретного CallbackId (не parent).
-
-### Happy Path
-
-| #   | Пріоритет | Опис кейсу           | Очікуваний результат                             |
-|-----|-----------|----------------------|--------------------------------------------------|
-| 3.1 | HIGH      | Будь-який CallbackId | Додається кнопка з вказаним callbackData         |
-| 3.2 | HIGH      | backButtonTo(MENU)   | Кнопка завжди додається (parent check відсутній) |
-| 3.3 | HIGH      | chain: build         | Повертає валідний InlineKeyboardMarkup           |
-
-### Edge Cases
-
-| #   | Пріоритет | Опис кейсу              | Очікуваний результат  |
-|-----|-----------|-------------------------|-----------------------|
-| 3.4 | MEDIUM    | root CallbackId (MENU)  | Кнопка додається      |
-| 3.5 | LOW       | chain з іншими методами | Коректно комбінується |
-
-### Negative Cases
-
-| #   | Пріоритет | Опис кейсу   | Очікуваний результат |
-|-----|-----------|--------------|----------------------|
-| 3.6 | HIGH      | Передає null | кастомне виключення  |
+- **Trigger**: Натискання кнопки "👤 Профіль"
+- **Поведінка**:
+    - Виводить повідомлення з інформацією про користувача:
+        - Тип акаунту (REGULAR/VOLUNTEER)
+        - Юзернейм
+    - Кнопка "Змінити тип профілю" → PROFILE_CHANGE_TYPE (111)
+    - Кнопка "⬅️ Повернутись" → MENU (батьківський)
 
 ---
 
-## Метод 4: paginatedList(Page<CallbackListItem>)
+### 4. Створити ProfileChangeTypeHandler (PROFILE_CHANGE_TYPE: 111) ✅ ВИКОНАНО + ТЕСТИ
+**Новий файл**: `src/main/java/op/edu/ua/petbed/telegram/callback/handler/profile/ProfileChangeTypeHandler.java`
+**Тести**: `src/test/java/.../callback/handler/profile/ProfileChangeTypeHandlerTest.java`
 
-Створює пагінований список з кнопками на items + навігація.
-
-### Happy Path
-
-| #   | Пріоритет | Опис кейсу                             | Очікуваний результат                       |
-|-----|-----------|----------------------------------------|--------------------------------------------|
-| 4.1 | HIGH      | Page з content, 1 сторінка             | Рядок items + рядок пагінації (1/1)        |
-| 4.2 | HIGH      | Page з content, >1 сторінка            | Рядок items + рядок пагінації (<, 1/n, >)  |
-| 4.3 | HIGH      | Перша сторінка (page.isFirst()=true)   | Без кнопки "◀️" (тільки індикатор та "▶️") |
-| 4.4 | HIGH      | Остання сторінка (page.isLast()=true)  | Без кнопки "▶️" (тільки "◀️" та індикатор) |
-| 4.5 | HIGH      | Середина (isFirst=false, isLast=false) | Всі три кнопки навігації                   |
-| 4.6 | HIGH      | chain: build                           | Повертає валідний InlineKeyboardMarkup     |
-
-### Edge Cases
-
-| #    | Пріоритет | Опис кейсу                       | Очікуваний результат |
-|------|-----------|----------------------------------|----------------------|
-| 4.7  | MEDIUM    | Page порожній (hasContent=false) | Нічого не додається  |
-| 4.8  | MEDIUM    | Page з 0 items (content empty)   | Нічого не додається  |
-| 4.10 | LOW       | CallbackListItem з null label    | Кастомне виключення  |
-| 4.11 | LOW       | CallbackListItem з null entityId | Кастомне виключення  |
-
-### Negative Cases
-
-| #    | Пріоритет | Опис кейсу                  | Очікуваний результат |
-|------|-----------|-----------------------------|----------------------|
-| 4.12 | HIGH      | Передає null                | Кастомне виключення  |
-| 4.13 | HIGH      | Page з null getTotalPages() | Кастомне виключення  |
+- **Trigger**: Натискання кнопки "Змінити тип профілю"
+- **Поведінка**:
+    - Виводить інформацію про типи профілів:
+        - REGULAR — звичайний користувач
+        - VOLUNTEER — волонтер (для волонтерів доступні додаткові функції)
+        - Пояснення: "Ви можете змінити тип акаунту. Волонтери можуть створювати оголошення та керувати тваринами."
+    - Кнопка "✓ Підтвердження зміни типу" → PROFILE_CHANGE_TYPE_CONFIRM (112)
+        - містить `entityId` для ідентифікації користувача
+    - Кнопка "⬅️ Повернутись" → PROFILE
 
 ---
 
-## Комбіновані Сценарії
+### 5. Створити ProfileChangeTypeConfirmHandler (PROFILE_CHANGE_TYPE_CONFIRM: 112) ✅ ВИКОНАНО + ТЕСТИ
+**Новий файл**: `src/main/java/op/edu/ua/petbed/telegram/callback/handler/profile/ProfileChangeTypeConfirmHandler.java`
+**Тести**: `src/test/java/.../callback/handler/profile/ProfileChangeTypeConfirmHandlerTest.java`
 
-| #   | Пріоритет | Опис кейсу                                                          | Очікуваний результат                     |
-|-----|-----------|---------------------------------------------------------------------|------------------------------------------|
-| 5.1 | HIGH      | navButtonsFor(має нащадків) + backButtonFor + build                 | Коректний markup з 2+ рядками            |
-| 5.2 | HIGH      | navButtonsFor(має нащадків) + paginatedList + build                 | Коректний markup з різними типами кнопок |
-| 5.3 | HIGH      | backButtonFor + paginatedList + build                               | Коректний markup                         |
-| 5.4 | MEDIUM    | navButtonsFor(має нащадків) + backButtonFor + paginatedList + build | Все в одному markup                      |
-| 5.5 | LOW       | Multiple navButtonsFor виклики                                      | Кастомне виключення                      |
+- **Trigger**: Натискання кнопки "✓ Підтвердження зміни типу"
+- **Поведінка**:
+    - Отримує поточний тип користувача з БД
+    - Викликає метод toggle() для зміни типу (REGULAR ↔ VOLUNTEER)
+    - Виводить повідомлення з підтвердженням:
+        - "✅ Тип акаунту змінено на {НОВИЙ_ТИП}"
+    - Кнопка "⬅️ Профіль" → PROFILE (110)
 
 ---
 
-## Нотатки
+## Залежності
 
-1. **Метод 2 (backButtonFor)** — не кидає виключення для root(parent = null) CallbackId, просто ігнорує
-2. **Метод 3 (backButtonTo)** — завжди додає передану параметром кнопку, без перевірки на null parent
-3. **CallbackListItem** - @NullMarked
-4. **Всі методи** — повертають `this` для fluent API chaining
+- `UserService` — для отримання та оновлення даних користувача
+- `TelegramAuthService` — для аутентифікації
+- `InlineKeyboardBuilder` — для створення клавіатур
+- `CallbackQueryContext` — для доступу до даних коллбеку
+
+## Примітка
+
+CallbackId вже визначені в `CallbackId.java`:
+- PROFILE(110, "👤 Профіль", MENU)
+- PROFILE_CHANGE_TYPE(111, "Змінити тип профілю", PROFILE)
+- PROFILE_CHANGE_TYPE_CONFIRM(112, "✓ Підтвердження зміни типу", PROFILE_CHANGE_TYPE)

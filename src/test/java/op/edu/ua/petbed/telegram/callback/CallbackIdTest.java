@@ -25,7 +25,7 @@ class CallbackIdTest {
         void label_returns_correct_value() {
             var result = CallbackId.PROFILE;
 
-            assertThat(result.label()).isEqualTo("Профіль");
+            assertThat(result.label()).isEqualTo("👤 Профіль");
         }
     }
 
@@ -91,9 +91,9 @@ class CallbackIdTest {
 
             assertThat(result)
                     .startsWith("graph TD")
-                    .contains("MENU[\"Меню\"]")
+                    .contains("MENU[\"🏠 Меню\"]")
                     .contains("MENU --> PROFILE")
-                    .contains("PROFILE[\"Профіль\"]");
+                    .contains("PROFILE[\"👤 Профіль\"]");
         }
     }
 }

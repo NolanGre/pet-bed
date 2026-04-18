@@ -54,11 +54,20 @@ public class InlineKeyboardBuilder {
 
     public InlineKeyboardBuilder navButtonsFor(CallbackId currentCallbackId) {
         checkNotAdded(AddedMethod.NAV_BUTTONS, "navButtonsFor");
+        return navButtonsForInternal(currentCallbackId, null);
+    }
+
+    public InlineKeyboardBuilder navButtonsFor(CallbackId currentCallbackId, @Nullable Long entityId) {
+        checkNotAdded(AddedMethod.NAV_BUTTONS, "navButtonsFor");
+        return navButtonsForInternal(currentCallbackId, entityId);
+    }
+
+    private InlineKeyboardBuilder navButtonsForInternal(CallbackId currentCallbackId, @Nullable Long entityId) {
         List<CallbackId> children = currentCallbackId.children();
         for (CallbackId child : children) {
             String label = child.label();
             if (label != null && !label.isBlank()) {
-                String callbackData = CallbackData.of(child, null, null).toString();
+                String callbackData = CallbackData.of(child, entityId, null).toString();
                 navButtons.add(createButton(label, callbackData));
             }
         }

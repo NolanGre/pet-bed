@@ -18,7 +18,8 @@ public enum CallbackId {
     ADOPTION(160, "🎁 Адопція", MENU),
 
     // PROFILE children
-    PROFILE_CHANGE_TYPE_CONFIRM(111, "✓ Підтвердження зміни типу", PROFILE),
+    PROFILE_CHANGE_TYPE(111, "Змінити тип профілю", PROFILE),
+    PROFILE_CHANGE_TYPE_CONFIRM(112, "✓ Підтвердити зміну", PROFILE_CHANGE_TYPE),
 
     // MY_PETS children
     ADD_PET(121, "➕ Додати тварину", MY_PETS),

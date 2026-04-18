@@ -1,6 +1,5 @@
 local.properties
-test.log
-spotless.log
+*.log
 .env
 HELP.md
 .gradle

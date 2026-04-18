@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements UserService {  //TODO: add or update tests to check @Validation correctness
 
     private final UserRepository userRepository;
 
@@ -34,13 +34,21 @@ public class UserServiceImpl implements UserService {
         return toDto(user);
     }
 
-    private void validateOrThrow(@Nullable Long telegramId, @Nullable String telegramUsername) {
-        if (telegramId == null) {
-            throw new PetBedException("telegramId must not be null", PetBedException.ErrorCode.USER_TELEGRAM_ID_REQUIRED);
-        }
-        if (telegramUsername == null) {
-            throw new PetBedException("telegramUsername must not be null", PetBedException.ErrorCode.USER_TELEGRAM_USERNAME_REQUIRED);
-        }
+    @Override
+    public UserDTO findByTelegramId(Long telegramId) {
+        User user = userRepository.findByTelegramId(telegramId)
+                .orElseThrow(() -> new PetBedException("User not found with telegramId: " + telegramId, PetBedException.ErrorCode.USER_NOT_FOUND));
+        return toDto(user);
+    }
+
+    @Override
+    public UserDTO toggleUserType(Long telegramId) {
+        User user = userRepository.findByTelegramId(telegramId)
+                .orElseThrow(() -> new PetBedException("User not found with telegramId: " + telegramId, PetBedException.ErrorCode.USER_NOT_FOUND));
+        user.switchType();
+        User saved = userRepository.save(user);
+        log.info("User type toggled: telegramId={}, newType={}", telegramId, user.getType());
+        return toDto(saved);
     }
 
     private UserDTO toDto(User user) {
@@ -50,5 +58,14 @@ public class UserServiceImpl implements UserService {
                 user.getTelegramUsername(),
                 user.getType()
         );
+    }
+
+    private void validateOrThrow(@Nullable Long telegramId, @Nullable String telegramUsername) {
+        if (telegramId == null) {
+            throw new PetBedException("telegramId must not be null", PetBedException.ErrorCode.USER_TELEGRAM_ID_REQUIRED);
+        }
+        if (telegramUsername == null) {
+            throw new PetBedException("telegramUsername must not be null", PetBedException.ErrorCode.USER_TELEGRAM_USERNAME_REQUIRED);
+        }
     }
 }

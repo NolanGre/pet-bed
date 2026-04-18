@@ -200,16 +200,29 @@ src/test/java/op/edu/ua/petbed/
 
 ## Test Organization
 
-Group tests by method using comments:
+Use `@Nested` classes to group tests by method:
 
 ```java
-// .methodName() -------------------------------------------------
+@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
+@ExtendWith(MockitoExtension.class)
+class InlineKeyboardBuilderTest {
 
-@Test
-void methodName_scenario_expectedResult() {
-    // test implementation
+    @Nested
+    @DisplayName(".navButtonsFor(CallbackId, Long)")
+    class NavButtonsForWithEntityId {
+
+        @Test
+        void methodName_scenario_expectedResult() {
+            // test implementation
+        }
+    }
 }
 ```
+
+**Benefits:**
+- Better readability - tests grouped by method/feature
+- Clear structure - each Nested class has focused scope
+- IDE support - easy navigation between test groups
 
 ## Test Naming Convention
 

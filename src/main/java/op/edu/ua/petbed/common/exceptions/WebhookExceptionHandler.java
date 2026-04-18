@@ -1,5 +1,6 @@
 package op.edu.ua.petbed.common.exceptions;
 
+import jakarta.validation.ConstraintViolationException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,12 @@ public class WebhookExceptionHandler {
         if (e instanceof PetBedException petBedException) {
             log.warn("Business error [{}]: {}", petBedException.getErrorCode().name(), petBedException.getMessage());
             return buildMessage(chatId, petBedException.getErrorCode().getUserMessage());
+        }
+
+        //TODO add tests for this
+        if (e instanceof ConstraintViolationException constraintEx) {
+            log.warn("Validation error: {}", constraintEx.getMessage());
+            return buildMessage(chatId, PetBedException.ErrorCode.VALIDATION_ERROR.getUserMessage());
         }
 
         log.error("Unexpected error while processing update: {}", update != null ? update.getUpdateId() : "null", e);
