@@ -4,6 +4,7 @@
     ".opencode/rules/*.md",
     "docs/*.md"
   ],
+  "plugin": ["@mohak34/opencode-notifier@latest"],
   "permission": {
     "skill": {
       "*": "allow"

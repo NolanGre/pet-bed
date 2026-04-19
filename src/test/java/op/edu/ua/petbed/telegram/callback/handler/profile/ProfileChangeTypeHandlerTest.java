@@ -2,11 +2,7 @@ package op.edu.ua.petbed.telegram.callback.handler.profile;
 
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.DisplayNameGeneration;
-import org.junit.jupiter.api.DisplayNameGenerator;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -14,6 +10,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+
+import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -58,7 +56,6 @@ class ProfileChangeTypeHandlerTest {
             BotApiMethod<?> result = underTest.handle(context);
 
             // then
-            assertThat(result).isNotNull();
             assertThat(result).isInstanceOf(EditMessageText.class);
             EditMessageText editMessage = (EditMessageText) result;
 
@@ -114,15 +111,15 @@ class ProfileChangeTypeHandlerTest {
 
             // Find button with "✓ Підтвердження зміни типу"
             var hasConfirmButton = replyMarkup.getKeyboard().stream()
-                    .flatMap(row -> row.stream())
-                    .anyMatch(btn -> btn.getText().contains("✓ Підтвердження зміни типу"));
+                    .flatMap(Collection::stream)
+                    .anyMatch(btn -> btn.getText().contains("✓ Підтвердити зміну"));
 
             assertThat(hasConfirmButton).isTrue();
 
             // Verify callback data contains PROFILE_CHANGE_TYPE_CONFIRM id (112) with entityId
             String expectedCallbackData = "112," + userId + ",";
             var hasCorrectCallback = replyMarkup.getKeyboard().stream()
-                    .flatMap(row -> row.stream())
+                    .flatMap(Collection::stream)
                     .anyMatch(btn -> btn.getCallbackData() != null
                             && btn.getCallbackData().startsWith("112," + userId + ","));
 

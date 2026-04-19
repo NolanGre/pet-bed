@@ -3,11 +3,7 @@ package op.edu.ua.petbed.telegram.response;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.telegram.callback.CallbackData;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.DisplayNameGeneration;
-import org.junit.jupiter.api.DisplayNameGenerator;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -17,6 +13,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -50,9 +47,9 @@ class InlineKeyboardBuilderTest {
             var row = markup.getKeyboard().getFirst();
             var button = row.getFirst();
 
-            String callbackData = button.getCallbackData();
-            assertThat(callbackData).isNotBlank();
-            assertThat(callbackData).contains("456");
+            assertThat(button.getCallbackData())
+                    .isNotBlank()
+                    .contains("456");
         }
 
         @Test
@@ -237,8 +234,10 @@ class InlineKeyboardBuilderTest {
                     .build();
 
             var row = markup.getKeyboard().getFirst();
+            assertThat(CallbackId.PROFILE.parent()).isNotNull();
+            var parent = Objects.requireNonNull(CallbackId.PROFILE.parent());
             assertThat(row.getFirst().getCallbackData())
-                    .startsWith(String.valueOf(CallbackId.PROFILE.parent().id()));
+                    .startsWith(String.valueOf(parent.id()));
         }
 
         @Test
@@ -488,9 +487,9 @@ class InlineKeyboardBuilderTest {
         @Test
         void multiple_navButtonsFor_throws_exception() {
             assertThatThrownBy(() -> InlineKeyboardBuilder.builder()
-                            .navButtonsFor(CallbackId.MENU)
-                            .navButtonsFor(CallbackId.PROFILE)
-                            .build())
+                    .navButtonsFor(CallbackId.MENU)
+                    .navButtonsFor(CallbackId.PROFILE)
+                    .build())
                     .isInstanceOf(PetBedException.class);
         }
     }

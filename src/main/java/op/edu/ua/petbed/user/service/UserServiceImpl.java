@@ -20,9 +20,7 @@ public class UserServiceImpl implements UserService {  //TODO: add or update tes
     private final UserRepository userRepository;
 
     @Override
-    public UserDTO registerOrGet(@Nullable Long telegramId, @Nullable String telegramUsername) {
-        validateOrThrow(telegramId, telegramUsername);
-
+    public UserDTO registerOrGet(Long telegramId, String telegramUsername) {
         User user = userRepository.findByTelegramId(telegramId)
                 .orElseGet(() -> {
                     User newUser = userRepository.save(User.create(telegramId, telegramUsername));
@@ -58,14 +56,5 @@ public class UserServiceImpl implements UserService {  //TODO: add or update tes
                 user.getTelegramUsername(),
                 user.getType()
         );
-    }
-
-    private void validateOrThrow(@Nullable Long telegramId, @Nullable String telegramUsername) {
-        if (telegramId == null) {
-            throw new PetBedException("telegramId must not be null", PetBedException.ErrorCode.USER_TELEGRAM_ID_REQUIRED);
-        }
-        if (telegramUsername == null) {
-            throw new PetBedException("telegramUsername must not be null", PetBedException.ErrorCode.USER_TELEGRAM_USERNAME_REQUIRED);
-        }
     }
 }

@@ -15,15 +15,12 @@ public class TelegramAuthService {
 
     private final UserService userService;
 
-    public UserAuthContext authenticate(@Nullable Long telegramId, @Nullable String telegramUsername) {
-        if (telegramId == null) {
-            throw new PetBedException("Telegram ID is required", PetBedException.ErrorCode.USER_TELEGRAM_ID_REQUIRED);
-        }
-        UserDTO user = userService.registerOrGet(telegramId, telegramUsername != null ? telegramUsername : "unknown");
+    public UserAuthContext authenticate(Long telegramId, String telegramUsername) {
+        UserDTO user = userService.registerOrGet(telegramId, telegramUsername);
         return new UserAuthContext(user.id(), user.type());
     }
 
-    public UserAuthContext requireVolunteer(@Nullable Long telegramId, @Nullable String telegramUsername) {
+    public UserAuthContext requireVolunteer(Long telegramId, String telegramUsername) {
         UserAuthContext auth = authenticate(telegramId, telegramUsername);
         if (!auth.isVolunteer()) {
             throw new PetBedException("This action requires volunteer status", PetBedException.ErrorCode.AUTHORIZATION_REQUIRED);

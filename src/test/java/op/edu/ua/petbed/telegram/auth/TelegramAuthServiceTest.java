@@ -63,18 +63,6 @@ class TelegramAuthServiceTest {
     }
 
     @Test
-    void authenticate_nullTelegramId_throws() {
-        // given
-        Long telegramId = null;
-        String username = "testuser";
-
-        // when/then
-        assertThatThrownBy(() -> underTest.authenticate(telegramId, username))
-                .isInstanceOf(PetBedException.class)
-                .hasFieldOrPropertyWithValue("errorCode", PetBedException.ErrorCode.USER_TELEGRAM_ID_REQUIRED);
-    }
-
-    @Test
     void requireVolunteer_volunteerUser_returnsContext() {
         // given
         Long telegramId = 123L;

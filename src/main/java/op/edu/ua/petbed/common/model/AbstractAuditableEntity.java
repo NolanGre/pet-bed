@@ -4,23 +4,24 @@ import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 
 @Getter
 @Setter
 @ToString
-@RequiredArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @MappedSuperclass
 public abstract class AbstractAuditableEntity {
 
+    @Nullable
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+
+    @Nullable
     @Column(name = "updated_at")
     private Instant updatedAt;
 

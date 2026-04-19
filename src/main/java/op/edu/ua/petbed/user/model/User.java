@@ -14,8 +14,7 @@ import java.util.Objects;
 @NullMarked
 @ToString
 @Getter
-//@Setter(AccessLevel.PROTECTED)
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED, onConstructor_ = @SuppressWarnings("NullAway"))
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "users")
@@ -45,12 +44,6 @@ public class User extends AbstractAuditableEntity {
     private Integer fosteringHistoryOffset = 0;
 
     public static User create(Long telegramId, String telegramUsername) {
-        if (telegramId == null) {
-            throw new PetBedException("telegramId must not be null", PetBedException.ErrorCode.USER_TELEGRAM_ID_REQUIRED);
-        }
-        if (telegramUsername == null) {
-            throw new PetBedException("telegramUsername must not be null", PetBedException.ErrorCode.USER_TELEGRAM_USERNAME_REQUIRED);
-        }
         return new User(null, telegramId, telegramUsername, UserType.REGULAR, 0, 0);
     }
 

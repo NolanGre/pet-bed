@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
+import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.updates.DeleteWebhook;
 import org.telegram.telegrambots.meta.api.methods.updates.SetWebhook;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -43,7 +44,13 @@ public class TelegramBotConfig {
 
         return SpringTelegramWebhookBot.builder()
                 .botPath(botPath)
-                .updateHandler(telegramUpdateRouter::route)
+                .updateHandler(update -> {
+                    BotApiMethod<?> response = telegramUpdateRouter.route(update);
+                    if (response == null) {
+                        log.warn("No response for update: {}", update.getUpdateId());
+                    }
+                    return response;
+                })
                 .setWebhook(registerWebhook(telegramClient, setWebhook))
                 .deleteWebhook(deleteWebhook(telegramClient))
                 .build();

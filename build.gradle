@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '4.0.3'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'net.ltgt.errorprone' version '5.1.0'
 }
 
 group = 'op.edu.ua'
@@ -61,6 +62,10 @@ dependencies {
     implementation 'org.telegram:telegrambots-springboot-webhook-starter:9.4.0'
     implementation 'org.telegram:telegrambots-client:9.4.0'
 
+    // NullAway
+    errorprone 'com.uber.nullaway:nullaway:0.13.3'
+    errorprone 'com.google.errorprone:error_prone_core:2.47.0'
+
     // AWS S3
     implementation platform("software.amazon.awssdk:bom:2.42.9")
     implementation "software.amazon.awssdk:s3"
@@ -85,4 +90,14 @@ dependencyManagement {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone {
+        disableAllChecks = true // Other error prone checks are disabled
+        option("NullAway:AnnotatedPackages", "op.edu.ua.petbed")
+        option("NullAway:TreatGeneratedAsUnchecked", "true")
+        error('NullAway') // bump checks from warnings (default) to errors
+        option('NullAway:JSpecifyMode', 'true') // https://github.com/uber/NullAway/wiki/JSpecify-Support
+    }
 }

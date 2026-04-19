@@ -26,7 +26,7 @@ public record CommandContext(
     Message message,
     Long chatId,
     Long userId,
-    @Nullable String username,
+    String username,
     String rawText
 ) {
     /**

@@ -11,6 +11,8 @@ import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
 import op.edu.ua.petbed.telegram.command.Command;
 import op.edu.ua.petbed.telegram.command.CommandContext;
 import op.edu.ua.petbed.telegram.command.CommandHandler;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -22,6 +24,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@NullMarked
 @Component
 @Slf4j
 public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
@@ -48,7 +51,7 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
     }
 
     @Override
-    public BotApiMethod<?> route(Update update) {
+    public @Nullable BotApiMethod<?> route(Update update) {
         try {
             if (update.hasMessage()) {
                 if (isCommand(update)) {
@@ -107,7 +110,7 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
 
         if (handler == null) {
             log.error("No handler for callback id: {}", callbackId);
-            return null;
+            return defaultResponse(context.chatId());
         }
 
         BotApiMethod<?> response = handler.handle(context);
@@ -117,13 +120,20 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
 
     private BotApiMethod<?> handleTextMessage(Update update) {
         Long chatId = update.getMessage().getChatId();
-        return defaultResponse(chatId);
+        return defaultTextMessageResponse(chatId);
     }
 
     private SendMessage defaultResponse(Long chatId) {
         return SendMessage.builder()
                 .chatId(chatId)
-                .text("HandleTextMessage: default response")
+                .text("⚠️ Тимчасово не доступно.")
+                .build();
+    }
+
+    private SendMessage defaultTextMessageResponse(Long chatId) {
+        return SendMessage.builder()
+                .chatId(chatId)
+                .text("Не зрозумів 🤔")
                 .build();
     }
 }

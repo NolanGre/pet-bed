@@ -22,6 +22,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -106,8 +107,9 @@ class TelegramUpdateRouterImplTest {
         // then
         assertThat(result).isNotNull()
                 .isInstanceOf(SendMessage.class);
-        SendMessage sendMessage = (SendMessage) result;
-        assertThat(sendMessage.getText()).contains("HandleTextMessage: default response");
+        SendMessage sendMessage = (SendMessage) Objects.requireNonNull(result);
+        assertThat(sendMessage.getText())
+                .contains("Не зрозумів 🤔");
     }
 
     @Test

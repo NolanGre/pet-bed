@@ -37,7 +37,7 @@ public class ProfileHandler implements CommandHandler {
                     Type: %s
                     """,
                         auth.userId(),
-                        context.username() != null ? context.username() : "N/A",
+                        context.username(),
                         auth.userType()))
                 .build();
     }

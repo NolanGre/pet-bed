@@ -425,3 +425,39 @@ void save_null_pet_throws() {
 ```
 
 > Skip null-path tests unless the parameter is explicitly `@Nullable`.
+
+### Fixing NullAway errors in tests
+
+NullAway enforces null safety at **flow level** — it does not track nullability through AssertJ chains, separate method calls, or `assert x != null` statements.
+
+**Use `Objects.requireNonNull` as the null-guard expression.** It serves a dual purpose:
+- tells NullAway the value is non-null from this point on
+- throws `NullPointerException` with a clear message if the assumption is wrong at runtime
+
+#### Pattern 1: nullable return value used directly
+
+```
+// ❌ NullAway error — parent() is @Nullable, called twice independently
+assertThat(row.getFirst().getCallbackData())
+        .startsWith(String.valueOf(CallbackId.PROFILE.parent().id()));
+
+// ✅ Store + guard in one step
+var parent = Objects.requireNonNull(CallbackId.PROFILE.parent());
+assertThat(row.getFirst().getCallbackData())
+        .startsWith(String.valueOf(parent.id()));
+```
+
+#### Pattern 2: cast from @Nullable after isInstanceOf
+
+```
+// ❌ NullAway error — result is @Nullable after cast, assertThat chain not tracked
+assertThat(result).isNotNull().isInstanceOf(SendMessage.class);
+SendMessage sendMessage = (SendMessage) result;
+assertThat(sendMessage.getText()).contains("...");
+
+// ✅ requireNonNull wraps the cast
+SendMessage sendMessage = (SendMessage) Objects.requireNonNull(result);
+assertThat(sendMessage.getText()).contains("...");
+```
+
+> **Why not `assert x != null`?** NullAway does not treat Java `assert` statements as flow guards — they are ignored. Only `requireNonNull`, `checkNotNull` (Guava), and similar throwing methods are recognized.
