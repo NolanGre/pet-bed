@@ -12,6 +12,8 @@ import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import java.util.Objects;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -31,8 +33,10 @@ class TelegramUpdateRouterImplIntegrationTest extends PostgresTestContainer {
         BotApiMethod<?> result = underTest.route(update);
 
         // then
-        assertThat(result).isNotNull();
-        assertThat(((SendMessage) result).getText())
+        SendMessage sendMessage = (SendMessage) result;
+        String text = Objects.requireNonNull(sendMessage).getText();
+
+        assertThat(text)
                 .contains("Welcome to PetBed Bot");
     }
 
@@ -71,7 +75,7 @@ class TelegramUpdateRouterImplIntegrationTest extends PostgresTestContainer {
         // then - should return default help message
         assertThat(result).isNotNull()
                 .isInstanceOf(SendMessage.class);
-        SendMessage sendMessage = (SendMessage) result;
+        SendMessage sendMessage = (SendMessage) Objects.requireNonNull(result);
         assertThat(sendMessage.getText())
                 .contains("Unknown command.");
     }

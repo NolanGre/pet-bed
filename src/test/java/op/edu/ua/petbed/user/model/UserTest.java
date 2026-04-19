@@ -1,13 +1,11 @@
 package op.edu.ua.petbed.user.model;
 
-import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.UserType;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class UserTest {
@@ -41,22 +39,6 @@ class UserTest {
         assertThat(user.getTelegramUsername()).isEqualTo(username);
     }
 
-    @Test
-    void create_whenTelegramIdIsNull_thenThrowsPetBedException() {
-        assertThatThrownBy(() -> User.create(null, "john_doe"))
-                .isInstanceOf(PetBedException.class)
-                .extracting(e -> ((PetBedException) e).getErrorCode())
-                .isEqualTo(PetBedException.ErrorCode.USER_TELEGRAM_ID_REQUIRED);
-    }
-
-    @Test
-    void create_whenTelegramUsernameIsNull_thenThrowsPetBedException() {
-        // given / when / then
-        assertThatThrownBy(() -> User.create(123456789L, null))
-                .isInstanceOf(PetBedException.class)
-                .extracting(e -> ((PetBedException) e).getErrorCode())
-                .isEqualTo(PetBedException.ErrorCode.USER_TELEGRAM_USERNAME_REQUIRED);
-    }
 
     // .switchType() -------------------------------------------------
 

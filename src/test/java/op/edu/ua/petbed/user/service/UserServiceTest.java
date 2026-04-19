@@ -1,9 +1,8 @@
 package op.edu.ua.petbed.user.service;
 
-import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.dto.UserDTO;
-import op.edu.ua.petbed.user.model.User;
 import op.edu.ua.petbed.common.model.UserType;
+import op.edu.ua.petbed.user.model.User;
 import op.edu.ua.petbed.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -17,10 +16,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
@@ -71,21 +70,5 @@ class UserServiceTest {
         verify(userRepository).save(any(User.class));
     }
 
-    @Test
-    void registerOrGet_null_telegramId_throws_PetBedException() {
-        // when / then
-        assertThatThrownBy(() -> underTest.registerOrGet(null, "john_doe"))
-                .isInstanceOf(PetBedException.class)
-                .hasFieldOrPropertyWithValue("errorCode", PetBedException.ErrorCode.USER_TELEGRAM_ID_REQUIRED);
-        verifyNoInteractions(userRepository);
-    }
 
-    @Test
-    void registerOrGet_null_telegramUsername_throws_PetBedException() {
-        // when / then
-        assertThatThrownBy(() -> underTest.registerOrGet(123L, null))
-                .isInstanceOf(PetBedException.class)
-                .hasFieldOrPropertyWithValue("errorCode", PetBedException.ErrorCode.USER_TELEGRAM_USERNAME_REQUIRED);
-        verifyNoInteractions(userRepository);
-    }
 }

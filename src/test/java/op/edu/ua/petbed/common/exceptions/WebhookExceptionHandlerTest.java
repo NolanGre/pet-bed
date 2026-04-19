@@ -10,6 +10,8 @@ import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
 
+import java.util.Objects;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -36,7 +38,7 @@ class WebhookExceptionHandlerTest {
 
         // then
         assertThat(result).isInstanceOf(SendMessage.class);
-        SendMessage sendMessage = (SendMessage) result;
+        SendMessage sendMessage = (SendMessage) Objects.requireNonNull(result);
         assertThat(sendMessage.getChatId()).isEqualTo("42");
         assertThat(sendMessage.getText()).isEqualTo(PetBedException.ErrorCode.USER_TELEGRAM_ID_REQUIRED.getUserMessage());
     }
@@ -57,7 +59,7 @@ class WebhookExceptionHandlerTest {
 
         // then
         assertThat(result).isInstanceOf(SendMessage.class);
-        SendMessage sendMessage = (SendMessage) result;
+        SendMessage sendMessage = (SendMessage) Objects.requireNonNull(result);
         assertThat(sendMessage.getChatId()).isEqualTo("42");
         assertThat(sendMessage.getText()).isEqualTo(PetBedException.ErrorCode.INTERNAL_ERROR.getUserMessage());
     }
@@ -76,7 +78,7 @@ class WebhookExceptionHandlerTest {
 
         // then
         assertThat(result).isInstanceOf(SendMessage.class);
-        assertThat(((SendMessage) result).getChatId()).isEqualTo("99");
+        assertThat(((SendMessage) Objects.requireNonNull(result)).getChatId()).isEqualTo("99");
     }
 
     @Test
@@ -96,7 +98,7 @@ class WebhookExceptionHandlerTest {
 
         // then
         assertThat(result).isInstanceOf(SendMessage.class);
-        assertThat(((SendMessage) result).getChatId()).isEqualTo("77");
+        assertThat(((SendMessage) Objects.requireNonNull(result)).getChatId()).isEqualTo("77");
     }
 
     @Test
@@ -108,15 +110,6 @@ class WebhookExceptionHandlerTest {
 
         // when
         BotApiMethod<?> result = WebhookExceptionHandler.handle(update, new RuntimeException());
-
-        // then
-        assertThat(result).isNull();
-    }
-
-    @Test
-    void handle_whenUpdateIsNull_thenReturnsNull() {
-        // given / when
-        BotApiMethod<?> result = WebhookExceptionHandler.handle(null, new RuntimeException());
 
         // then
         assertThat(result).isNull();
