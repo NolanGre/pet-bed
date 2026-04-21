@@ -7,94 +7,136 @@ import java.util.Arrays;
 import java.util.List;
 
 public enum CallbackId {
-    MENU(100, "🏠 Меню", null),
+    MENU(1, "🏠 Меню", null),
 
-    // MENU children
-    PROFILE(110, "👤 Профіль", MENU),
-    MY_PETS(120, "🐾 Мої тварини", MENU),
-    FEED(130, "📋 Стрічка оголошень", MENU),
-    SEARCH(140, "🔍 Пошук тварин", MENU),
-    FOSTER(180, "🏠 Перетримка", MENU),
-    ADOPTION(160, "🎁 Адопція", MENU),
+    // PROFILE menu (2xx)
+    PROFILE(2, "👤 Профіль", MENU),
+    PROFILE_CHANGE_TYPE(21, "Змінити тип профілю", PROFILE),
+    PROFILE_CHANGE_TYPE_CONFIRM(211, "✓ Підтвердити зміну", PROFILE_CHANGE_TYPE),
 
-    // PROFILE children
-    PROFILE_CHANGE_TYPE(111, "Змінити тип профілю", PROFILE),
-    PROFILE_CHANGE_TYPE_CONFIRM(112, "✓ Підтвердити зміну", PROFILE_CHANGE_TYPE),
+    // MY_PETS menu (3xx)
+    MY_PETS(3, "🐾 Мої тварини", MENU),
+    ADD_PET(31, "➕ Додати тварину", MY_PETS),
+    PET_DETAIL(32, "", MY_PETS),  // Shows as paginated list in MY_PETS
+    PET_UPDATE(321, "✏️ Оновити анкету", PET_DETAIL),
+    PET_DELETE(322, "🗑️ Видалити анкету", PET_DETAIL),
+    PET_DELETE_CONFIRM(3221, "✅ Підтвердити видалення", PET_DELETE),
 
-    // MY_PETS children
-    ADD_PET(121, "➕ Додати тварину", MY_PETS),
-    PET_LIST(122, "📋 Список тварин", MY_PETS),
+    // FEED menu (4xx)
+    FEED(4, "📋 Стрічка оголошень", MENU),
 
-    // PET_LIST -> PET_DETAIL chain
-    PET_DETAIL(123, "", PET_LIST),    // List element
-    PET_UPDATE(124, "✏️ Оновити анкету", PET_DETAIL),
-    PET_DELETE(125, "🗑️ Видалити анкету", PET_DETAIL),
-    PET_DELETE_CONFIRM(126, "✅ Підтвердити видалення", PET_DELETE),
+    FEED_RADIUS(41, "📍 Обрати радіус", FEED),
+    FEED_GEOLOCATION(42, "🌍 Обрати геолокацію", FEED),
+    FEED_CREATE(43, "➕ Створити оголошення", FEED),
 
-    // FEED children
-    FEED_RADIUS(131, "📍 Обрати радіус", FEED),
-    FEED_GEOLOCATION(132, "🌍 Обрати геолокацію", FEED),
-    FEED_CREATE(133, "➕ Створити оголошення", FEED),
-    FEED_MY_POSTS(134, "📋 Мої оголошення", FEED),
-    FEED_VIEW(135, "👁️ Перегляд оголошення", FEED),
+    FEED_MY_POSTS(44, "📋 Мої оголошення", FEED),
+    FEED_POST_DETAIL(441, "", FEED_MY_POSTS),
+    FEED_POST_DELETE_CONFIRM(4411, "✅ Видалити оголошення", FEED_POST_DETAIL),
 
-    // FEED_MY_POSTS -> FEED_POST_DETAIL chain
-    FEED_POST_DETAIL(136, "📄 Оголошення", FEED_MY_POSTS),
-    FEED_POST_DELETE_CONFIRM(137, "✅ Видалити оголошення", FEED_POST_DETAIL),
+    FEED_VIEW(45, "👁️ Переглянути оголошення", FEED),  // When pressed, show first post by editing message
+    FEED_VIEW_NEXT(451, "➡️ Наступне", FEED_VIEW),  // Send new message each time
 
-    // SEARCH children
-    SEARCH_START(141, "🔎 Почати пошук", SEARCH),
-    SEARCH_FOUND(142, "🐕 Я знайшов тварину", SEARCH),
-    SEARCH_ACTIVE(143, "📋 Активні пошуки", SEARCH),
+    // LOST menu (5xx)
+    LOST(5, "🔍 Пошук тварин", MENU),
 
-    // SEARCH_START -> SEARCH_SELECT_PET chain
-    SEARCH_SELECT_PET(144, "🐾 Обрати тварину", SEARCH_START),
-    SEARCH_ADD_PET(146, "➕ Додати нову тварину", SEARCH_SELECT_PET),
-    SEARCH_FINAL_CONFIRM(145, "✅ Підтвердження", SEARCH_START),
+    LOST_START(51, "🔎 Почати пошук", LOST),
+    LOST_SELECT_PET(511, "🐾 Обрати тварину", LOST_START),
+    LOST_ADD_PET(5111, "➕ Додати нову тварину", LOST_SELECT_PET),
 
-    // SEARCH_FOUND -> SEARCH_FOUND_MATCHES chain
-    SEARCH_FOUND_MATCHES(147, "🔗 Потенційні збіги", SEARCH_FOUND),
+    LOST_FOUND(52, "🐕 Я знайшов тварину", LOST),
+    LOST_FOUND_MATCHES(521, "🔗 Потенційні збіги", LOST_FOUND), // Shows after filling out the form
 
-    // SEARCH_ACTIVE -> SEARCH_ACTIVE_DETAIL chain
-    SEARCH_ACTIVE_DETAIL(148, "🔍 Тварина у пошуку", SEARCH_ACTIVE),
-    SEARCH_RECOMMENDATIONS(149, "💡 Рекомендації", SEARCH_ACTIVE_DETAIL),
-    SEARCH_FINISH_CONFIRM(150, "✅ Завершити пошук", SEARCH_ACTIVE_DETAIL),
+    LOST_ACTIVE(53, "📋 Мої пошуки", LOST),
+    LOST_ACTIVE_DETAIL(531, "", LOST_ACTIVE),
 
-    // SEARCH_RECOMMENDATIONS -> SEARCH_CLAIM_PET chain
-    SEARCH_CLAIM_PET(151, "🐾 Це моя тварина", SEARCH_RECOMMENDATIONS),
+    LOST_FINISH(5311, "🏁 Завершити пошук", LOST_ACTIVE_DETAIL),
+    LOST_FINISH_CONFIRM(53111, "✅ Підтвердити", LOST_FINISH),
 
-    // ADOPTION children
-    ADOPTION_GIVE(161, "🎁 Віддати тварину", ADOPTION),
-    ADOPTION_GET(162, "🐾 Отримати тварину", ADOPTION),
-    ADOPTION_MY_RESPONSES(163, "📋 Мої відгуки", ADOPTION),
-    ADOPTION_MY_POSTS(164, "📋 Мої оголошення", ADOPTION),
+    LOST_RECOMMENDATIONS(5312, "💡 Рекомендації", LOST_ACTIVE_DETAIL),       // Show first recommendation by editing message
+    LOST_RECOMMENDATION_NEXT(53121, "➡️ Наступна", LOST_RECOMMENDATIONS),   // Each new recom. send as new message
+    LOST_CLAIM_PET(53122, "🐾 Це моя тварина", LOST_RECOMMENDATIONS),
+    LOST_CLAIM_PET_CONFIRM(531221, "✅ Підтвердити", LOST_CLAIM_PET),
 
-    // ADOPTION_GIVE -> chain
-    ADOPTION_SELECT_PET(165, "🐾 Обрати тварину", ADOPTION_GIVE),
-    ADOPTION_ADD_PET(169, "➕ Додати нову тварину", ADOPTION_SELECT_PET),
-    ADOPTION_ADD_COMMENT(166, "💬 Додати коментар", ADOPTION_GIVE),
-    ADOPTION_FINAL_CONFIRM(167, "✅ Підтвердити", ADOPTION_GIVE),
-    ADOPTION_CLEAR(168, "🗑️ Очистити", ADOPTION_GIVE),
+    // ADOPTION menu (6xx)
+    ADOPTION(6, "🏠 Адопція", MENU),
 
-    // ADOPTION_GET -> ADOPTION_RESPONSE_CREATE chain
-    ADOPTION_RESPONSE_CREATE(170, "✉️ Створити відгук", ADOPTION_GET),
+    ADOPTION_GIVE(61, "🤝 Віддати тварину", ADOPTION),
+    ADOPTION_SELECT_PET(611, "🐾 Обрати тварину", ADOPTION_GIVE),
+    ADOPTION_PET_DETAIL(6111, "", ADOPTION_SELECT_PET),      // Shows as paginated list in ADOPTION_GIVE
 
-    // ADOPTION_MY_RESPONSES -> ADOPTION_MY_RESPONSE_DETAIL chain
-    ADOPTION_MY_RESPONSE_DETAIL(171, "📄 Мій відгук", ADOPTION_MY_RESPONSES),
+    ADOPTION_ADD_PET(6112, "➕ Додати нову тварину", ADOPTION_SELECT_PET),   // Start form
 
-    // ADOPTION_MY_POSTS -> ADOPTION_POST_DETAIL chain
-    ADOPTION_POST_DETAIL(172, "📄 Оголошення", ADOPTION_MY_POSTS),
-    ADOPTION_RESPONSE_DETAIL(173, "📝 Відгук", ADOPTION_POST_DETAIL),
-    ADOPTION_POST_DELETE_CONFIRM(174, "🗑️ Видалити оголошення", ADOPTION_POST_DETAIL),
+    ADOPTION_ADD_COMMENT(612, "💬 Додати коментар", ADOPTION_GIVE),   // Start form
+    ADOPTION_TRY_CONFIRM(613, "✅ Підтвердити", ADOPTION_GIVE),   // If it can be done
+    ADOPTION_FINAL_CONFIRM(6131, "🏁 Підтвердити", ADOPTION_TRY_CONFIRM),     // Submit form
 
-    // FOSTER children (mirror ADOPTION)
-    FOSTER_GIVE(181, "🏠 Віддати тварину", FOSTER),
-    FOSTER_GET(182, "🐾 Отримати тварину", FOSTER),
-    FOSTER_MY_RESPONSES(183, "📋 Мої відгуки", FOSTER),
-    FOSTER_MY_POSTS(184, "📋 Мої оголошення", FOSTER),
+    ADOPTION_CLEAR(614, "🗑️ Очистити", ADOPTION_GIVE),
+    ADOPTION_CLEAR_CONFIRM(6141, "✅ Підтвердити", ADOPTION_CLEAR),
 
-    // PAGINATION STUBS
-    PAGINATION_PAGE_INDICATOR(300, "", null);
+    ADOPTION_GET(62, "🐾 Отримати тварину", ADOPTION),   // Shows by editing existing message
+    ADOPTION_GET_NEXT(621, "➡️ Наступна", ADOPTION_GET),
+    ADOPTION_RESPONSE_CREATE(622, "✉️ Відгукнутись", ADOPTION_GET),  // Start form for comment
+
+    ADOPTION_MY_RESPONSES(63, "✉️ Мої відгуки", ADOPTION),
+    ADOPTION_MY_RESPONSE_DETAIL(631, "", ADOPTION_MY_RESPONSES),  // Shows as paginated list in ADOPTION_MY_RESPONSES
+    ADOPTION_MY_RESPONSE_DETAIL_CANCEL(6311, "❌ Відмінити", ADOPTION_MY_RESPONSE_DETAIL),
+    ADOPTION_MY_RESPONSE_DETAIL_CANCEL_CONFIRM(63111, "✅ Підтвердити", ADOPTION_MY_RESPONSE_DETAIL_CANCEL),
+
+    ADOPTION_MY_POSTS(64, "📋 Мої оголошення", ADOPTION),
+    ADOPTION_POST_DETAIL(641, "", ADOPTION_MY_POSTS),      // Shows as paginated list in ADOPTION_MY_POSTS
+    ADOPTION_RESPONSE_DETAIL(6411, "", ADOPTION_POST_DETAIL),     // Shows as paginated list in ADOPTION_POST_DETAIL
+
+    ADOPTION_RESPONSE_DETAIL_TRY_CONFIRM(64111, "✅ Підтвердити", ADOPTION_RESPONSE_DETAIL),
+    ADOPTION_RESPONSE_DETAIL_CONFIRM(641111, "✅ Підтвердити", ADOPTION_RESPONSE_DETAIL_TRY_CONFIRM),
+
+    ADOPTION_RESPONSE_DETAIL_TRY_CANCEL(64112, "❌ Відхилити", ADOPTION_RESPONSE_DETAIL),
+    ADOPTION_RESPONSE_DETAIL_CANCEL(641121, "❌ Відхилити", ADOPTION_RESPONSE_DETAIL_TRY_CANCEL),
+
+    ADOPTION_POST_TRY_DELETE(6412, "🗑️ Видалити оголошення", ADOPTION_POST_DETAIL),
+    ADOPTION_POST_DELETE(64121, "✅ Підтвердити", ADOPTION_POST_TRY_DELETE),
+
+    // FOSTERING menu (7xx)
+    FOSTERING(7, "⏳ Перетримка", MENU),
+
+    FOSTERING_GIVE(71, "🤝 Почати перетримку", FOSTERING),
+    FOSTERING_SELECT_PET(711, "🐾 Обрати тварину", FOSTERING_GIVE),
+    FOSTERING_PET_DETAIL(7111, "", FOSTERING_SELECT_PET),      // Shows as paginated list in FOSTERING_GIVE
+
+    FOSTERING_ADD_PET(7112, "➕ Додати нову тварину", FOSTERING_SELECT_PET),   // Start form
+
+    FOSTERING_ADD_COMMENT(712, "💬 Додати коментар", FOSTERING_GIVE),   // Start form
+    FOSTERING_ADD_DURATION(713, "⏳ Обрати тривалість", FOSTERING_GIVE),   // Start form
+
+    FOSTERING_TRY_CONFIRM(714, "✅ Підтвердити", FOSTERING_GIVE),   // If it can be done
+    FOSTERING_FINAL_CONFIRM(7141, "🏁 Підтвердити", FOSTERING_TRY_CONFIRM),     // Submit form
+
+    FOSTERING_CLEAR(715, "🗑️ Очистити", FOSTERING_GIVE),
+    FOSTERING_CLEAR_CONFIRM(7151, "✅ Підтвердити", FOSTERING_CLEAR),
+
+    FOSTERING_GET(72, "🐾 Перетримати тварину", FOSTERING),   // Shows by editing existing message
+    FOSTERING_GET_NEXT(721, "➡️ Наступна", FOSTERING_GET),
+    FOSTERING_RESPONSE_CREATE(722, "✉️ Відгукнутись", FOSTERING_GET),  // Start form for comment
+
+    FOSTERING_MY_RESPONSES(73, "✉️ Мої відгуки", FOSTERING),
+    FOSTERING_MY_RESPONSE_DETAIL(731, "", FOSTERING_MY_RESPONSES),  // Shows as paginated list in FOSTERING_MY_RESPONSES
+    FOSTERING_MY_RESPONSE_DETAIL_CANCEL(7311, "❌ Відмінити", FOSTERING_MY_RESPONSE_DETAIL),
+    FOSTERING_MY_RESPONSE_DETAIL_CANCEL_CONFIRM(73111, "✅ Підтвердити", FOSTERING_MY_RESPONSE_DETAIL_CANCEL),
+
+    FOSTERING_MY_POSTS(74, "📋 Мої оголошення", FOSTERING),
+    FOSTERING_POST_DETAIL(741, "", FOSTERING_MY_POSTS),      // Shows as paginated list in FOSTERING_MY_POSTS
+    FOSTERING_RESPONSE_DETAIL(7411, "", FOSTERING_POST_DETAIL),     // Shows as paginated list in FOSTERING_POST_DETAIL
+
+    FOSTERING_RESPONSE_DETAIL_TRY_CONFIRM(74111, "✅ Підтвердити", FOSTERING_RESPONSE_DETAIL),
+    FOSTERING_RESPONSE_DETAIL_CONFIRM(741111, "✅ Підтвердити", FOSTERING_RESPONSE_DETAIL_TRY_CONFIRM),
+
+    FOSTERING_RESPONSE_DETAIL_TRY_CANCEL(74112, "❌ Відхилити", FOSTERING_RESPONSE_DETAIL),
+    FOSTERING_RESPONSE_DETAIL_CANCEL(741121, "❌ Відхилити", FOSTERING_RESPONSE_DETAIL_TRY_CANCEL),
+
+    FOSTERING_POST_TRY_DELETE(7412, "🗑️ Видалити оголошення", FOSTERING_POST_DETAIL),
+    FOSTERING_POST_DELETE(74121, "✅ Підтвердити", FOSTERING_POST_TRY_DELETE),
+
+    // PAGINATION STUB
+    PAGINATION_PAGE_INDICATOR(900, "", null);
 
     public static final String BACK_BUTTON_LABEL = "⬅️ Повернутись";
 

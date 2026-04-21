@@ -84,7 +84,7 @@ class TelegramUpdateRouterImplTest {
     @Test
     void route_callbackQuery_routesToHandler() {
         // given
-        Update update = TelegramUpdateFixtureUtil.withCallback("135,,0", 123L, "testuser", 123L, 1);
+        Update update = TelegramUpdateFixtureUtil.withCallback("45,,0", 123L, "testuser", 123L, 1);
         BotApiMethod<?> handlerResponse = mock(BotApiMethod.class);
         doReturn(handlerResponse).when(callbackHandler).handle(any());
 

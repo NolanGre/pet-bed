@@ -80,22 +80,13 @@ class InlineKeyboardBuilderTest {
         }
 
         @Test
-        void chain_build_returns_valid_InlineKeyboardMarkup() {
+        void chain_build_alid_InlineKeyboardMarkup() {
             var markup = InlineKeyboardBuilder.builder()
                     .navButtonsFor(CallbackId.PROFILE, 100L)
                     .build();
 
             assertThat(markup).isNotNull();
             assertThat(markup.getKeyboard()).isNotNull();
-        }
-
-        @Test
-        void PET_LIST_with_entityId_no_buttons_for_blank_labels() {
-            var markup = InlineKeyboardBuilder.builder()
-                    .navButtonsFor(CallbackId.PET_LIST, 1L)
-                    .build();
-
-            assertThat(markup.getKeyboard()).isEmpty();
         }
 
         @Test
@@ -151,7 +142,7 @@ class InlineKeyboardBuilderTest {
         }
 
         @Test
-        void chain_build_returns_valid_InlineKeyboardMarkup() {
+        void chain_build_alid_InlineKeyboardMarkup() {
             var markup = InlineKeyboardBuilder.builder()
                     .navButtonsFor(CallbackId.PROFILE)
                     .build();
@@ -174,10 +165,10 @@ class InlineKeyboardBuilderTest {
         @Test
         void with_some_blank_labels_creates_only_non_blank() {
             var markup = InlineKeyboardBuilder.builder()
-                    .navButtonsFor(CallbackId.PET_LIST)
+                    .navButtonsFor(CallbackId.MY_PETS)
                     .build();
 
-            assertThat(markup.getKeyboard()).isEmpty();
+            assertThat(markup.getKeyboard()).hasSize(1);
         }
 
         @Test
@@ -218,7 +209,7 @@ class InlineKeyboardBuilderTest {
         }
 
         @Test
-        void chain_build_returns_valid_InlineKeyboardMarkup() {
+        void chain_build_alid_InlineKeyboardMarkup() {
             var markup = InlineKeyboardBuilder.builder()
                     .backButtonFor(CallbackId.PROFILE)
                     .build();
@@ -285,7 +276,7 @@ class InlineKeyboardBuilderTest {
         }
 
         @Test
-        void chain_build_returns_valid_InlineKeyboardMarkup() {
+        void chain_build_alid_InlineKeyboardMarkup() {
             var markup = InlineKeyboardBuilder.builder()
                     .backButtonTo(CallbackId.PROFILE)
                     .build();
@@ -314,7 +305,7 @@ class InlineKeyboardBuilderTest {
             Page<CallbackListItem> page = new PageImpl<>(List.of(
                     new CallbackListItem(CallbackId.PET_DETAIL, 1L, "Барсик")
             ), PageRequest.of(0, 1), 1);
-            var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber());
+            var currentCallback = CallbackData.of(CallbackId.MY_PETS, null, page.getNumber());
 
             var markup = InlineKeyboardBuilder.builder()
                     .paginatedList(page, currentCallback)
@@ -329,7 +320,7 @@ class InlineKeyboardBuilderTest {
                     new CallbackListItem(CallbackId.PET_DETAIL, 1L, "Барсик"),
                     new CallbackListItem(CallbackId.PET_DETAIL, 2L, "Мурчик")
             ), PageRequest.of(1, 1), 2);
-            var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber());
+            var currentCallback = CallbackData.of(CallbackId.MY_PETS, null, page.getNumber());
 
             var markup = InlineKeyboardBuilder.builder()
                     .paginatedList(page, currentCallback)
@@ -345,7 +336,7 @@ class InlineKeyboardBuilderTest {
             Page<CallbackListItem> page = new PageImpl<>(List.of(
                     new CallbackListItem(CallbackId.PET_DETAIL, 1L, "Барсик")
             ), PageRequest.of(0, 1), 1);
-            var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber());
+            var currentCallback = CallbackData.of(CallbackId.MY_PETS, null, page.getNumber());
 
             var markup = InlineKeyboardBuilder.builder()
                     .paginatedList(page, currentCallback)
@@ -362,7 +353,7 @@ class InlineKeyboardBuilderTest {
             Page<CallbackListItem> page = new PageImpl<>(List.of(
                     new CallbackListItem(CallbackId.PET_DETAIL, 2L, "Мурчик")
             ), PageRequest.of(0, 1), 1);
-            var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber());
+            var currentCallback = CallbackData.of(CallbackId.MY_PETS, null, page.getNumber());
 
             var markup = InlineKeyboardBuilder.builder()
                     .paginatedList(page, currentCallback)
@@ -379,7 +370,7 @@ class InlineKeyboardBuilderTest {
             Page<CallbackListItem> page = new PageImpl<>(List.of(
                     new CallbackListItem(CallbackId.PET_DETAIL, 1L, "Барсик")
             ), PageRequest.of(1, 1), 2);
-            var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber());
+            var currentCallback = CallbackData.of(CallbackId.MY_PETS, null, page.getNumber());
 
             var markup = InlineKeyboardBuilder.builder()
                     .paginatedList(page, currentCallback)
@@ -393,12 +384,12 @@ class InlineKeyboardBuilderTest {
         }
 
         @Test
-        void chain_build_returns_valid_InlineKeyboardMarkup() {
+        void chain_build_alid_InlineKeyboardMarkup() {
             List<CallbackListItem> items = List.of(
                     new CallbackListItem(CallbackId.PET_DETAIL, 1L, "Барсик")
             );
             Page<CallbackListItem> page = new PageImpl<>(items, PageRequest.of(0, 1), 1);
-            var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber());
+            var currentCallback = CallbackData.of(CallbackId.MY_PETS, null, page.getNumber());
             var markup = InlineKeyboardBuilder.builder()
                     .paginatedList(page, currentCallback)
                     .build();
@@ -409,7 +400,7 @@ class InlineKeyboardBuilderTest {
         void page_without_content_nothing_added() {
             List<CallbackListItem> items = List.of();
             Page<CallbackListItem> page = new PageImpl<>(items, PageRequest.of(0, 1), 0);
-            var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber());
+            var currentCallback = CallbackData.of(CallbackId.MY_PETS, null, page.getNumber());
             var markup = InlineKeyboardBuilder.builder()
                     .paginatedList(page, currentCallback)
                     .build();
@@ -419,7 +410,7 @@ class InlineKeyboardBuilderTest {
         @Test
         void page_with_0_items() {
             Page<CallbackListItem> page = Page.empty(PageRequest.of(0, 1));
-            var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber());
+            var currentCallback = CallbackData.of(CallbackId.MY_PETS, null, page.getNumber());
             var markup = InlineKeyboardBuilder.builder()
                     .paginatedList(page, currentCallback)
                     .build();
@@ -447,7 +438,7 @@ class InlineKeyboardBuilderTest {
                     new CallbackListItem(CallbackId.PET_DETAIL, 1L, "Барсик")
             );
             Page<CallbackListItem> page = new PageImpl<>(items, PageRequest.of(0, 1), 1);
-            var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber());
+            var currentCallback = CallbackData.of(CallbackId.MY_PETS, null, page.getNumber());
             var markup = InlineKeyboardBuilder.builder()
                     .navButtonsFor(CallbackId.MENU)
                     .paginatedList(page, currentCallback)
@@ -461,7 +452,7 @@ class InlineKeyboardBuilderTest {
                     new CallbackListItem(CallbackId.PET_DETAIL, 1L, "Барсик")
             );
             Page<CallbackListItem> page = new PageImpl<>(items, PageRequest.of(0, 1), 1);
-            var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber());
+            var currentCallback = CallbackData.of(CallbackId.MY_PETS, null, page.getNumber());
             var markup = InlineKeyboardBuilder.builder()
                     .backButtonFor(CallbackId.PROFILE)
                     .paginatedList(page, currentCallback)
@@ -475,7 +466,7 @@ class InlineKeyboardBuilderTest {
                     new CallbackListItem(CallbackId.PET_DETAIL, 1L, "Барсик")
             );
             Page<CallbackListItem> page = new PageImpl<>(items, PageRequest.of(0, 1), 1);
-            var currentCallback = CallbackData.of(CallbackId.PET_LIST, null, page.getNumber());
+            var currentCallback = CallbackData.of(CallbackId.MY_PETS, null, page.getNumber());
             var markup = InlineKeyboardBuilder.builder()
                     .navButtonsFor(CallbackId.PROFILE)
                     .backButtonFor(CallbackId.PROFILE)

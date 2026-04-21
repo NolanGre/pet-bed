@@ -117,11 +117,10 @@ class ProfileChangeTypeHandlerTest {
             assertThat(hasConfirmButton).isTrue();
 
             // Verify callback data contains PROFILE_CHANGE_TYPE_CONFIRM id (112) with entityId
-            String expectedCallbackData = "112," + userId + ",";
             var hasCorrectCallback = replyMarkup.getKeyboard().stream()
                     .flatMap(Collection::stream)
                     .anyMatch(btn -> btn.getCallbackData() != null
-                            && btn.getCallbackData().startsWith("112," + userId + ","));
+                            && btn.getCallbackData().startsWith("211," + userId + ","));
 
             assertThat(hasCorrectCallback).isTrue();
         }
@@ -146,7 +145,7 @@ class ProfileChangeTypeHandlerTest {
 
             // Find button with "⬅️ Повернутись"
             var hasBackButton = replyMarkup.getKeyboard().stream()
-                    .flatMap(row -> row.stream())
+                    .flatMap(Collection::stream)
                     .anyMatch(btn -> btn.getText().contains("⬅️ Повернутись"));
 
             assertThat(hasBackButton).isTrue();
@@ -154,7 +153,7 @@ class ProfileChangeTypeHandlerTest {
             // Verify callback data contains PROFILE id (110) - parent
             String expectedCallbackPrefix = String.valueOf(CallbackId.PROFILE.id());
             var hasCorrectCallback = replyMarkup.getKeyboard().stream()
-                    .flatMap(row -> row.stream())
+                    .flatMap(Collection::stream)
                     .anyMatch(btn -> btn.getCallbackData() != null
                             && btn.getCallbackData().startsWith(expectedCallbackPrefix + ","));
 

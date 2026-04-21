@@ -75,16 +75,16 @@ class CallbackDataTest {
         void of_createsWithCallbackId() {
             var result = CallbackData.of(CallbackId.PROFILE, null, null);
 
-            assertThat(result.callbackId()).isEqualTo(110);
+            assertThat(result.callbackId()).isEqualTo(2);
             assertThat(result.entityId()).isNull();
             assertThat(result.offset()).isNull();
         }
 
         @Test
         void of_withEntityAndOffset() {
-            var result = CallbackData.of(CallbackId.PET_DETAIL, 42L, 5);
+            var result = CallbackData.of(CallbackId.MY_PETS, 42L, 5);
 
-            assertThat(result.callbackId()).isEqualTo(123);
+            assertThat(result.callbackId()).isEqualTo(3);
             assertThat(result.entityId()).isEqualTo(42L);
             assertThat(result.offset()).isEqualTo(5);
         }
@@ -118,7 +118,7 @@ class CallbackDataTest {
     class CallbackIdEnum {
         @Test
         void callbackIdEnum_returnsCorrectEnum() {
-            var data = CallbackData.from("110,,");
+            var data = CallbackData.from("2,,");
 
             var result = data.callbackIdEnum();
 
@@ -139,31 +139,31 @@ class CallbackDataTest {
     class Pagination {
         @Test
         void withPrevPage_decrementsOffset() {
-            var data = CallbackData.of(CallbackId.PET_LIST, null, 3);
+            var data = CallbackData.of(CallbackId.MY_PETS, null, 3);
             assertThat(data.withPrevPage().offset()).isEqualTo(2);
         }
 
         @Test
         void withNextPage_incrementsOffset() {
-            var data = CallbackData.of(CallbackId.PET_LIST, null, 3);
+            var data = CallbackData.of(CallbackId.MY_PETS, null, 3);
             assertThat(data.withNextPage().offset()).isEqualTo(4);
         }
 
         @Test
         void withPrevPage_nullOffset_treatsAsZero() {
-            var data = CallbackData.of(CallbackId.PET_LIST, null, null);
+            var data = CallbackData.of(CallbackId.MY_PETS, null, null);
             assertThat(data.withPrevPage().offset()).isEqualTo(-1);
         }
 
         @Test
         void withNextPage_nullOffset_treatsAsZero() {
-            var data = CallbackData.of(CallbackId.PET_LIST, null, null);
+            var data = CallbackData.of(CallbackId.MY_PETS, null, null);
             assertThat(data.withNextPage().offset()).isEqualTo(1);
         }
 
         @Test
         void withPrevPage_preservesCallbackIdAndEntityId() {
-            var data = CallbackData.of(CallbackId.PET_LIST, 42L, 2);
+            var data = CallbackData.of(CallbackId.MY_PETS, 42L, 2);
             var result = data.withPrevPage();
             assertThat(result.callbackId()).isEqualTo(data.callbackId());
             assertThat(result.entityId()).isEqualTo(42L);
@@ -171,7 +171,7 @@ class CallbackDataTest {
 
         @Test
         void withNextPage_preservesCallbackIdAndEntityId() {
-            var data = CallbackData.of(CallbackId.PET_LIST, 42L, 2);
+            var data = CallbackData.of(CallbackId.MY_PETS, 42L, 2);
             var result = data.withNextPage();
             assertThat(result.callbackId()).isEqualTo(data.callbackId());
             assertThat(result.entityId()).isEqualTo(42L);

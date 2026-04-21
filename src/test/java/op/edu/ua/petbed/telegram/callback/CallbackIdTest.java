@@ -6,8 +6,14 @@ import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class CallbackIdTest {
@@ -18,7 +24,7 @@ class CallbackIdTest {
         void id_returns_correct_value() {
             var result = CallbackId.PROFILE;
 
-            assertThat(result.id()).isEqualTo(110);
+            assertThat(result.id()).isEqualTo(2);
         }
 
         @Test
@@ -32,13 +38,34 @@ class CallbackIdTest {
     @Nested
     class Hierarchy {
         @Test
+        void allIdsShouldBeUnique() {
+            Map<Integer, List<CallbackId>> duplicates = Arrays.stream(CallbackId.values())
+                    .collect(Collectors.groupingBy(CallbackId::id))
+                    .entrySet().stream()
+                    .filter(e -> e.getValue().size() > 1)
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+            assertTrue(duplicates.isEmpty(),
+                    "Found duplicate CallbackId values:\n" +
+                            duplicates.entrySet().stream()
+                                    .map(e -> "  id=%d → %s".formatted(
+                                            e.getKey(),
+                                            e.getValue().stream()
+                                                    .map(Enum::name)
+                                                    .collect(Collectors.joining(", "))
+                                    ))
+                                    .collect(Collectors.joining("\n"))
+            );
+        }
+
+        @Test
         void children_returns_direct_children_only() {
             var menu = CallbackId.MENU;
             var children = menu.children();
 
             assertThat(children)
                     .hasSize(6)
-                    .contains(CallbackId.PROFILE, CallbackId.MY_PETS, CallbackId.FEED, CallbackId.SEARCH, CallbackId.FOSTER, CallbackId.ADOPTION);
+                    .contains(CallbackId.PROFILE, CallbackId.MY_PETS, CallbackId.FEED, CallbackId.LOST, CallbackId.FOSTERING, CallbackId.ADOPTION);
         }
 
         @Test
@@ -70,7 +97,7 @@ class CallbackIdTest {
     class Parsing {
         @Test
         void fromId_returns_correct_enum() {
-            var result = CallbackId.fromId(110);
+            var result = CallbackId.fromId(2);
 
             assertThat(result).isEqualTo(CallbackId.PROFILE);
         }
