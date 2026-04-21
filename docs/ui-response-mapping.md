@@ -39,8 +39,8 @@ private BotApiMethod<?> mapToResponse(CommandContext context, Page<PetDTO> pets)
 
 private InlineKeyboardMarkup petListKeyboard(Page<PetDTO> pets) {
     return InlineKeyboardBuilder.builder()
-            .navButtonsFor(CallbackId.PET_LIST)
-            .backButtonFor(CallbackId.PET_LIST)
+            .navButtonsFor(CallbackId.MY_PETS)
+            .backButtonFor(CallbackId.MY_PETS)
             .paginatedList(pets)
             .build();
 }
@@ -81,6 +81,8 @@ All keyboards are built using `InlineKeyboardBuilder`.
 | Method                                       | Description                                                            |
 |----------------------------------------------|------------------------------------------------------------------------|
 | `navButtonsFor(CallbackId)`                  | Creates buttons for all children                                       |
+| `navButtonsFor(CallbackId, Predicate)`      | Creates buttons for children that match predicate                         |
+| `navButtonsFor(CallbackId, Long, Predicate)` | Creates buttons with entityId for children that match predicate        |
 | `backButtonFor(CallbackId)`                  | Adds back button to parent                                             |
 | `backButtonTo(CallbackId)`                   | Adds back button to specific id                                        |
 | `paginatedList(Page<CallbackListItem> page)` | Creates pagination buttons: "<", "1/n", ">", and show list of elements |
@@ -94,7 +96,7 @@ InlineKeyboardBuilder.builder()
         .backButtonFor(getCallbackId())
         .build();
 
-// Pet list 
+// Pet list
 InlineKeyboardBuilder.builder()
         .navButtonsFor(getCallbackId())
         .backButtonFor(getCallbackId())
@@ -107,6 +109,17 @@ InlineKeyboardBuilder.builder()
         .backButtonFor(getCallbackId())
         .build();
 
+// Conditional buttons - filter children by predicate
+InlineKeyboardBuilder.builder()
+        .navButtonsFor(CallbackId.PET_DETAIL, child -> child != CallbackId.PET_DELETE)
+        .backButtonFor(CallbackId.PET_DETAIL)
+        .build();
+
+// Conditional with entityId
+InlineKeyboardBuilder.builder()
+        .navButtonsFor(CallbackId.PET_DETAIL, petId, pet -> pet != CallbackId.PET_DELETE)
+        .backButtonFor(CallbackId.PET_DETAIL)
+        .build();
 ```
 
 ---

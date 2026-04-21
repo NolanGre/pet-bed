@@ -13,6 +13,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.function.Predicate;
 
 @NullMarked
 public class InlineKeyboardBuilder {
@@ -54,17 +55,30 @@ public class InlineKeyboardBuilder {
 
     public InlineKeyboardBuilder navButtonsFor(CallbackId currentCallbackId) {
         checkNotAdded(AddedMethod.NAV_BUTTONS, "navButtonsFor");
-        return navButtonsForInternal(currentCallbackId, null);
+        return navButtonsForInternal(currentCallbackId, null, null);
     }
 
     public InlineKeyboardBuilder navButtonsFor(CallbackId currentCallbackId, @Nullable Long entityId) {
         checkNotAdded(AddedMethod.NAV_BUTTONS, "navButtonsFor");
-        return navButtonsForInternal(currentCallbackId, entityId);
+        return navButtonsForInternal(currentCallbackId, entityId, null);
     }
 
-    private InlineKeyboardBuilder navButtonsForInternal(CallbackId currentCallbackId, @Nullable Long entityId) {
+    public InlineKeyboardBuilder navButtonsFor(CallbackId currentCallbackId, Predicate<CallbackId> filter) {
+        checkNotAdded(AddedMethod.NAV_BUTTONS, "navButtonsFor");
+        return navButtonsForInternal(currentCallbackId, null, filter);
+    }
+
+    public InlineKeyboardBuilder navButtonsFor(CallbackId currentCallbackId, @Nullable Long entityId, Predicate<CallbackId> filter) {
+        checkNotAdded(AddedMethod.NAV_BUTTONS, "navButtonsFor");
+        return navButtonsForInternal(currentCallbackId, entityId, filter);
+    }
+
+    private InlineKeyboardBuilder navButtonsForInternal(CallbackId currentCallbackId, @Nullable Long entityId, @Nullable Predicate<CallbackId> filter) {
         List<CallbackId> children = currentCallbackId.children();
         for (CallbackId child : children) {
+            if (filter != null && !filter.test(child)) {
+                continue;
+            }
             String label = child.label();
             if (label != null && !label.isBlank()) {
                 String callbackData = CallbackData.of(child, entityId, null).toString();

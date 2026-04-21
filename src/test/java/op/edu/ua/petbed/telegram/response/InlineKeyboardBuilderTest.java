@@ -55,7 +55,7 @@ class InlineKeyboardBuilderTest {
         @Test
         void with_null_entityId_creates_buttons_without_entity() {
             var markup = InlineKeyboardBuilder.builder()
-                    .navButtonsFor(CallbackId.PROFILE, null)
+                    .navButtonsFor(CallbackId.PROFILE, (Long) null)
                     .build();
 
             assertThat(markup.getKeyboard()).isNotEmpty();
@@ -189,6 +189,88 @@ class InlineKeyboardBuilderTest {
                     .build();
 
             assertThat(markup.getKeyboard()).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("navButtonsFor(CallbackId, Predicate<CallbackId>)")
+    class NavButtonsForWithPredicate {
+
+        @Test
+        void filter_excludes_buttons_that_fail_predicate() {
+            // FEED has children: FEED_RADIUS, FEED_GEOLOCATION, FEED_CREATE, FEED_MY_POSTS, FEED_VIEW
+            var markup = InlineKeyboardBuilder.builder()
+                    .navButtonsFor(CallbackId.FEED, child -> child != CallbackId.FEED_CREATE)
+                    .build();
+
+            var row = markup.getKeyboard().getFirst();
+            boolean hasExcludedButton = row.stream()
+                    .anyMatch(b -> b.getCallbackData() != null && b.getCallbackData().contains("FEED_CREATE"));
+            assertThat(hasExcludedButton).isFalse();
+        }
+
+        @Test
+        void filter_includes_buttons_that_pass_predicate() {
+            // FEED has children: FEED_RADIUS, FEED_GEOLOCATION, FEED_CREATE, FEED_MY_POSTS, FEED_VIEW
+            var markup = InlineKeyboardBuilder.builder()
+                    .navButtonsFor(CallbackId.FEED, child -> child == CallbackId.FEED_CREATE)
+                    .build();
+
+            assertThat(markup.getKeyboard()).isNotEmpty();
+        }
+
+        @Test
+        void filter_accept_all_includes_all_buttons() {
+            // FEED has multiple children with non-blank labels
+            var markup = InlineKeyboardBuilder.builder()
+                    .navButtonsFor(CallbackId.FEED, child -> true)
+                    .build();
+
+            var row = markup.getKeyboard().getFirst();
+            assertThat(row).hasSizeGreaterThan(1);
+        }
+
+        @Test
+        void filter_reject_all_excludes_all_buttons() {
+            var markup = InlineKeyboardBuilder.builder()
+                    .navButtonsFor(CallbackId.FEED, child -> false)
+                    .build();
+
+            assertThat(markup.getKeyboard()).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("navButtonsFor(CallbackId, Long, Predicate<CallbackId>)")
+    class NavButtonsForWithEntityIdAndPredicate {
+
+        @Test
+        void with_entityId_and_filter_works() {
+            Long entityId = 123L;
+
+            // FEED has children: FEED_RADIUS, FEED_GEOLOCATION, FEED_CREATE, FEED_MY_POSTS, FEED_VIEW
+            var markup = InlineKeyboardBuilder.builder()
+                    .navButtonsFor(CallbackId.FEED, entityId, child -> child == CallbackId.FEED_CREATE)
+                    .build();
+
+            assertThat(markup.getKeyboard()).isNotEmpty();
+            var button = markup.getKeyboard().getFirst().getFirst();
+            assertThat(button.getCallbackData()).contains("123");
+        }
+
+        @Test
+        void filter_excludes_buttons_with_entityId() {
+            Long entityId = 456L;
+
+            // FEED has children: FEED_RADIUS, FEED_GEOLOCATION, FEED_CREATE, FEED_MY_POSTS, FEED_VIEW
+            var markup = InlineKeyboardBuilder.builder()
+                    .navButtonsFor(CallbackId.FEED, entityId, child -> child != CallbackId.FEED_CREATE)
+                    .build();
+
+            var row = markup.getKeyboard().getFirst();
+            boolean hasExcluded = row.stream()
+                    .anyMatch(b -> b.getCallbackData() != null && b.getCallbackData().contains("FEED_CREATE"));
+            assertThat(hasExcluded).isFalse();
         }
     }
 
