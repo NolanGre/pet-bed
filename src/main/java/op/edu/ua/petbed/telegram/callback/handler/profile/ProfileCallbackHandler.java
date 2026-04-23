@@ -64,8 +64,8 @@ public class ProfileCallbackHandler implements CallbackHandler {
 
     private String formatUserType(UserType type) {
         return type == UserType.VOLUNTEER
-                ? "🌟 Волонтер"
-                : "👤 Звичайний";
+                ? "Волонтер"
+                : "Звичайний";
     }
 
     private String getTypeDescription(UserType type) {

@@ -18,7 +18,9 @@ public enum Command {
     START("/start"),
     MENU("/menu"),
     PROFILE("/profile"),
-    DEFAULT("");
+    DEFAULT(""),
+    SUBMIT_FORM("/submit"),
+    CANCEL_FORM("/cancel");
 
     private final String label;
 

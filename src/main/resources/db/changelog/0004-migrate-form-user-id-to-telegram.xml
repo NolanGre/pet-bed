@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.11.xsd">
+
+    <changeSet id="0004-01-change-pk-to-telegram-id" author="NolanGre">
+        <dropForeignKeyConstraint baseTableName="user_form_states" constraintName="fk_user_form_states_user"/>
+    </changeSet>
+
+    <changeSet id="0004-02-rename-user-id-to-telegram-id" author="NolanGre">
+        <renameColumn tableName="user_form_states" oldColumnName="user_id" newColumnName="telegram_id" columnDataType="BIGINT"/>
+    </changeSet>
+
+    <changeSet id="0004-03-add-foreign-key-to-telegram-id" author="NolanGre">
+        <addForeignKeyConstraint baseTableName="user_form_states"
+                                 constraintName="fk_user_form_states_user"
+                                 referencedTableName="users"
+                                 referencedColumnNames="telegram_id"
+                                 baseColumnNames="telegram_id"/>
+    </changeSet>
+
+</databaseChangeLog>

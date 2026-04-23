@@ -19,7 +19,7 @@ public class PetBedException extends RuntimeException {
     @RequiredArgsConstructor
     public enum ErrorCode {
         UNSUPPORTED_UPDATE("This type of update is not supported"),
-        INTERNAL_ERROR("Something went wrong. Please try again later"),
+        INTERNAL_ERROR("🥶 Ой ой, щось пішло не так"),
         USER_TELEGRAM_ID_REQUIRED("Telegram ID is required to create a user"),
         USER_TELEGRAM_USERNAME_REQUIRED("Telegram username is required to create a user"),
         USER_NOT_PERSISTED("User is not persisted yet"),
@@ -27,7 +27,7 @@ public class PetBedException extends RuntimeException {
         AUTHORIZATION_REQUIRED("This action requires volunteer status"),
         UNKNOWN_COMMAND("Unknown command. Use /help"),
         INVALID_CALLBACK("Invalid callback data"),
-        VALIDATION_ERROR("Invalid data");
+        INVALID_FORM_INPUT("❌ Непідтримуваний тип повідомлення.");
 
         private final String userMessage;
     }

@@ -46,10 +46,10 @@ class TelegramUpdateRouterImplTest {
     CommandHandler profileHandler;
 
     @Mock
-    CommandHandler publishHandler;
+    CallbackHandler callbackHandler;
 
     @Mock
-    CallbackHandler callbackHandler;
+    FormService formService;
 
     private TelegramUpdateRouterImpl underTest;
 
@@ -63,7 +63,7 @@ class TelegramUpdateRouterImplTest {
         given(profileHandler.getCommand()).willReturn(Command.PROFILE);
         given(callbackHandler.getCallbackId()).willReturn(CallbackId.FEED_VIEW);
 
-        underTest = new TelegramUpdateRouterImpl(authService, commandHandlers, callbackHandlers);
+        underTest = new TelegramUpdateRouterImpl(authService, commandHandlers, callbackHandlers, formService);
     }
 
     @Test

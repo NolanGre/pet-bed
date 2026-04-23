@@ -11,7 +11,7 @@ public enum CallbackId {
 
     // PROFILE menu (2xx)
     PROFILE(2, "👤 Профіль", MENU),
-    PROFILE_CHANGE_TYPE(21, "Змінити тип профілю", PROFILE),
+    PROFILE_CHANGE_TYPE(21, "🧐 Змінити тип профілю", PROFILE),
     PROFILE_CHANGE_TYPE_CONFIRM(211, "✓ Підтвердити зміну", PROFILE_CHANGE_TYPE),
 
     // MY_PETS menu (3xx)
@@ -168,10 +168,6 @@ public enum CallbackId {
         return parent;
     }
 
-    public boolean hasParent() {
-        return parent != null;
-    }
-
     public String backButtonLabel() {
         return BACK_BUTTON_LABEL;
     }
@@ -183,15 +179,8 @@ public enum CallbackId {
                 .orElseThrow(() -> new PetBedException("Unknown callback id: " + id, PetBedException.ErrorCode.INVALID_CALLBACK));
     }
 
-    public static CallbackId fromId(String id) {
-        if (id == null || id.isBlank()) {
-            throw new PetBedException("Callback id is required", PetBedException.ErrorCode.INVALID_CALLBACK);
-        }
-        try {
-            return fromId(Integer.parseInt(id));
-        } catch (NumberFormatException e) {
-            throw new PetBedException("Invalid callback id format: " + id, PetBedException.ErrorCode.INVALID_CALLBACK);
-        }
+    public boolean isPaginated() {
+        return children().stream().anyMatch(child -> child.label().isBlank());
     }
 
     public static String toMermaidGraph() {

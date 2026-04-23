@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.11.xsd">
+
+    <changeSet id="0003-01-add-form-state-columns" author="NolanGre">
+        <addColumn tableName="user_form_states">
+            <column name="chat_id" type="BIGINT">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="0003-02-add-return-callback" author="NolanGre">
+        <addColumn tableName="user_form_states">
+            <column name="return_callback" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="0003-03-rename-collected-data-column" author="NolanGre">
+        <renameColumn tableName="user_form_states" oldColumnName="collected_data" newColumnName="raw_steps" columnDataType="JSONB"/>
+    </changeSet>
+
+    <changeSet id="0003-04-remove-unused-current-step" author="NolanGre">
+        <dropColumn tableName="user_form_states" columnName="current_step"/>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,193 @@
+package op.edu.ua.petbed.telegram.service;
+
+import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import op.edu.ua.petbed.common.exceptions.PetBedException;
+import op.edu.ua.petbed.telegram.callback.CallbackId;
+import op.edu.ua.petbed.telegram.form.FormEntity;
+import op.edu.ua.petbed.telegram.form.FormRepository;
+import op.edu.ua.petbed.telegram.form.handler.FormSubmissionHandler;
+import op.edu.ua.petbed.telegram.form.scheme.FormInput;
+import op.edu.ua.petbed.telegram.form.scheme.FormStep;
+import op.edu.ua.petbed.telegram.form.scheme.FormType;
+import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
+import op.edu.ua.petbed.telegram.response.ResponseBuilder;
+import org.jspecify.annotations.NullMarked;
+import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+/**
+ * Manages the full lifecycle of user forms: start, input processing, confirmation, and cancellation.
+ */
+@NullMarked
+@Slf4j
+@Service
+public class FormService {
+
+    private final FormRepository formRepository;
+    private final Map<FormType, FormSubmissionHandler> handlersMap;
+
+    public FormService(FormRepository formRepository, List<FormSubmissionHandler> handlers) {
+        this.formRepository = formRepository;
+        this.handlersMap = Map.copyOf(handlers.stream()
+                .collect(Collectors.toMap(FormSubmissionHandler::getFormType, Function.identity())));
+
+        log.debug("Registered form submission handlers: {}", handlersMap.keySet());
+    }
+
+    /**
+     * Starts a new form session for the user.
+     * Deletes any existing form before creating a new one.
+     * Returns the first step prompt.
+     */
+    @Transactional
+    public BotApiMethod<?> startForm(FormType type, CallbackId returnCallback, Long telegramUserId, Long chatId) {
+        formRepository.deleteById(telegramUserId);
+
+        FormEntity entity = FormEntity.initiate(telegramUserId, chatId, type, returnCallback);
+        formRepository.save(entity);
+
+        return ResponseBuilder.telegram()
+                .chatId(chatId)
+                .text(entity.nextStep().prompt() + "\n\nℹ️ Для скасування форми /cancel")
+                .build();
+    }
+
+    /**
+     * Processes user input for the current step.
+     * Validates input — returns error if invalid.
+     * Saves answer and returns next prompt or confirmation request if form is complete.
+     */
+    @Transactional
+    public BotApiMethod<?> processInput(FormInput input, Long telegramUserId) {
+        var entity = formRepository.findById(telegramUserId).orElse(null);
+
+        if (entity == null) {
+            return noActiveFormMessage(telegramUserId);
+        }
+
+        FormStep step = entity.nextStep();
+
+        if (!step.validate(input)) {
+            return inputValidationMessage(step, entity);
+        }
+
+        entity.applyStep(input);
+        formRepository.save(entity);
+
+        if (entity.isComplete()) {
+            return formCompleteMessage(entity.getChatId());
+        }
+
+        return ResponseBuilder.telegram()
+                .chatId(entity.getChatId())
+                .text(entity.nextStep().prompt())
+                .build();
+    }
+
+    /**
+     * Confirms the completed form.
+     * Converts collected data to DTO, delegates to the appropriate handler, deletes the form.
+     */
+    @Transactional
+    public BotApiMethod<?> confirmForm(Long telegramUserId) {
+        var entity = formRepository.findById(telegramUserId).orElse(null);
+
+        if (entity == null) {
+            return noActiveFormMessage(telegramUserId);
+        }
+
+        if (!entity.isComplete()) {
+            return formNotCompleteMessage(entity.getChatId());
+        }
+
+        FormSubmissionHandler handler = handlersMap.get(entity.getFormType());
+        if (handler == null) {
+            throw new PetBedException("No handler for form type: " + entity.getFormType(), PetBedException.ErrorCode.INTERNAL_ERROR);
+        }
+
+        var result = handler.handle(entity);
+        formRepository.delete(entity);
+
+        return result;
+    }
+
+    /**
+     * Cancels the active form and returns the user to the returnCallback screen.
+     */
+    @Transactional
+    public BotApiMethod<?> cancelForm(Long telegramUserId) {
+        var entity = formRepository.findById(telegramUserId).orElse(null);
+
+        if (entity == null) {
+            return noActiveFormMessage(telegramUserId);
+        }
+
+        Long chatId = entity.getChatId();
+        CallbackId returnCallbackId = entity.getReturnCallback();
+
+        formRepository.delete(entity);
+
+        return formCancelledMessage(chatId, returnCallbackId);
+    }
+
+    /**
+     * Returns true if the user currently has an active form.
+     */
+    public boolean hasActiveForm(Long telegramUserId) {
+        return formRepository.existsById(telegramUserId);
+    }
+
+    private static BotApiMethod<?> noActiveFormMessage(Long chatId) {
+        return ResponseBuilder.telegram()
+                .chatId(chatId)
+                .text("📭 У вас немає активних форм")
+                .build();
+    }
+
+    private static BotApiMethod<?> inputValidationMessage(FormStep step, FormEntity entity) {
+        String errorMessage = switch (step.input()) {
+            case FormInput.Text _ -> "ℹ️ Очікується текст. Надішліть повідомленням.";
+            case FormInput.Photo _ -> "ℹ️ Очікується фото. Надішліть фото.";
+            case FormInput.Location _ -> "ℹ️ Очікується геолокація. Надішліть геолокацію.";
+        };
+        return ResponseBuilder.telegram()
+                .chatId(entity.getChatId())
+                .text(errorMessage)
+                .build();
+    }
+
+    private static BotApiMethod<?> formCompleteMessage(Long chatId) {
+        return ResponseBuilder.telegram()
+                .chatId(chatId)
+                .text("""
+                        ✅ Ви завершили заповнення форми!
+                        
+                        ✏️ Напишіть /submit щоб надіслати
+                        🗑️ Або /cancel щоб скасувати
+                        """)
+                .build();
+    }
+
+    private static BotApiMethod<?> formNotCompleteMessage(Long chatId) {
+        return ResponseBuilder.telegram()
+                .chatId(chatId)
+                .text("⛔ Форма ще не заповнена")
+                .build();
+    }
+
+    private static BotApiMethod<?> formCancelledMessage(Long chatId, CallbackId returnCallback) {
+        return ResponseBuilder.telegram()
+                .chatId(chatId)
+                .text("🗑️ Форму скасовано")
+                .keyboard(InlineKeyboardBuilder.builder()
+                        .backButtonTo(returnCallback)
+                        .build())
+                .build();
+    }
+}

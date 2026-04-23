@@ -2,20 +2,19 @@ package op.edu.ua.petbed.user.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.dto.UserDTO;
+import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.user.UserService;
 import op.edu.ua.petbed.user.model.User;
 import op.edu.ua.petbed.user.repository.UserRepository;
 import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 @NullMarked
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class UserServiceImpl implements UserService {  //TODO: add or update tests to check @Validation correctness
+public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
@@ -27,7 +26,7 @@ public class UserServiceImpl implements UserService {  //TODO: add or update tes
                     log.info("Created new user: id={}, telegramId={}", newUser.getIdOrThrow(), telegramId);
                     return newUser;
                 });
-        
+
         log.debug("Retrieved existing user: id={}, telegramId={}", user.getIdOrThrow(), telegramId);
         return toDto(user);
     }

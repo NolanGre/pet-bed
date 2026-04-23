@@ -11,13 +11,16 @@ import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
 import op.edu.ua.petbed.telegram.command.Command;
 import op.edu.ua.petbed.telegram.command.CommandContext;
 import op.edu.ua.petbed.telegram.command.CommandHandler;
+import op.edu.ua.petbed.telegram.form.scheme.FormInput;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 
 import java.util.List;
 import java.util.Map;
@@ -30,11 +33,15 @@ import java.util.stream.Collectors;
 public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
 
     private final TelegramAuthService authService;
+    private final FormService formService;
+
     private final Map<Command, CommandHandler> commandHandlerMap;
     private final Map<CallbackId, CallbackHandler> callbackHandlerMap;
 
-    public TelegramUpdateRouterImpl(TelegramAuthService authService, List<CommandHandler> commandHandlers, List<CallbackHandler> callbackHandlers) {
+    public TelegramUpdateRouterImpl(TelegramAuthService authService, List<CommandHandler> commandHandlers, List<CallbackHandler> callbackHandlers, FormService formService) {
         this.authService = authService;
+        this.formService = formService;
+
         this.commandHandlerMap = Map.copyOf(commandHandlers.stream()
                 .collect(Collectors.toMap(CommandHandler::getCommand, Function.identity())));
         this.callbackHandlerMap = Map.copyOf(callbackHandlers.stream()
@@ -57,7 +64,7 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
                 if (isCommand(update)) {
                     return handleCommand(update);
                 }
-                return handleTextMessage(update);
+                return handleMessage(update);
             }
             if (update.hasCallbackQuery()) {
                 return handleCallback(update);
@@ -104,13 +111,17 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
 
         CallbackId callbackId = context.callbackData().callbackIdEnum();
 
+        if (callbackId == CallbackId.PAGINATION_PAGE_INDICATOR) {
+            return AnswerCallbackQuery.builder().callbackQueryId(context.callbackQuery().getId()).build();
+        }
+
         log.debug("Handling callback id: {}, entityId: {}, offset: {}", callbackId, context.callbackData().entityId(), context.callbackData().offset());
 
         CallbackHandler handler = callbackHandlerMap.get(callbackId);
 
         if (handler == null) {
             log.error("No handler for callback id: {}", callbackId);
-            return defaultResponse(context.chatId());
+            return defaultCallbackResponse(context.callbackQuery().getId());
         }
 
         BotApiMethod<?> response = handler.handle(context);
@@ -118,9 +129,20 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
         return response;
     }
 
-    private BotApiMethod<?> handleTextMessage(Update update) {
-        Long chatId = update.getMessage().getChatId();
-        return defaultTextMessageResponse(chatId);
+    // Hande all type of message: text, photo, location etc.
+    private BotApiMethod<?> handleMessage(Update update) {
+        Message message = update.getMessage();
+        Long userId = message.getFrom().getId();
+        Long chatId = message.getChatId();
+
+        if (formService.hasActiveForm(userId)) {
+            FormInput input = FormInput.from(message);
+            log.debug("Processing form input for userId: {}, type: {}", userId, input.getClass().getSimpleName());
+            return formService.processInput(input, userId);
+        }
+
+        log.debug("No active form for userId: {}, returning default response", userId);
+        return defaultMessageResponse(chatId);
     }
 
     private SendMessage defaultResponse(Long chatId) {
@@ -130,7 +152,15 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
                 .build();
     }
 
-    private SendMessage defaultTextMessageResponse(Long chatId) {
+    private AnswerCallbackQuery defaultCallbackResponse(String callbackQueryId) {
+        return AnswerCallbackQuery.builder()
+                .callbackQueryId(callbackQueryId)
+                .text("⚠️ Тимчасово не доступно.")
+                .showAlert(true)
+                .build();
+    }
+
+    private SendMessage defaultMessageResponse(Long chatId) {
         return SendMessage.builder()
                 .chatId(chatId)
                 .text("Не зрозумів 🤔")

@@ -123,4 +123,48 @@ class CallbackIdTest {
                     .contains("PROFILE[\"👤 Профіль\"]");
         }
     }
+
+    @Nested
+    class IsPaginated {
+
+        @Test
+        void with_paginated_parent_true() {
+            // MY_PETS has children like PET_DETAIL with empty label
+            var myPets = CallbackId.MY_PETS;
+
+            var result = myPets.isPaginated();
+
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        void without_children_false() {
+            // PROFILE has no children with empty label
+            var profile = CallbackId.PROFILE;
+
+            var result = profile.isPaginated();
+
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        void feed_view_not_paginated() {
+            // FEED_VIEW's children don't have empty labels
+            var feedView = CallbackId.FEED_VIEW;
+
+            var result = feedView.isPaginated();
+
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        void lostActiveDetail_not_paginated() {
+            // LOST_ACTIVE_DETAIL's direct children don't have empty labels
+            var lostActiveDetail = CallbackId.LOST_ACTIVE_DETAIL;
+
+            var result = lostActiveDetail.isPaginated();
+
+            assertThat(result).isFalse();
+        }
+    }
 }

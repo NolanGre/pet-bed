@@ -1,5 +1,6 @@
 package op.edu.ua.petbed.telegram.response;
 
+import lombok.extern.slf4j.Slf4j;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.telegram.callback.CallbackData;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
@@ -15,6 +16,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Predicate;
 
+@Slf4j
 @NullMarked
 public class InlineKeyboardBuilder {
 
@@ -81,7 +83,8 @@ public class InlineKeyboardBuilder {
             }
             String label = child.label();
             if (label != null && !label.isBlank()) {
-                String callbackData = CallbackData.of(child, entityId, null).toString();
+                Integer offset = child.isPaginated() ? 0 : null;
+                String callbackData = CallbackData.of(child, entityId, offset).toString();
                 navButtons.add(createButton(label, callbackData));
             }
         }
@@ -108,6 +111,8 @@ public class InlineKeyboardBuilder {
         checkNotAdded(AddedMethod.PAGINATION, "paginatedList");
 
         if (page.hasContent()) {
+            log.debug("Page has content. Processing {} items", page.getContent().size());
+
             for (CallbackListItem item : page.getContent()) {
                 String callbackData = CallbackData.of(item.callbackId(), item.entityId(), null).toString();
                 items.add(createButton(item.label(), callbackData));
@@ -117,17 +122,22 @@ public class InlineKeyboardBuilder {
             if (!page.isFirst()) {
                 String prevCallbackData = currentCallbackData.withPrevPage().toString();
                 paginationButtons.add(createButton("◀️", prevCallbackData));
+                log.debug("Added PREV button: {}", prevCallbackData);
             }
 
-            String pageIndicator = (page.getNumber() + 1) + "/" + page.getTotalPages();
-            paginationButtons.add(createButton(pageIndicator, ""));
+            String pageIndicator = "📄 " + (page.getNumber() + 1) + "/" + page.getTotalPages();
+            String indicatorCallbackData = CallbackData.of(CallbackId.PAGINATION_PAGE_INDICATOR).toString();
+            paginationButtons.add(createButton(pageIndicator, indicatorCallbackData));
 
             if (!page.isLast()) {
                 String nextCallbackData = currentCallbackData.withNextPage().toString();
                 paginationButtons.add(createButton("▶️", nextCallbackData));
+                log.debug("Added NEXT button: {}", nextCallbackData);
             }
 
             pagination.addAll(paginationButtons);
+        } else {
+            log.info("Page is empty for currentCallbackData: {}", currentCallbackData);
         }
 
         return this;
