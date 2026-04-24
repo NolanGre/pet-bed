@@ -1,7 +1,6 @@
 package op.edu.ua.petbed.telegram.command.handler;
 
 import op.edu.ua.petbed.common.model.UserType;
-import op.edu.ua.petbed.telegram.auth.TelegramAuthService;
 import op.edu.ua.petbed.telegram.auth.UserAuthContext;
 import op.edu.ua.petbed.telegram.command.Command;
 import op.edu.ua.petbed.telegram.command.CommandContext;
@@ -17,14 +16,10 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class ProfileHandlerTest {
-
-    @Mock
-    TelegramAuthService authService;
 
     @Mock
     CommandContext context;
@@ -42,14 +37,12 @@ class ProfileHandlerTest {
     void handle_validContext_returnsUserProfile() {
         // given
         Long chatId = 123L;
-        Long userId = 456L;
+        Long internalUserId = 456L;
         String username = "testuser";
-        UserAuthContext authContext = new UserAuthContext(userId, UserType.REGULAR);
+        UserAuthContext authContext = new UserAuthContext(123L, internalUserId, UserType.REGULAR, username);
 
         given(context.chatId()).willReturn(chatId);
-        given(context.userId()).willReturn(userId);
-        given(context.username()).willReturn(username);
-        given(authService.authenticate(userId, username)).willReturn(authContext);
+        given(context.userAuthContext()).willReturn(authContext);
 
         // when
         BotApiMethod<?> result = underTest.handle(context);
@@ -59,9 +52,8 @@ class ProfileHandlerTest {
         assertThat(result).isInstanceOf(SendMessage.class);
         SendMessage sendMessage = (SendMessage) result;
         assertThat(sendMessage.getText()).contains("Your Profile");
-        assertThat(sendMessage.getText()).contains(String.valueOf(userId));
+        // Profile handler shows internal user ID
+        assertThat(sendMessage.getText()).contains(String.valueOf(internalUserId));
         assertThat(sendMessage.getText()).contains(username);
-
-        verify(authService).authenticate(userId, username);
     }
 }

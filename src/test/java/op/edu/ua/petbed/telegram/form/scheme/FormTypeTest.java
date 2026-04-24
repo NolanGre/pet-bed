@@ -14,12 +14,12 @@ class FormTypeTest {
     class AddPet_steps {
 
         @Test
-        void steps_count_is_3() {
+        void steps_count_is_10() {
             // when
             var steps = FormType.ADD_PET.steps();
 
             // then
-            assertThat(steps).hasSize(3);
+            assertThat(steps).hasSize(10);
         }
 
         @Test
@@ -34,23 +34,13 @@ class FormTypeTest {
         }
 
         @Test
-        void step_1_is_photo_input() {
-            // when
-            var step = FormType.ADD_PET.steps().get(1);
-
-            // then
-            assertThat(step.prompt()).contains("Надішліть фото");
-            assertThat(step.input()).isInstanceOf(FormInput.Photo.class);
-        }
-
-        @Test
-        void step_2_is_location_input() {
+        void step_2_is_photo_input() {
             // when
             var step = FormType.ADD_PET.steps().get(2);
 
             // then
-            assertThat(step.prompt()).contains("локацію");
-            assertThat(step.input()).isInstanceOf(FormInput.Location.class);
+            assertThat(step.prompt()).contains("Надішліть фото тварини");
+            assertThat(step.input()).isInstanceOf(FormInput.Photo.class);
         }
     }
 }

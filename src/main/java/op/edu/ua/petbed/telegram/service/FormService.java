@@ -64,11 +64,11 @@ public class FormService {
      * Saves answer and returns next prompt or confirmation request if form is complete.
      */
     @Transactional
-    public BotApiMethod<?> processInput(FormInput input, Long internalUserId, Long chatId) {
+    public BotApiMethod<?> processInput(FormInput input, Long internalUserId, Long fallbackChatId) {
         var entity = formRepository.findById(internalUserId).orElse(null);
 
         if (entity == null) {
-            return noActiveFormMessage(chatId);
+            return noActiveFormMessage(fallbackChatId);
         }
 
         FormStep step = entity.nextStep();

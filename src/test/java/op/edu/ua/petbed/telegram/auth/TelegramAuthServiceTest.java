@@ -40,7 +40,8 @@ class TelegramAuthServiceTest {
 
         // then
         assertThat(result).isNotNull();
-        assertThat(result.userTelegramId()).isEqualTo(1L);
+        assertThat(result.userTelegramId()).isEqualTo(123L);
+        assertThat(result.userInternalId()).isEqualTo(1L);
         assertThat(result.userType()).isEqualTo(UserType.REGULAR);
         verify(userService).registerOrGet(telegramId, username);
     }
@@ -58,7 +59,8 @@ class TelegramAuthServiceTest {
 
         // then
         assertThat(result).isNotNull();
-        assertThat(result.userTelegramId()).isEqualTo(2L);
+        assertThat(result.userTelegramId()).isEqualTo(456L);
+        assertThat(result.userInternalId()).isEqualTo(2L);
         assertThat(result.userType()).isEqualTo(UserType.VOLUNTEER);
     }
 
@@ -75,7 +77,8 @@ class TelegramAuthServiceTest {
 
         // then
         assertThat(result).isNotNull();
-        assertThat(result.userTelegramId()).isEqualTo(1L);
+        assertThat(result.userTelegramId()).isEqualTo(123L);
+        assertThat(result.userInternalId()).isEqualTo(1L);
         assertThat(result.isVolunteer()).isTrue();
     }
 

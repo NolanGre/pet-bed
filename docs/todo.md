@@ -1,164 +1,105 @@
-# Тест План: Form Architecture
+# Тест План: Виправлення тестів після рефакторингу
 
-## Фокус
+## Проблема
 
-FormService повертає `BotApiMethod<?>` (Telegram повідомлення), не кидає винятки на бізнес-помилки.
-Тестуємо **бізнес логіку**, не JPA/ Lombok (вони працюють з коробки).
+Після рефакторингу (зміна API з `telegramId` на `internal userId`, додавання `UserAuthContext` контексту) — 48 помилок компіляції.
 
 ---
 
-## FormServiceTest
+## Аналіз зламаних тестів
 
+### 1. FormServiceTest.java (14 помилок)
+
+**api змінився:**
+| Старе | Нове |
+|-------|------|
+| `processInput(input, userId)` | `processInput(input, userId, chatId)` |
+| `confirmForm(userId)` | `confirmForm(userId, fallbackChatId)` |
+| `cancelForm(userId)` | `cancelForm(userId, fallbackChatId)` |
+
+**Що робити:** Оновити виклики методів — додати `fallbackChatId` (456L) параметр
+
+**Тесткейси:** Залишаються, бо бізнес-логіка не змінилась
+
+---
+
+### 2. CommandContextTest.java (2 помилки)
+
+**api змінився:**
+| Старе | Нове |
+|-------|------|
+| `CommandContext.from(update, command)` | `CommandContext.from(update, command, authContext)` |
+| `context.userId()` | `context.userAuthContext().userTelegramId()` |
+
+**Що робити:** 
+1. Додати `UserAuthContext authContext = new UserAuthContext(123L, 123L, UserType.REGULAR, "testuser")` перед викликом
+2. Змінити `assertThat(result.userId())` → `assertThat(result.userAuthContext().userTelegramId())`
+
+**Тесткейси:** Актуальні, змінились лише API
+
+---
+
+### 3. CallbackQueryContextTest.java (3 помилки)
+
+**api змінився:**
+| Старе | Нове |
+|-------|------|
+| `CallbackQueryContext.from(update)` | `CallbackQueryContext.from(update, authContext)` |
+
+**Що робити:** Додати `UserAuthContext` до всіх викликів `.from(update)`
+
+**Тесткейси:** Актуальні
+
+---
+
+### 4. TelegramUpdateRouterImplTest.java (1 помилка)
+
+**api змінився:**
 ```java
-@ExtendWith(MockitoExtension.class)
-class FormServiceTest {
-
-    @Mock
-    FormRepository formRepository;
-
-    @Mock
-    FormSubmissionHandler handler;
-
-    @InjectMocks
-    FormService underTest;
-}
+// Було
+new UserAuthContext(1L, UserType.REGULAR)
+// Потрібно
+new UserAuthContext(telegramId, internalId, userType, username)
 ```
 
-| Тест | Сценарій | Перевірка |
-|------|----------|-----------|
-| `startForm_new_returnsPromptWithEntity_saved` | Нова форма | entity saved + message contains first step prompt |
-| `startForm_existing_deletesOldAndCreates` | Існує форма | delete called, new entity saved |
-| `processInput_validInput_savesAndReturns_nextOrComplete` | Валідний ввід | entity saved + message contains next prompt OR "форма завершена" |
-| `processInput_invalidInput_returnsErrorMessage` | Інвалідний ввід | message contains validation error |
-| `processInput_noActiveForm_returnsNoActiveFormMessage` | Немає активної форми | message: "немає активних форм" |
-| `confirmForm_complete_invokesHandlerAndReturnsResult` | Форма завершена | handler called, entity deleted, result returned |
-| `confirmForm_incomplete_returnsFormNotCompleteMessage` | Форма неповна | message: "форма ще не заповнена" |
-| `confirmForm_noActiveForm_returnsNoActiveFormMessage` | Немає активної форми | message: "немає активних форм" |
-| `confirmForm_noHandler_throws` | Немає handler для типу | PetBedException |
-| `cancelForm_active_deletesAndReturnsCancelled` | Є активна форма | entity deleted + message with back button |
-| `cancelForm_noActiveForm_returnsNoActiveFormMessage` | Немає активної форми | message: "немає активних форм" |
-| `hasActiveForm_exists_true` | Форма існує | true |
-| `hasActiveForm_notExists_false` | Форма не існує | false |
+**Що робити:** Оновити конструктор на 4 параметри
+
+**Тесткейс:** Залишається
 
 ---
 
-## FormEntityTest
+### 5. ProfileHandlerTest.java (1 помилка)
 
-```java
-class FormEntityTest { }
-```
+**api змінився:**
+| Старе | Нове |
+|-------|------|
+| `context.userId()` | `context.userAuthContext().userTelegramId()` |
 
-| Тест | Сценарій | Очікуваний результат |
-|------|----------|---------------------|
-| `initiate_setsAllFields` | → Все поля встановлені |
-| `nextStep_whenComplete_throws` | Форма завершена | PetBedException |
-| `nextStep_returnsNextStep` | Є незаповнені кроки | FormStep |
-| `isComplete_allFilled_true` | Всі кроки заповнені | true |
-| `isComplete_notAll_false` | Не всі заповнені | false |
-| `applyStep_savesInput` | → rawSteps оновлено |
+**Що робити:** Оновити виклик
+
+**Тесткейс:** Актуальний
 
 ---
 
-## FormInputTest
+## Файли що потребують оновлення
 
-```java
-class FormInputTest { }
-```
-
-| Тест | Сценарій | Очікуваний результат |
-|------|----------|---------------------|
-| `from_withPhoto_returnsPhoto` | Message.hasPhoto()=true | Photo з правильним fileId |
-| `from_withLocation_returnsLocation` | Message.hasLocation()=true | Location з lat/lng |
-| `from_withText_returnsText` | Message.hasText()=true, text="hello" | Text("hello") |
-| `from_withTextBlank_throws` | Message.hasText()=true, text=" " | PetBedException |
-| `from_withTextNull_throws` | Message.hasText()=true, text=null | PetBedException |
-| `from_unsupportedType_sticker_throws` | Message тільки sticker | PetBedException |
+| Файл | Проблема | Дія |
+|------|----------|-----|
+| FormServiceTest.java | processInput/confirmForm/cancelForm | Оновити виклики |
+| CommandContextTest.java | authContext not defined, userId() | Додати authContext |
+| CallbackQueryContextTest.java | CallbackQueryContext.from() | Додати authContext |
+| TelegramUpdateRouterImplTest.java | UserAuthContext constructor | Оновити конструктор |
+| ProfileHandlerTest.java | context.userId() | Оновити на userAuthContext |
 
 ---
 
-## FormStepTest
+## Тесткейси що залишаються актуальними
 
-```java
-class FormStepTest { }
-```
-
-| Тест | Сценарій | Очікуваний результат |
-|------|----------|---------------------|
-| `validate_nonBlankText_withValidText_true` | Text("name") | true |
-| `validate_nonBlankText_withBlank_false` | Text(" ") | false |
-| `validate_nonBlankText_withWrongType_false` | Photo("id") | false |
-| `validate_nonBlankPhoto_withValidPhoto_true` | Photo("fileId") | true |
-| `validate_nonBlankPhoto_withBlank_false` | Photo("") | false |
-| `validate_nonBlankPhoto_withWrongType_false` | Text("name") | false |
-| `validate_anyLocation_withLocation_true` | Location(50.4, 30.5) | true |
-| `validate_anyLocation_withWrongType_false` | Text("50.4,30.5") | false |
-
----
-
-## FormTypeTest
-
-```java
-class FormTypeTest { }
-```
-
-| Тест | Сценарій | Очікуваний результат |
-|------|----------|---------------------|
-| `addPet_stepsCount_is3` | FormType.ADD_PET | 3 |
-| `addPet_step0_isName` | Перший крок | Text input |
-| `addPet_step1_isPhoto` | Другий крок | Photo input |
-| `addPet_step2_isLocation` | Третій крок | Location input |
-
----
-
-## CallbackIdTest (new logic)
-
-```java
-class CallbackIdTest { }
-```
-
-| Тест | Сценарій | Очікуваний результат |
-|------|----------|---------------------|
-| `isPaginated_withPaginatedParent_true` | CallbackId з дітьми що мають пустий label | true |
-| `isPaginated_withoutChildren_false` | CallbackId без дітей | false |
-
----
-
-## SubmitFormHandlerTest
-
-```java
-@ExtendWith(MockitoExtension.class)
-class SubmitFormHandlerTest { }
-```
-
-| Тест | Сценарій | Перевірка |
-|------|----------|-----------|
-| `getCommand_returnsSubmitForm` | → Command.SUBMIT_FORM |
-| `handle_confirmFormCalled` | → formService.confirmForm called |
-
----
-
-## CancelFormHandlerTest
-
-```java
-@ExtendWith(MockitoExtension.class)
-class CancelFormHandlerTest { }
-```
-
-| Тест | Сценарій | Перевірка |
-|------|----------|-----------|
-| `getCommand_returnsCancelForm` | → Command.CANCEL_FORM |
-| `handle_cancelFormCalled` | → formService.cancelForm called |
-
----
-
-## Coverage Targets
-
-| Клас | Ціль |
-|------|------|
-| FormService | 90%+ (всі методи) |
-| FormInput | 100% |
-| FormStep | 100% |
-| FormType | 100% (тільки one test) |
+- Всі бізнес-сценарії FormServiceTest (процес форми, валідація)
+- FormEntityTest — логіка не змінилась
+- FormInputTest — логіка не змінилась
+- FormStepTest — логіка не змінилась
+- FormTypeTest — оновити кількість кроків (3 → 10)
 
 ---
 
@@ -172,12 +113,19 @@ class CancelFormHandlerTest { }
 
 ## Status
 
-- [x] Unit tests FormService
-- [x] Unit tests FormEntity
-- [x] Unit tests FormInput
-- [x] Unit tests FormStep
-- [x] Unit tests FormType
-- [x] Unit tests CallbackId
-- [x] Unit tests SubmitFormHandler
-- [x] Unit tests CancelFormHandler
-- [x] Run all tests (198 passed)
+- [ ] FormServiceTest — оновити виклики методів
+- [ ] CommandContextTest — додати authContext
+- [ ] CallbackQueryContextTest — додати authContext
+- [ ] TelegramUpdateRouterImplTest — оновити конструктор
+- [ ] ProfileHandlerTest — оновити виклик userId
+- [ ] FormTypeTest — оновити кількість кроків
+
+## Нові класи без тестів (потрібно додати)
+
+| Клас | Опис | Пріоритет |
+|------|------|-----------|
+| PetServiceImpl | CRUD for Pet | high |
+| PetRepository | Data access | high |
+| MyPetsCallbackHandler | Список улюбленців | high |
+| AddPetCallbackHandler | Додавання тварини | medium |
+| FormData | Доступ до відповідей | medium |

@@ -1,5 +1,7 @@
 package op.edu.ua.petbed.telegram.callback.handler.profile;
 
+import op.edu.ua.petbed.common.model.UserType;
+import op.edu.ua.petbed.telegram.auth.UserAuthContext;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
 import org.junit.jupiter.api.*;
@@ -47,9 +49,10 @@ class ProfileChangeTypeHandlerTest {
             Long chatId = 123L;
             Long userId = 456L;
             Integer messageId = 1;
+            UserAuthContext authContext = new UserAuthContext(userId, userId, UserType.REGULAR, "testuser");
 
             given(context.chatId()).willReturn(chatId);
-            given(context.userTelegramId()).willReturn(userId);
+            given(context.auth()).willReturn(authContext);
             given(context.messageId()).willReturn(messageId);
 
             // when
@@ -70,9 +73,10 @@ class ProfileChangeTypeHandlerTest {
             Long chatId = 123L;
             Long userId = 456L;
             Integer messageId = 1;
+            UserAuthContext authContext = new UserAuthContext(userId, userId, UserType.REGULAR, "testuser");
 
             given(context.chatId()).willReturn(chatId);
-            given(context.userTelegramId()).willReturn(userId);
+            given(context.auth()).willReturn(authContext);
             given(context.messageId()).willReturn(messageId);
 
             // when
@@ -95,9 +99,10 @@ class ProfileChangeTypeHandlerTest {
             Long chatId = 123L;
             Long userId = 456L;
             Integer messageId = 1;
+            UserAuthContext authContext = new UserAuthContext(userId, userId, UserType.REGULAR, "testuser");
 
             given(context.chatId()).willReturn(chatId);
-            given(context.userTelegramId()).willReturn(userId);
+            given(context.auth()).willReturn(authContext);
             given(context.messageId()).willReturn(messageId);
 
             // when
@@ -131,9 +136,10 @@ class ProfileChangeTypeHandlerTest {
             Long chatId = 123L;
             Long userId = 456L;
             Integer messageId = 1;
+            UserAuthContext authContext = new UserAuthContext(userId, userId, UserType.REGULAR, "testuser");
 
             given(context.chatId()).willReturn(chatId);
-            given(context.userTelegramId()).willReturn(userId);
+            given(context.auth()).willReturn(authContext);
             given(context.messageId()).willReturn(messageId);
 
             // when

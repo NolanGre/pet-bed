@@ -1,6 +1,8 @@
 package op.edu.ua.petbed.telegram.callback;
 
 import op.edu.ua.petbed.common.exceptions.PetBedException;
+import op.edu.ua.petbed.common.model.UserType;
+import op.edu.ua.petbed.telegram.auth.UserAuthContext;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Nested;
@@ -40,7 +42,8 @@ class CallbackQueryContextTest {
             Update update = mock(Update.class);
             when(update.getCallbackQuery()).thenReturn(callbackQuery);
 
-            CallbackQueryContext result = CallbackQueryContext.from(update);
+            UserAuthContext authContext = new UserAuthContext(123L, 123L, UserType.REGULAR, "testuser");
+            CallbackQueryContext result = CallbackQueryContext.from(update, authContext);
 
             assertThat(result.callbackData().callbackId()).isEqualTo(110);
             assertThat(result.callbackData().entityId()).isEqualTo(42L);
@@ -49,8 +52,8 @@ class CallbackQueryContextTest {
             assertThat(result.callbackData().entityId()).isEqualTo(42L);
             assertThat(result.callbackData().offset()).isEqualTo(5);
             assertThat(result.chatId()).isEqualTo(456L);
-            assertThat(result.userTelegramId()).isEqualTo(123L);
-            assertThat(result.username()).isEqualTo("testuser");
+            assertThat(result.auth().userTelegramId()).isEqualTo(123L);
+            assertThat(result.auth().username()).isEqualTo("testuser");
             assertThat(result.messageId()).isEqualTo(10);
             assertThat(result.update()).isEqualTo(update);
         }
@@ -69,7 +72,8 @@ class CallbackQueryContextTest {
             Update update = mock(Update.class);
             when(update.getCallbackQuery()).thenReturn(callbackQuery);
 
-            assertThatThrownBy(() -> CallbackQueryContext.from(update))
+            UserAuthContext authContext = new UserAuthContext(123L, 123L, UserType.REGULAR, "testuser");
+            assertThatThrownBy(() -> CallbackQueryContext.from(update, authContext))
                     .isInstanceOf(PetBedException.class)
                     .hasFieldOrPropertyWithValue("errorCode", PetBedException.ErrorCode.INTERNAL_ERROR);
         }
@@ -86,7 +90,8 @@ class CallbackQueryContextTest {
             Update update = mock(Update.class);
             when(update.getCallbackQuery()).thenReturn(callbackQuery);
 
-            assertThatThrownBy(() -> CallbackQueryContext.from(update))
+            UserAuthContext authContext = new UserAuthContext(123L, 123L, UserType.REGULAR, "testuser");
+            assertThatThrownBy(() -> CallbackQueryContext.from(update, authContext))
                     .isInstanceOf(PetBedException.class)
                     .hasFieldOrPropertyWithValue("errorCode", PetBedException.ErrorCode.INVALID_CALLBACK);
         }

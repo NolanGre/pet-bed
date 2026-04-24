@@ -1,7 +1,6 @@
 package op.edu.ua.petbed.telegram.callback.handler.profile;
 
 import op.edu.ua.petbed.common.model.UserType;
-import op.edu.ua.petbed.telegram.auth.TelegramAuthService;
 import op.edu.ua.petbed.telegram.auth.UserAuthContext;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -18,14 +17,10 @@ import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class ProfileCallbackHandlerTest {
-
-    @Mock
-    TelegramAuthService authService;
 
     @Mock
     CallbackQueryContext context;
@@ -49,36 +44,16 @@ class ProfileCallbackHandlerTest {
     class HandleMethod {
 
         @Test
-        void callsAuthService_authenticate() {
-            // given
-            Long userId = 456L;
-            String username = "testuser";
-            UserAuthContext authContext = new UserAuthContext(userId, UserType.REGULAR);
-
-            given(context.userTelegramId()).willReturn(userId);
-            given(context.username()).willReturn(username);
-            given(authService.authenticate(userId, username)).willReturn(authContext);
-
-            // when
-            underTest.handle(context);
-
-            // then
-            verify(authService).authenticate(userId, username);
-        }
-
-        @Test
         void validContext_returnsUserInfo_withUsername() {
             // given
             Long chatId = 123L;
             Long userId = 456L;
             String username = "testuser";
-            UserAuthContext authContext = new UserAuthContext(userId, UserType.VOLUNTEER);
+            UserAuthContext authContext = new UserAuthContext(userId, userId, UserType.VOLUNTEER, username);
 
             given(context.chatId()).willReturn(chatId);
-            given(context.userTelegramId()).willReturn(userId);
-            given(context.username()).willReturn(username);
+            given(context.auth()).willReturn(authContext);
             given(context.messageId()).willReturn(1);
-            given(authService.authenticate(userId, username)).willReturn(authContext);
 
             // when
             BotApiMethod<?> result = underTest.handle(context);
@@ -98,13 +73,11 @@ class ProfileCallbackHandlerTest {
             Long chatId = 123L;
             Long userId = 456L;
             String username = "testuser";
-            UserAuthContext authContext = new UserAuthContext(userId, UserType.REGULAR);
+            UserAuthContext authContext = new UserAuthContext(userId, userId, UserType.REGULAR, username);
 
             given(context.chatId()).willReturn(chatId);
-            given(context.userTelegramId()).willReturn(userId);
-            given(context.username()).willReturn(username);
+            given(context.auth()).willReturn(authContext);
             given(context.messageId()).willReturn(1);
-            given(authService.authenticate(userId, username)).willReturn(authContext);
 
             // when
             BotApiMethod<?> result = underTest.handle(context);
@@ -125,13 +98,11 @@ class ProfileCallbackHandlerTest {
             Long chatId = 123L;
             Long userId = 456L;
             String username = "testuser";
-            UserAuthContext authContext = new UserAuthContext(userId, UserType.REGULAR);
+            UserAuthContext authContext = new UserAuthContext(userId, userId, UserType.REGULAR, username);
 
             given(context.chatId()).willReturn(chatId);
-            given(context.userTelegramId()).willReturn(userId);
-            given(context.username()).willReturn(username);
+            given(context.auth()).willReturn(authContext);
             given(context.messageId()).willReturn(1);
-            given(authService.authenticate(userId, username)).willReturn(authContext);
 
             // when
             BotApiMethod<?> result = underTest.handle(context);
@@ -165,13 +136,11 @@ class ProfileCallbackHandlerTest {
             Long chatId = 123L;
             Long userId = 456L;
             String username = "testuser";
-            UserAuthContext authContext = new UserAuthContext(userId, UserType.REGULAR);
+            UserAuthContext authContext = new UserAuthContext(userId, userId, UserType.REGULAR, username);
 
             given(context.chatId()).willReturn(chatId);
-            given(context.userTelegramId()).willReturn(userId);
-            given(context.username()).willReturn(username);
+            given(context.auth()).willReturn(authContext);
             given(context.messageId()).willReturn(1);
-            given(authService.authenticate(userId, username)).willReturn(authContext);
 
             // when
             BotApiMethod<?> result = underTest.handle(context);

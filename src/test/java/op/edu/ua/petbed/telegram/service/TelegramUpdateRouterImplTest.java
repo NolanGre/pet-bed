@@ -100,6 +100,8 @@ class TelegramUpdateRouterImplTest {
     void route_textMessage_returnsDefault() {
         // given
         Update update = TelegramUpdateFixtureUtil.withTextMessage("Hello", 123L, 456L);
+        UserAuthContext authContext = new UserAuthContext(123L, 123L, UserType.REGULAR, "testuser");
+        given(authService.authenticate(123L, "testuser")).willReturn(authContext);
 
         // when
         BotApiMethod<?> result = underTest.route(update);
@@ -117,7 +119,7 @@ class TelegramUpdateRouterImplTest {
         // given
         Update update = TelegramUpdateFixtureUtil.withCommand("/profile", 123L, "testuser");
         BotApiMethod<?> handlerResponse = mock(BotApiMethod.class);
-        UserAuthContext authContext = new UserAuthContext(1L, UserType.REGULAR);
+        UserAuthContext authContext = new UserAuthContext(1L, 1L, UserType.REGULAR, "testuser");
 
         doReturn(handlerResponse).when(profileHandler).handle(any());
         given(authService.authenticate(123L, "testuser")).willReturn(authContext);

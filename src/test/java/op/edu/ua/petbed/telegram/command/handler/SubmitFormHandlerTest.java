@@ -1,5 +1,7 @@
 package op.edu.ua.petbed.telegram.command.handler;
 
+import op.edu.ua.petbed.common.model.UserType;
+import op.edu.ua.petbed.telegram.auth.UserAuthContext;
 import op.edu.ua.petbed.telegram.command.Command;
 import op.edu.ua.petbed.telegram.command.CommandContext;
 import op.edu.ua.petbed.telegram.service.FormService;
@@ -15,11 +17,10 @@ import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import static op.edu.ua.petbed.telegram.testutil.TelegramUpdateFixtureUtil.withCommand;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.mock;
-import static op.edu.ua.petbed.telegram.testutil.TelegramUpdateFixtureUtil.withCommand;
 
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 @ExtendWith(MockitoExtension.class)
@@ -51,15 +52,16 @@ class SubmitFormHandlerTest {
         void confirmForm_called() {
             // given
             Update update = withCommand("/submit", 123L, "username", 456L);
+            UserAuthContext authContext = new UserAuthContext(123L, 123L, UserType.REGULAR, "username");
             CommandContext context = CommandContext.from(update, Command.SUBMIT_FORM, authContext);
             SendMessage expectedResult = SendMessage.builder().chatId("456").text("Done").build();
-            doAnswer(invocation -> expectedResult).when(formService).confirmForm(123L);
+            doAnswer(invocation -> expectedResult).when(formService).confirmForm(123L, 456L);
 
             // when
             BotApiMethod<?> result = underTest.handle(context);
 
             // then
-            verify(formService).confirmForm(123L);
+            verify(formService).confirmForm(123L, 456L);
             assertThat(result).isEqualTo(expectedResult);
         }
     }

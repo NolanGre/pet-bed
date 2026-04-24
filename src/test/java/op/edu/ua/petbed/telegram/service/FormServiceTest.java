@@ -82,7 +82,8 @@ class FormServiceTest {
         void valid_input_saves_and_returns_next_prompt() {
             // given
             Long userId = 123L;
-            FormEntity entity = FormEntity.initiate(userId, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
+            Long chatId = 456L;
+            FormEntity entity = FormEntity.initiate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
             given(formRepository.findById(userId)).willReturn(Optional.of(entity));
             FormService underTest = new FormService(formRepository, List.of());
 
@@ -95,20 +96,30 @@ class FormServiceTest {
             verify(formRepository).save(entity);
 
             String text = extractText(result);
-            assertThat(text).contains("Надішліть фото");
+            // Step 1 is "Оберіть тип тварини"
+            assertThat(text).contains("Оберіть тип тварини");
         }
 
         @Test
         void valid_input_last_step_returns_complete_message() {
-            // given
+            // given - fill 9 steps, last step is step 9 (index 9)
             Long userId = 123L;
-            FormEntity entity = FormEntity.initiate(userId, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
-            entity.applyStep(new FormInput.Text("Барсик"));
-            entity.applyStep(new FormInput.Photo("file123"));
+            Long chatId = 456L;
+            FormEntity entity = FormEntity.initiate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
+            entity.applyStep(new FormInput.Text("Барсик"));           // 0: name
+            entity.applyStep(new FormInput.Text("cat"));               // 1: type
+            entity.applyStep(new FormInput.Photo("file123"));          // 2: photo
+            entity.applyStep(new FormInput.Text("Persian"));           // 3: breed
+            entity.applyStep(new FormInput.Text("white"));             // 4: color
+            entity.applyStep(new FormInput.Text("solid"));             // 5: pattern
+            entity.applyStep(new FormInput.Text("3"));                 // 6: age
+            entity.applyStep(new FormInput.Text("male"));              // 7: gender
+            entity.applyStep(new FormInput.Text("small"));             // 8: size
+
             given(formRepository.findById(userId)).willReturn(Optional.of(entity));
             FormService underTest = new FormService(formRepository, List.of());
 
-            FormInput input = new FormInput.Location(50.45, 30.52);
+            FormInput input = new FormInput.Text("friendly");          // 9: notes - last step
 
             // when
             BotApiMethod<?> result = underTest.processInput(input, userId, chatId);
@@ -126,7 +137,8 @@ class FormServiceTest {
         void invalid_input_returns_error_message() {
             // given
             Long userId = 123L;
-            FormEntity entity = FormEntity.initiate(userId, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
+            Long chatId = 456L;
+            FormEntity entity = FormEntity.initiate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
             given(formRepository.findById(userId)).willReturn(Optional.of(entity));
             FormService underTest = new FormService(formRepository, List.of());
 
@@ -144,6 +156,7 @@ class FormServiceTest {
         void no_active_form_returns_no_active_form_message() {
             // given
             Long userId = 123L;
+            Long chatId = 456L;
             given(formRepository.findById(userId)).willReturn(Optional.empty());
             FormService underTest = new FormService(formRepository, List.of());
 
@@ -167,17 +180,26 @@ class FormServiceTest {
             // with a simplified stub due to Mockito generic type constraints.
             // Full integration is tested in Spring Boot integration tests.
             Long userId = 123L;
-            FormEntity entity = FormEntity.initiate(userId, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
-            entity.applyStep(new FormInput.Text("Барсик"));
-            entity.applyStep(new FormInput.Photo("file123"));
-            entity.applyStep(new FormInput.Location(50.45, 30.52));
+            Long chatId = 456L;
+            FormEntity entity = FormEntity.initiate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
+            // Fill all 10 steps
+            entity.applyStep(new FormInput.Text("Барсик"));           // 0: name
+            entity.applyStep(new FormInput.Text("cat"));               // 1: type
+            entity.applyStep(new FormInput.Photo("file123"));          // 2: photo
+            entity.applyStep(new FormInput.Text("Persian"));           // 3: breed
+            entity.applyStep(new FormInput.Text("white"));             // 4: color
+            entity.applyStep(new FormInput.Text("solid"));             // 5: pattern
+            entity.applyStep(new FormInput.Text("3"));                 // 6: age
+            entity.applyStep(new FormInput.Text("male"));              // 7: gender
+            entity.applyStep(new FormInput.Text("small"));             // 8: size
+            entity.applyStep(new FormInput.Text("friendly"));          // 9: notes
             given(formRepository.findById(userId)).willReturn(Optional.of(entity));
 
             FormService underTest = new FormService(formRepository, List.of());
 
             // when - call will throw but still verify delete is called
             try {
-                underTest.confirmForm(userId);
+                underTest.confirmForm(userId, chatId);
             } catch (Exception expected) {
                 // Expects handler - but delete should have been called after find
             }
@@ -188,13 +210,14 @@ class FormServiceTest {
         void incomplete_form_returns_form_not_complete_message() {
             // given
             Long userId = 123L;
-            FormEntity entity = FormEntity.initiate(userId, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
+            Long chatId = 456L;
+            FormEntity entity = FormEntity.initiate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
             entity.applyStep(new FormInput.Text("Барсик"));
             given(formRepository.findById(userId)).willReturn(Optional.of(entity));
             FormService underTest = new FormService(formRepository, List.of());
 
             // when
-            BotApiMethod<?> result = underTest.confirmForm(userId);
+            BotApiMethod<?> result = underTest.confirmForm(userId, chatId);
 
             // then
             String text = extractText(result);
@@ -205,11 +228,12 @@ class FormServiceTest {
         void no_active_form_returns_no_active_form_message() {
             // given
             Long userId = 123L;
+            Long chatId = 456L;
             given(formRepository.findById(userId)).willReturn(Optional.empty());
             FormService underTest = new FormService(formRepository, List.of());
 
             // when
-            BotApiMethod<?> result = underTest.confirmForm(userId);
+            BotApiMethod<?> result = underTest.confirmForm(userId, chatId);
 
             // then
             String text = extractText(result);
@@ -218,18 +242,26 @@ class FormServiceTest {
 
         @Test
         void no_handler_for_type_throws_PetBedException() {
-            // given
+            // given - fill all 10 steps
             Long userId = 123L;
-            FormEntity entity = FormEntity.initiate(userId, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
-            entity.applyStep(new FormInput.Text("Барсик"));
-            entity.applyStep(new FormInput.Photo("file123"));
-            entity.applyStep(new FormInput.Location(50.45, 30.52));
+            Long chatId = 456L;
+            FormEntity entity = FormEntity.initiate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
+            entity.applyStep(new FormInput.Text("Барсик"));           // 0: name
+            entity.applyStep(new FormInput.Text("cat"));               // 1: type
+            entity.applyStep(new FormInput.Photo("file123"));          // 2: photo
+            entity.applyStep(new FormInput.Text("Persian"));           // 3: breed
+            entity.applyStep(new FormInput.Text("white"));             // 4: color
+            entity.applyStep(new FormInput.Text("solid"));             // 5: pattern
+            entity.applyStep(new FormInput.Text("3"));                 // 6: age
+            entity.applyStep(new FormInput.Text("male"));              // 7: gender
+            entity.applyStep(new FormInput.Text("small"));             // 8: size
+            entity.applyStep(new FormInput.Text("friendly"));          // 9: notes
             given(formRepository.findById(userId)).willReturn(Optional.of(entity));
 
             FormService serviceWithHandler = new FormService(formRepository, List.of()); // No handlers
 
             // when & then
-            assertThatThrownBy(() -> serviceWithHandler.confirmForm(userId))
+            assertThatThrownBy(() -> serviceWithHandler.confirmForm(userId, chatId))
                     .isInstanceOf(PetBedException.class)
                     .hasFieldOrPropertyWithValue("errorCode", PetBedException.ErrorCode.INTERNAL_ERROR);
         }
@@ -248,7 +280,7 @@ class FormServiceTest {
             FormService underTest = new FormService(formRepository, List.of());
 
             // when
-            BotApiMethod<?> result = underTest.cancelForm(userId);
+            BotApiMethod<?> result = underTest.cancelForm(userId, chatId);
 
             // then
             verify(formRepository).delete(entity);
@@ -261,11 +293,12 @@ class FormServiceTest {
         void no_active_form_returns_no_active_form_message() {
             // given
             Long userId = 123L;
+            Long chatId = 456L;
             given(formRepository.findById(userId)).willReturn(Optional.empty());
             FormService underTest = new FormService(formRepository, List.of());
 
             // when
-            BotApiMethod<?> result = underTest.cancelForm(userId);
+            BotApiMethod<?> result = underTest.cancelForm(userId, chatId);
 
             // then
             String text = extractText(result);

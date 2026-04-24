@@ -24,7 +24,7 @@ class FormEntityTest {
             FormEntity entity = FormEntity.initiate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
 
             // then
-            assertThat(entity.getTelegramId()).isEqualTo(123L);
+            assertThat(entity.getUserId()).isEqualTo(123L);
             assertThat(entity.getChatId()).isEqualTo(456L);
             assertThat(entity.getFormType()).isEqualTo(FormType.ADD_PET);
             assertThat(entity.getReturnCallback()).isEqualTo(CallbackId.MY_PETS);
@@ -55,17 +55,24 @@ class FormEntityTest {
             // when
             var step = entity.nextStep();
 
-            // then
-            assertThat(step.prompt()).contains("Надішліть фото");
+            // then - step 1 is type selection (TEXT)
+            assertThat(step.prompt()).contains("Оберіть тип тварини");
         }
 
         @Test
         void When_complete_throws_PetBedException() {
-            // given
+            // given - fill all 10 steps
             FormEntity entity = FormEntity.initiate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
-            entity.applyStep(new FormInput.Text("Барсик"));
-            entity.applyStep(new FormInput.Photo("file123"));
-            entity.applyStep(new FormInput.Location(50.45, 30.52));
+            entity.applyStep(new FormInput.Text("Барсик"));           // 0: name
+            entity.applyStep(new FormInput.Text("cat"));               // 1: type
+            entity.applyStep(new FormInput.Photo("file123"));          // 2: photo
+            entity.applyStep(new FormInput.Text("Persian"));           // 3: breed
+            entity.applyStep(new FormInput.Text("white"));             // 4: color
+            entity.applyStep(new FormInput.Text("solid"));             // 5: pattern
+            entity.applyStep(new FormInput.Text("3"));                 // 6: age
+            entity.applyStep(new FormInput.Text("male"));              // 7: gender
+            entity.applyStep(new FormInput.Text("small"));             // 8: size
+            entity.applyStep(new FormInput.Text("friendly"));          // 9: notes
 
             // when & then
             assertThatThrownBy(() -> entity.nextStep())
@@ -79,11 +86,18 @@ class FormEntityTest {
 
         @Test
         void All_steps_filled_true() {
-            // given
+            // given - fill all 10 steps
             FormEntity entity = FormEntity.initiate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
-            entity.applyStep(new FormInput.Text("Барсик"));
-            entity.applyStep(new FormInput.Photo("file123"));
-            entity.applyStep(new FormInput.Location(50.45, 30.52));
+            entity.applyStep(new FormInput.Text("Барсик"));           // 0: name
+            entity.applyStep(new FormInput.Text("cat"));               // 1: type
+            entity.applyStep(new FormInput.Photo("file123"));          // 2: photo
+            entity.applyStep(new FormInput.Text("Persian"));           // 3: breed
+            entity.applyStep(new FormInput.Text("white"));             // 4: color
+            entity.applyStep(new FormInput.Text("solid"));             // 5: pattern
+            entity.applyStep(new FormInput.Text("3"));                 // 6: age
+            entity.applyStep(new FormInput.Text("male"));              // 7: gender
+            entity.applyStep(new FormInput.Text("small"));             // 8: size
+            entity.applyStep(new FormInput.Text("friendly"));          // 9: notes
 
             // when
             boolean result = entity.isComplete();
@@ -132,34 +146,42 @@ class FormEntityTest {
             // then
             // Verify by calling nextStep and checking we moved to next step
             var step = entity.nextStep();
-            assertThat(step.prompt()).contains("Надішліть фото");
+            assertThat(step.prompt()).contains("Оберіть тип тварини");
         }
 
         @Test
         void Saves_photo_input() {
             // given
             FormEntity entity = FormEntity.initiate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
-            entity.applyStep(new FormInput.Text("Барсик"));
+            entity.applyStep(new FormInput.Text("Барсик"));           // 0: name
+            entity.applyStep(new FormInput.Text("cat"));               // 1: type
 
             // when
             entity.applyStep(new FormInput.Photo("file123"));
 
-            // then
+            // then - step 3 is breed (TEXT)
             var step = entity.nextStep();
-            assertThat(step.prompt()).contains("локацію");
+            assertThat(step.prompt()).contains("Введіть породу");
         }
 
         @Test
         void Saves_location_input() {
-            // given
+            // given - fill 9 steps (all except last)
             FormEntity entity = FormEntity.initiate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
-            entity.applyStep(new FormInput.Text("Барсик"));
-            entity.applyStep(new FormInput.Photo("file123"));
+            entity.applyStep(new FormInput.Text("Барсик"));           // 0: name
+            entity.applyStep(new FormInput.Text("cat"));               // 1: type
+            entity.applyStep(new FormInput.Photo("file123"));          // 2: photo
+            entity.applyStep(new FormInput.Text("Persian"));           // 3: breed
+            entity.applyStep(new FormInput.Text("white"));             // 4: color
+            entity.applyStep(new FormInput.Text("solid"));             // 5: pattern
+            entity.applyStep(new FormInput.Text("3"));                 // 6: age
+            entity.applyStep(new FormInput.Text("male"));              // 7: gender
+            entity.applyStep(new FormInput.Text("small"));             // 8: size
 
-            // when
-            entity.applyStep(new FormInput.Location(50.45, 30.52));
+            // when - apply last step
+            entity.applyStep(new FormInput.Text("friendly"));          // 9: notes
 
-            // then
+            // then - form is now complete
             assertThat(entity.isComplete()).isTrue();
         }
     }
