@@ -55,7 +55,7 @@ class ProfileCallbackHandlerTest {
             String username = "testuser";
             UserAuthContext authContext = new UserAuthContext(userId, UserType.REGULAR);
 
-            given(context.userId()).willReturn(userId);
+            given(context.userTelegramId()).willReturn(userId);
             given(context.username()).willReturn(username);
             given(authService.authenticate(userId, username)).willReturn(authContext);
 
@@ -75,7 +75,7 @@ class ProfileCallbackHandlerTest {
             UserAuthContext authContext = new UserAuthContext(userId, UserType.VOLUNTEER);
 
             given(context.chatId()).willReturn(chatId);
-            given(context.userId()).willReturn(userId);
+            given(context.userTelegramId()).willReturn(userId);
             given(context.username()).willReturn(username);
             given(context.messageId()).willReturn(1);
             given(authService.authenticate(userId, username)).willReturn(authContext);
@@ -101,7 +101,7 @@ class ProfileCallbackHandlerTest {
             UserAuthContext authContext = new UserAuthContext(userId, UserType.REGULAR);
 
             given(context.chatId()).willReturn(chatId);
-            given(context.userId()).willReturn(userId);
+            given(context.userTelegramId()).willReturn(userId);
             given(context.username()).willReturn(username);
             given(context.messageId()).willReturn(1);
             given(authService.authenticate(userId, username)).willReturn(authContext);
@@ -128,7 +128,7 @@ class ProfileCallbackHandlerTest {
             UserAuthContext authContext = new UserAuthContext(userId, UserType.REGULAR);
 
             given(context.chatId()).willReturn(chatId);
-            given(context.userId()).willReturn(userId);
+            given(context.userTelegramId()).willReturn(userId);
             given(context.username()).willReturn(username);
             given(context.messageId()).willReturn(1);
             given(authService.authenticate(userId, username)).willReturn(authContext);
@@ -168,7 +168,7 @@ class ProfileCallbackHandlerTest {
             UserAuthContext authContext = new UserAuthContext(userId, UserType.REGULAR);
 
             given(context.chatId()).willReturn(chatId);
-            given(context.userId()).willReturn(userId);
+            given(context.userTelegramId()).willReturn(userId);
             given(context.username()).willReturn(username);
             given(context.messageId()).willReturn(1);
             given(authService.authenticate(userId, username)).willReturn(authContext);

@@ -1,12 +1,9 @@
 package op.edu.ua.petbed.telegram.form.scheme;
 
-import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
-import org.telegram.telegrambots.meta.api.objects.message.Message;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.exceptions.PetBedException.ErrorCode;
-
-import java.util.Set;
+import org.jspecify.annotations.NullMarked;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 
 @NullMarked
 public sealed interface FormInput {
@@ -15,8 +12,6 @@ public sealed interface FormInput {
     Text TEXT = new Text("");
     Photo PHOTO = new Photo("");
     Location LOCATION = new Location(0, 0);
-
-    Set<String> SUPPORTED_TEXT_TYPES = Set.of("text", "channel_text");
 
     record Text(String value) implements FormInput {
     }

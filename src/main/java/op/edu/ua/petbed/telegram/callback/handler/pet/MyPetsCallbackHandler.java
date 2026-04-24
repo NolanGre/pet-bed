@@ -1,23 +1,30 @@
 package op.edu.ua.petbed.telegram.callback.handler.pet;
 
+import op.edu.ua.petbed.common.dto.PetDTO;
+import op.edu.ua.petbed.common.exceptions.PetBedException;
+import op.edu.ua.petbed.pet.PetService;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
 import op.edu.ua.petbed.telegram.response.CallbackListItem;
 import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
+import op.edu.ua.petbed.telegram.response.KeyboardLayout;
 import op.edu.ua.petbed.telegram.response.ResponseBuilder;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 
-import java.util.List;
-
 @NullMarked
 @Component
 public class MyPetsCallbackHandler implements CallbackHandler {
+
+    private final PetService petService;
+
+    public MyPetsCallbackHandler(PetService petService) {
+        this.petService = petService;
+    }
 
     @Override
     public CallbackId getCallbackId() {
@@ -26,21 +33,31 @@ public class MyPetsCallbackHandler implements CallbackHandler {
 
     @Override
     public BotApiMethod<?> handle(CallbackQueryContext context) {
-        //call pet service, get list of pets
-        Page<CallbackListItem> page = new PageImpl<>(List.of(
-                new CallbackListItem(CallbackId.PET_DETAIL, 1L, "Барсик"),
-                new CallbackListItem(CallbackId.PET_DETAIL, 2L, "Бебрик")
-        ), PageRequest.of(0, 5), 10);
+        var callbackData = context.callbackData();
+        if (callbackData.offset() == null) {
+            throw new PetBedException("Offset must be not null: " + callbackData, PetBedException.ErrorCode.INVALID_CALLBACK);
+        }
+
+        var result = petService.findAllByOwnerId(context.auth().userInternalId(),
+                PageRequest.of(callbackData.offset(), KeyboardLayout.DEFAULT.pageSize()));
 
         return ResponseBuilder.telegram()
                 .chatId(context.chatId())
                 .text("🐾 Мої улюбленці")
                 .keyboard(InlineKeyboardBuilder.builder()
-                        .paginatedList(page, context.callbackData())
+                        .paginatedList(toPageDto(result), context.callbackData())
                         .navButtonsFor(getCallbackId())
                         .backButtonFor(getCallbackId())
                         .build())
                 .editMessage(context.messageId())
                 .build();
+    }
+
+    private Page<CallbackListItem> toPageDto(Page<PetDTO> result) {
+        return result.map(pet -> new CallbackListItem(
+                CallbackId.PET_DETAIL,
+                pet.id(),
+                pet.name()
+        ));
     }
 }

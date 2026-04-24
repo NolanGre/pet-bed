@@ -17,7 +17,7 @@ public class TelegramAuthService {
 
     public UserAuthContext authenticate(Long telegramId, String telegramUsername) {
         UserDTO user = userService.registerOrGet(telegramId, telegramUsername);
-        return new UserAuthContext(user.id(), user.type());
+        return new UserAuthContext(user.id(), user.id(), user.type(), user.telegramUsername());
     }
 
     public UserAuthContext requireVolunteer(Long telegramId, String telegramUsername) {

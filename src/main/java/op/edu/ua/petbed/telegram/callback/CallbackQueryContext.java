@@ -1,6 +1,7 @@
 package op.edu.ua.petbed.telegram.callback;
 
 import op.edu.ua.petbed.common.exceptions.PetBedException;
+import op.edu.ua.petbed.telegram.auth.UserAuthContext;
 import org.jspecify.annotations.NullMarked;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -11,7 +12,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
  * Contains all information needed to handle button callback:
  * <ul>
  *     <li>{@link #callbackData()} - parsed action and payload from button</li>
- *     <li>{@link #userId()} - user who clicked</li>
+ *     <li>{@link #userTelegramId()} - user who clicked</li>
  *     <li>{@link #chatId()} - chat where button was clicked</li>
  *     <li>{@link #messageId()} - message containing the button</li>
  * </ul>
@@ -23,17 +24,16 @@ public record CallbackQueryContext(
         Update update,
         CallbackQuery callbackQuery,
         Long chatId,
-        Long userId,
-        String username,
+        UserAuthContext auth,
         Integer messageId
 ) {
-    public static CallbackQueryContext from(Update update) {
+    public static CallbackQueryContext from(Update update, UserAuthContext userAuthContext) {
         var cb = update.getCallbackQuery();
         var data = CallbackData.from(cb.getData());
         var msg = cb.getMessage();
         if (msg == null) {
             throw new PetBedException("Message is null in CallbackQuery", PetBedException.ErrorCode.INTERNAL_ERROR);
         }
-        return new CallbackQueryContext(data, update, cb, msg.getChatId(), cb.getFrom().getId(), cb.getFrom().getUserName(), msg.getMessageId());
+        return new CallbackQueryContext(data, update, cb, msg.getChatId(), userAuthContext, msg.getMessageId());
     }
 }

@@ -23,6 +23,6 @@ public class CancelFormHandler implements CommandHandler {
 
     @Override
     public BotApiMethod<?> handle(CommandContext context) {
-        return formService.cancelForm(context.userId());
+        return formService.cancelForm(context.userAuthContext().userInternalId(), context.chatId());
     }
 }

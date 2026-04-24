@@ -46,10 +46,10 @@ public class FormService {
      * Returns the first step prompt.
      */
     @Transactional
-    public BotApiMethod<?> startForm(FormType type, CallbackId returnCallback, Long telegramUserId, Long chatId) {
-        formRepository.deleteById(telegramUserId);
+    public BotApiMethod<?> startForm(FormType type, CallbackId returnCallback, Long internalUserId, Long chatId) {
+        formRepository.deleteById(internalUserId);
 
-        FormEntity entity = FormEntity.initiate(telegramUserId, chatId, type, returnCallback);
+        FormEntity entity = FormEntity.initiate(internalUserId, chatId, type, returnCallback);
         formRepository.save(entity);
 
         return ResponseBuilder.telegram()
@@ -64,11 +64,11 @@ public class FormService {
      * Saves answer and returns next prompt or confirmation request if form is complete.
      */
     @Transactional
-    public BotApiMethod<?> processInput(FormInput input, Long telegramUserId) {
-        var entity = formRepository.findById(telegramUserId).orElse(null);
+    public BotApiMethod<?> processInput(FormInput input, Long internalUserId, Long chatId) {
+        var entity = formRepository.findById(internalUserId).orElse(null);
 
         if (entity == null) {
-            return noActiveFormMessage(telegramUserId);
+            return noActiveFormMessage(chatId);
         }
 
         FormStep step = entity.nextStep();
@@ -95,11 +95,11 @@ public class FormService {
      * Converts collected data to DTO, delegates to the appropriate handler, deletes the form.
      */
     @Transactional
-    public BotApiMethod<?> confirmForm(Long telegramUserId) {
-        var entity = formRepository.findById(telegramUserId).orElse(null);
+    public BotApiMethod<?> confirmForm(Long internalUserId, Long fallbackChatId) {
+        var entity = formRepository.findById(internalUserId).orElse(null);
 
         if (entity == null) {
-            return noActiveFormMessage(telegramUserId);
+            return noActiveFormMessage(fallbackChatId);
         }
 
         if (!entity.isComplete()) {
@@ -111,7 +111,7 @@ public class FormService {
             throw new PetBedException("No handler for form type: " + entity.getFormType(), PetBedException.ErrorCode.INTERNAL_ERROR);
         }
 
-        var result = handler.handle(entity);
+        var result = handler.handle(entity.toFormData());
         formRepository.delete(entity);
 
         return result;
@@ -121,11 +121,11 @@ public class FormService {
      * Cancels the active form and returns the user to the returnCallback screen.
      */
     @Transactional
-    public BotApiMethod<?> cancelForm(Long telegramUserId) {
-        var entity = formRepository.findById(telegramUserId).orElse(null);
+    public BotApiMethod<?> cancelForm(Long userInternalId, Long fallbackChatId) {
+        var entity = formRepository.findById(userInternalId).orElse(null);
 
         if (entity == null) {
-            return noActiveFormMessage(telegramUserId);
+            return noActiveFormMessage(fallbackChatId);
         }
 
         Long chatId = entity.getChatId();
@@ -139,8 +139,8 @@ public class FormService {
     /**
      * Returns true if the user currently has an active form.
      */
-    public boolean hasActiveForm(Long telegramUserId) {
-        return formRepository.existsById(telegramUserId);
+    public boolean hasActiveForm(Long userInternalId) {
+        return formRepository.existsById(userInternalId);
     }
 
     private static BotApiMethod<?> noActiveFormMessage(Long chatId) {

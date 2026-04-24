@@ -4,6 +4,6 @@
     <include file="db/changelog/0001-setup-tables.xml"/>
     <include file="/db/changelog/0002-setup-main-tables.xml"/>
     <include file="/db/changelog/0003-add-form-state-columns.xml"/>
-    <include file="/db/changelog/0004-migrate-form-user-id-to-telegram.xml"/>
+    <include file="/db/changelog/0004-add-pet-status.xml"/>
 
 </databaseChangeLog>

@@ -49,7 +49,7 @@ class ProfileChangeTypeHandlerTest {
             Integer messageId = 1;
 
             given(context.chatId()).willReturn(chatId);
-            given(context.userId()).willReturn(userId);
+            given(context.userTelegramId()).willReturn(userId);
             given(context.messageId()).willReturn(messageId);
 
             // when
@@ -72,7 +72,7 @@ class ProfileChangeTypeHandlerTest {
             Integer messageId = 1;
 
             given(context.chatId()).willReturn(chatId);
-            given(context.userId()).willReturn(userId);
+            given(context.userTelegramId()).willReturn(userId);
             given(context.messageId()).willReturn(messageId);
 
             // when
@@ -97,7 +97,7 @@ class ProfileChangeTypeHandlerTest {
             Integer messageId = 1;
 
             given(context.chatId()).willReturn(chatId);
-            given(context.userId()).willReturn(userId);
+            given(context.userTelegramId()).willReturn(userId);
             given(context.messageId()).willReturn(messageId);
 
             // when
@@ -133,7 +133,7 @@ class ProfileChangeTypeHandlerTest {
             Integer messageId = 1;
 
             given(context.chatId()).willReturn(chatId);
-            given(context.userId()).willReturn(userId);
+            given(context.userTelegramId()).willReturn(userId);
             given(context.messageId()).willReturn(messageId);
 
             // when

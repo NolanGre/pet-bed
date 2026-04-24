@@ -6,8 +6,8 @@ import org.jspecify.annotations.NullMarked;
 
 @NullMarked
 public interface UserService {
-    UserDTO findByTelegramId(Long telegramId);
-
     UserDTO registerOrGet(Long telegramId, String telegramUsername);
-    UserDTO toggleUserType(Long telegramId);
+
+    UserDTO findById(Long internalId);
+    UserDTO toggleUserType(Long internalId);
 }

@@ -15,7 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,7 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.doAnswer;
 
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 @ExtendWith(MockitoExtension.class)
@@ -91,7 +89,7 @@ class FormServiceTest {
             FormInput input = new FormInput.Text("Барсик");
 
             // when
-            BotApiMethod<?> result = underTest.processInput(input, userId);
+            BotApiMethod<?> result = underTest.processInput(input, userId, chatId);
 
             // then
             verify(formRepository).save(entity);
@@ -113,7 +111,7 @@ class FormServiceTest {
             FormInput input = new FormInput.Location(50.45, 30.52);
 
             // when
-            BotApiMethod<?> result = underTest.processInput(input, userId);
+            BotApiMethod<?> result = underTest.processInput(input, userId, chatId);
 
             // then
             verify(formRepository).save(entity);
@@ -135,7 +133,7 @@ class FormServiceTest {
             FormInput input = new FormInput.Text(""); // Empty text - invalid
 
             // when
-            BotApiMethod<?> result = underTest.processInput(input, userId);
+            BotApiMethod<?> result = underTest.processInput(input, userId, chatId);
 
             // then
             String text = extractText(result);
@@ -152,7 +150,7 @@ class FormServiceTest {
             FormInput input = new FormInput.Text("test");
 
             // when
-            BotApiMethod<?> result = underTest.processInput(input, userId);
+            BotApiMethod<?> result = underTest.processInput(input, userId, chatId);
 
             // then
             String text = extractText(result);
@@ -183,7 +181,7 @@ class FormServiceTest {
             } catch (Exception expected) {
                 // Expects handler - but delete should have been called after find
             }
-            // Note: due to exception, delete verification context differs
+            // Note: due to exception, delete verification auth differs
         }
 
         @Test

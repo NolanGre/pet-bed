@@ -1,9 +1,9 @@
 package op.edu.ua.petbed.telegram.command;
 
+import op.edu.ua.petbed.telegram.auth.UserAuthContext;
 import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
-import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 
 /**
  * Context record for incoming command message.
@@ -11,8 +11,8 @@ import org.telegram.telegrambots.meta.api.objects.Update;
  * Contains all information needed to handle a command:
  * <ul>
  *     <li>{@link #command()} - parsed command enum</li>
- *     <li>{@link #userId()} - user who sent command</li>
  *     <li>{@link #chatId()} - chat where command was sent</li>
+ *     <li>{@link #userAuthContext()} - auth with all auth information</li>
  *     <li>{@link #rawText()} - full message text with arguments</li>
  * </ul>
  *
@@ -21,32 +21,30 @@ import org.telegram.telegrambots.meta.api.objects.Update;
  */
 @NullMarked
 public record CommandContext(
-    Command command,
-    Update update,
-    Message message,
-    Long chatId,
-    Long userId,
-    String username,
-    String rawText
+        Command command,
+        Update update,
+        Message message,
+        Long chatId,
+        UserAuthContext userAuthContext,
+        String rawText
 ) {
     /**
-     * Creates context from Telegram Update containing message.
+     * Creates auth from Telegram Update containing message.
      *
-     * @param update with Message
-     * @param command parsed Command enum
+     * @param update      with Message
+     * @param command     parsed Command enum
+     * @param authContext fetch user from DB
      * @return parsed CommandContext
      */
-    public static CommandContext from(Update update, Command command) {
+    public static CommandContext from(Update update, Command command, UserAuthContext authContext) {
         var msg = update.getMessage();
-        var from = msg.getFrom();
         return new CommandContext(
-            command,
-            update,
-            msg,
-            msg.getChatId(),
-            from.getId(),
-            from.getUserName(),
-            msg.getText()
+                command,
+                update,
+                msg,
+                msg.getChatId(),
+                authContext,
+                msg.getText()
         );
     }
 }

@@ -51,7 +51,7 @@ class SubmitFormHandlerTest {
         void confirmForm_called() {
             // given
             Update update = withCommand("/submit", 123L, "username", 456L);
-            CommandContext context = CommandContext.from(update, Command.SUBMIT_FORM);
+            CommandContext context = CommandContext.from(update, Command.SUBMIT_FORM, authContext);
             SendMessage expectedResult = SendMessage.builder().chatId("456").text("Done").build();
             doAnswer(invocation -> expectedResult).when(formService).confirmForm(123L);
 

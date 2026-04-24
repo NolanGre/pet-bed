@@ -49,7 +49,7 @@ class CallbackQueryContextTest {
             assertThat(result.callbackData().entityId()).isEqualTo(42L);
             assertThat(result.callbackData().offset()).isEqualTo(5);
             assertThat(result.chatId()).isEqualTo(456L);
-            assertThat(result.userId()).isEqualTo(123L);
+            assertThat(result.userTelegramId()).isEqualTo(123L);
             assertThat(result.username()).isEqualTo("testuser");
             assertThat(result.messageId()).isEqualTo(10);
             assertThat(result.update()).isEqualTo(update);

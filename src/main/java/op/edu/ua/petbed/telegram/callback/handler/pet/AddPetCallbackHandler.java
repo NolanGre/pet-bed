@@ -26,6 +26,6 @@ public class AddPetCallbackHandler implements CallbackHandler {
 
     @Override
     public BotApiMethod<?> handle(CallbackQueryContext context) {
-        return formService.startForm(FormType.ADD_PET, CallbackId.MY_PETS, context.userId(), context.chatId());
+        return formService.startForm(FormType.ADD_PET, CallbackId.MY_PETS, context.auth().userInternalId(), context.chatId());
     }
 }

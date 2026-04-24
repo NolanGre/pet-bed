@@ -29,12 +29,12 @@ public class ProfileChangeTypeConfirmHandler implements CallbackHandler {
 
     @Override
     public BotApiMethod<?> handle(CallbackQueryContext context) {
-        Long telegramId = context.callbackData().entityId();
-        if (telegramId == null) {
+        Long internalId = context.callbackData().entityId();
+        if (internalId == null) {
             throw new PetBedException("EntityId is required for PROFILE_CHANGE_TYPE_CONFIRM", PetBedException.ErrorCode.INVALID_CALLBACK);
         }
 
-        UserDTO user = userService.toggleUserType(telegramId);
+        UserDTO user = userService.toggleUserType(internalId);
         return mapToResponse(context, user.type());
     }
 

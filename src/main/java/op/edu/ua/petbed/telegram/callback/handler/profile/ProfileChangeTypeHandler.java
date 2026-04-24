@@ -38,7 +38,7 @@ public class ProfileChangeTypeHandler implements CallbackHandler {
                 """;
 
         InlineKeyboardMarkup keyboard = InlineKeyboardBuilder.builder()
-                .navButtonsFor(CallbackId.PROFILE_CHANGE_TYPE, context.userId())
+                .navButtonsFor(CallbackId.PROFILE_CHANGE_TYPE, context.auth().userTelegramId())
                 .backButtonFor(CallbackId.PROFILE_CHANGE_TYPE)
                 .build();
 

@@ -95,14 +95,16 @@ public class InlineKeyboardBuilder {
         checkNotAdded(AddedMethod.BACK_BUTTON, "backButtonFor");
         CallbackId parent = currentCallbackId.parent();
         if (parent != null) {
-            String callbackData = CallbackData.of(parent, null, null).toString();
+            Integer offset = parent.isPaginated() ? 0 : null;
+            String callbackData = CallbackData.of(parent, null, offset).toString();
             backButton = createButton(CallbackId.BACK_BUTTON_LABEL, callbackData);
         }
         return this;
     }
 
     public InlineKeyboardBuilder backButtonTo(CallbackId callbackId) {
-        String callbackData = CallbackData.of(callbackId, null, null).toString();
+        Integer offset = callbackId.isPaginated() ? 0 : null;
+        String callbackData = CallbackData.of(callbackId, null, offset).toString();
         backButton = createButton(CallbackId.BACK_BUTTON_LABEL, callbackData);
         return this;
     }

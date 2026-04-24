@@ -5,6 +5,7 @@ import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.exceptions.WebhookExceptionHandler;
 import op.edu.ua.petbed.telegram.TelegramUpdateRouter;
 import op.edu.ua.petbed.telegram.auth.TelegramAuthService;
+import op.edu.ua.petbed.telegram.auth.UserAuthContext;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -86,14 +87,8 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
         Command command = Command.fromLabel(text);
         log.debug("Handling command: {} with text: {}", command, text);
 
-        var from = update.getMessage().getFrom();
-        Long userId = from.getId();
-        if (command.requiresAuth()) {
-            log.debug("Command {} requires auth, authenticating user: {}", command, userId);
-            authService.authenticate(userId, from.getUserName());
-        }
-
-        CommandContext context = CommandContext.from(update, command);
+        var authContext = authUser(update);
+        CommandContext context = CommandContext.from(update, command, authContext);
         CommandHandler handler = commandHandlerMap.get(command);
 
         if (handler == null) {
@@ -107,7 +102,8 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
     }
 
     private BotApiMethod<?> handleCallback(Update update) {
-        CallbackQueryContext context = CallbackQueryContext.from(update);
+        var authContext = authUser(update);
+        CallbackQueryContext context = CallbackQueryContext.from(update, authContext);
 
         CallbackId callbackId = context.callbackData().callbackIdEnum();
 
@@ -131,18 +127,25 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
 
     // Hande all type of message: text, photo, location etc.
     private BotApiMethod<?> handleMessage(Update update) {
+        var auth = authUser(update);
         Message message = update.getMessage();
-        Long userId = message.getFrom().getId();
         Long chatId = message.getChatId();
 
-        if (formService.hasActiveForm(userId)) {
+        if (formService.hasActiveForm(auth.userInternalId())) {
             FormInput input = FormInput.from(message);
-            log.debug("Processing form input for userId: {}, type: {}", userId, input.getClass().getSimpleName());
-            return formService.processInput(input, userId);
+            log.debug("Processing form input for userTelegramId: {}, type: {}", auth.userTelegramId(), input.getClass().getSimpleName());
+            return formService.processInput(input, auth.userInternalId(), chatId);
         }
 
-        log.debug("No active form for userId: {}, returning default response", userId);
+        log.debug("No active form for userTelegramId: {}, returning default response", auth.userTelegramId());
         return defaultMessageResponse(chatId);
+    }
+
+    private UserAuthContext authUser(Update update) {
+        var from = update.hasCallbackQuery()
+                ? update.getCallbackQuery().getFrom()
+                : update.getMessage().getFrom();
+        return authService.authenticate(from.getId(), from.getUserName());
     }
 
     private SendMessage defaultResponse(Long chatId) {

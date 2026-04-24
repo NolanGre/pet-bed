@@ -3,7 +3,6 @@ package op.edu.ua.petbed.telegram.callback.handler.profile;
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.common.model.UserType;
 import op.edu.ua.petbed.telegram.auth.TelegramAuthService;
-import op.edu.ua.petbed.telegram.auth.UserAuthContext;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -28,11 +27,11 @@ public class ProfileCallbackHandler implements CallbackHandler {
 
     @Override
     public BotApiMethod<?> handle(CallbackQueryContext context) {
-        UserAuthContext auth = authService.authenticate(context.userId(), context.username());
-        return mapToResponse(context, auth);
+        return mapToResponse(context);
     }
 
-    private BotApiMethod<?> mapToResponse(CallbackQueryContext context, UserAuthContext auth) {
+    private BotApiMethod<?> mapToResponse(CallbackQueryContext context) {
+        var auth = context.auth();
         String messageText = String.format("""
                 👤 Ваш профіль
 
@@ -42,8 +41,8 @@ public class ProfileCallbackHandler implements CallbackHandler {
 
                 %s
                 """,
-                auth.userId(),
-                context.username(),
+                auth.userTelegramId(),
+                auth.username(),
                 formatUserType(auth.userType()),
                 getTypeDescription(auth.userType()));
 

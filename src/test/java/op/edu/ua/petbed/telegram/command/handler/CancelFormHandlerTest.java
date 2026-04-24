@@ -50,7 +50,7 @@ class CancelFormHandlerTest {
         void cancelForm_called() {
             // given
             Update update = withCommand("/cancel", 123L, "username", 456L);
-            CommandContext context = CommandContext.from(update, Command.CANCEL_FORM);
+            CommandContext context = CommandContext.from(update, Command.CANCEL_FORM, authContext);
             SendMessage expectedResult = SendMessage.builder().chatId("456").text("Cancelled").build();
             doAnswer(invocation -> expectedResult).when(formService).cancelForm(123L);
 

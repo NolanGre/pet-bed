@@ -23,6 +23,6 @@ public class SubmitFormHandler implements CommandHandler {
 
     @Override
     public BotApiMethod<?> handle(CommandContext context) {
-        return formService.confirmForm(context.userId());
+        return formService.confirmForm(context.userAuthContext().userInternalId(), context.chatId());
     }
 }

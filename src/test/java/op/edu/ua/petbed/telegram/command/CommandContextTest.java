@@ -18,7 +18,7 @@ class CommandContextTest {
         Command command = Command.START;
 
         // when
-        CommandContext result = CommandContext.from(update, command);
+        CommandContext result = CommandContext.from(update, command, authContext);
 
         // then
         assertThat(result.command()).isEqualTo(Command.START);

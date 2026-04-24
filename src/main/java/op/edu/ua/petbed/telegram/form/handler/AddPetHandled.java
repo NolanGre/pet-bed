@@ -1,19 +1,36 @@
 package op.edu.ua.petbed.telegram.form.handler;
 
 import lombok.extern.slf4j.Slf4j;
-import op.edu.ua.petbed.telegram.callback.CallbackId;
-import op.edu.ua.petbed.telegram.form.FormEntity;
+import op.edu.ua.petbed.common.dto.CreatePetDTO;
+import op.edu.ua.petbed.common.dto.UserDTO;
+import op.edu.ua.petbed.common.model.PetSex;
+import op.edu.ua.petbed.common.model.PetSize;
+import op.edu.ua.petbed.common.model.PetType;
+import op.edu.ua.petbed.pet.PetService;
+import op.edu.ua.petbed.telegram.form.FormData;
+import op.edu.ua.petbed.telegram.form.scheme.FormStep;
 import op.edu.ua.petbed.telegram.form.scheme.FormType;
 import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
 import op.edu.ua.petbed.telegram.response.ResponseBuilder;
+import op.edu.ua.petbed.user.UserService;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+
+import java.util.List;
 
 @Slf4j
 @Component
 @NullMarked
 public class AddPetHandled implements FormSubmissionHandler {
+
+    private final PetService petService;
+    private final UserService userService;
+
+    public AddPetHandled(PetService petService, UserService userService) {
+        this.petService = petService;
+        this.userService = userService;
+    }
 
     @Override
     public FormType getFormType() {
@@ -21,17 +38,35 @@ public class AddPetHandled implements FormSubmissionHandler {
     }
 
     @Override
-    public BotApiMethod<?> handle(FormEntity formEntity) {
+    public BotApiMethod<?> handle(FormData data) {
+        log.debug("Add Pet Handled: {}", data);
 
-        // call pet service
-        log.debug("Add Pet Handled: {}",  formEntity);
+        var userId = userService.findById(data.userId()).id();
+        var result = petService.create(mapToDto(data, userId));
 
         return ResponseBuilder.telegram()
-                .chatId(formEntity.getChatId())
-                .text("Тварину успішно додано")
+                .chatId(data.chatId())
+                .text("🟢 " + result.name() + " був доданий")
                 .keyboard(InlineKeyboardBuilder.builder()
-                        .backButtonTo(formEntity.getReturnCallback())
+                        .backButtonTo(data.returnCallback())
                         .build())
+                .build();
+    }
+
+    private static CreatePetDTO mapToDto(FormData data, Long userId) {
+        List<FormStep> steps = FormType.ADD_PET.steps();
+        return CreatePetDTO.builder()
+                .ownerId(userId)
+                .name(data.text(steps.get(0)))
+                .type(PetType.valueOf(data.text(steps.get(1)).toUpperCase()))
+                .photoId(data.photo(steps.get(2)))
+                .breed(data.text(steps.get(3)))
+                .color(data.text(steps.get(4)))
+                .colorPattern(data.text(steps.get(5)))
+                .age(Integer.parseInt(data.text(steps.get(6))))
+                .sex(PetSex.valueOf(data.text(steps.get(7)).toUpperCase()))
+                .size(PetSize.valueOf(data.text(steps.get(8)).toUpperCase()))
+                .specialMarks(data.text(steps.get(9)))
                 .build();
     }
 }

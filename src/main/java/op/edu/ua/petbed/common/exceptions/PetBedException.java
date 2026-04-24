@@ -27,7 +27,11 @@ public class PetBedException extends RuntimeException {
         AUTHORIZATION_REQUIRED("This action requires volunteer status"),
         UNKNOWN_COMMAND("Unknown command. Use /help"),
         INVALID_CALLBACK("Invalid callback data"),
-        INVALID_FORM_INPUT("❌ Непідтримуваний тип повідомлення.");
+        INVALID_FORM_INPUT("❌ Непідтримуваний тип повідомлення."),
+        PET_NOT_PERSISTED("Pet is not persisted yet"),
+        PET_NOT_FOUND("Pet not found"),
+        PET_CANNOT_UPDATE("Cannot update pet with non-default status"),
+        PET_CANNOT_DELETE("Cannot delete pet in fostered status");
 
         private final String userMessage;
     }
