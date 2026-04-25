@@ -34,7 +34,7 @@ import op.edu.ua.petbed.telegram.command.Command;
 import op.edu.ua.petbed.telegram.command.CommandContext;
 import op.edu.ua.petbed.telegram.command.CommandHandler;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
 @Component
@@ -46,7 +46,7 @@ public class MyCommandHandler implements CommandHandler {
     }
 
     @Override
-    public BotApiMethod<?> handle(CommandContext context) {
+    public PartialBotApiMethod<?> handle(CommandContext context) {
         return SendMessage.builder()
                 .chatId(context.chatId())
                 .text("Your response text here!")
@@ -89,7 +89,6 @@ TODO
 ## Working with Callbacks (Handler)
 
 ```java
-
 @Component
 public class PetDetailHandler implements CallbackHandler {
 
@@ -99,12 +98,12 @@ public class PetDetailHandler implements CallbackHandler {
     }
 
     @Override
-    public BotApiMethod<?> handle(CallbackQueryContext context) {
+    public PartialBotApiMethod<?> handle(CallbackQueryContext context) {
         PetDTO pet = petService.findById(entityId);
         return mapToResponse(context, pet);
     }
 
-    private BotApiMethod<?> mapToResponse(CallbackQueryContext context, PetDTO pet) {
+    private PartialBotApiMethod<?> mapToResponse(CallbackQueryContext context, PetDTO pet) {
         return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                 .text(formatPetInfo(pet))
                 .keyboard(petKeyboard(pet))
@@ -158,4 +157,128 @@ ResponseBuilder.sendMessage(chatId)
 ResponseBuilder.editMessage(chatId, messageId)
         .text("Updated text!")
         .build();
+```
+
+---
+
+## Response Method Types
+
+### PartialBotApiMethod<?> Hierarchy
+
+Telegram Bot API methods split into two transport categories:
+
+```
+PartialBotApiMethod<?>
+├── BotApiMethod<?>        → can return via webhook
+│   ├── SendMessage
+│   ├── EditMessageText
+│   ├── EditMessageReplyMarkup
+│   ├── AnswerCallbackQuery
+│   ├── DeleteMessage
+│   └── ...
+└── execute() only       → CANNOT return via webhook
+    ├── SendPhoto
+    ├── SendDocument
+    ├── SendVideo
+    ├── SendAudio
+    ├── SendLocation
+    ├── SendVenue
+    ├── SendContact
+    ├── SendSticker
+    ├── EditMessageMedia
+    └── ...
+```
+
+### Rule
+
+| Transport | Methods |
+|-----------|---------|
+| **Webhook return** | `BotApiMethod<?>` — text, edit, answer |
+| **execute()** | Media, files, location, venues, contacts, stickers |
+
+### Handler Interface
+
+Handlers return `PartialBotApiMethod<?>` — agnostic to transport.
+
+```java
+public interface CallbackHandler {
+    PartialBotApiMethod<?> handle(CallbackQueryContext context);
+}
+```
+
+### Router Delivery
+
+Router knows how to deliver the response. All transport logic lives here.
+
+```java
+private void deliver(PartialBotApiMethod<?> response) throws TelegramApiException {
+    if (response instanceof BotApiMethod<?> m) {
+        // return via webhook — do nothing here
+        return;
+    }
+    // media — execute directly
+    if (response instanceof SendPhoto p)        telegramClient.execute(p);
+    if (response instanceof SendDocument d)     telegramClient.execute(d);
+    if (response instanceof SendVideo v)        telegramClient.execute(v);
+    if (response instanceof SendLocation l)     telegramClient.execute(l);
+    if (response instanceof EditMessageMedia e) telegramClient.execute(e);
+    // ...
+}
+```
+
+### When to Use What
+
+| Scenario | Solution |
+|---|---|
+| Send text | `SendMessage` → webhook return |
+| Edit text | `EditMessageText` → webhook return |
+| Send photo | `SendPhoto` → `execute()` |
+| Edit media | `EditMessageMedia` → `execute()` |
+| Send location | `SendLocation` → `execute()` |
+| Answer callback | `AnswerCallbackQuery` → webhook return |
+| Delete message | `DeleteMessage` → webhook return |
+
+### Quick Test
+
+> If the method takes a file or media → use `execute()`.  
+> If it's pure JSON without attachments → can use webhook.
+
+---
+
+## TelegramMessageService
+
+Use `TelegramMessageService` when you need to edit a text message that was previously a media message.
+
+### Rule
+
+- **Webhook return** — preferred for text edits
+- **editOrReplace** — only in handlers that are back/nav actions from a media screen
+
+Currently this only applies to `MyPetsCallbackHandler` (back from `PET_DETAIL` which is a photo).
+
+### Usage
+
+```java
+@Component
+@RequiredArgsConstructor
+public class MyPetsCallbackHandler implements CallbackHandler {
+
+    private final TelegramMessageService telegramMessageService;
+
+    @Override
+    public BotApiMethod<?> handle(CallbackQueryContext context) {
+        // Build message
+        SendMessage message = ResponseBuilder.sendMessage(context.chatId())
+                .text("🐾 Мої улюбленці")
+                .keyboard(keyboard)
+                .build();
+
+        // Try edit, if previous was media → delete & send new
+        telegramMessageService.editOrReplace(context.messageId(), message);
+
+        return AnswerCallbackQuery.builder()
+                .callbackQueryId(context.callbackQuery().getId())
+                .build();
+    }
+}
 ```
