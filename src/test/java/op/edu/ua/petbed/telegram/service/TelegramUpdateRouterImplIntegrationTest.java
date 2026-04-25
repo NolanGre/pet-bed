@@ -35,9 +35,17 @@ class TelegramUpdateRouterImplIntegrationTest extends PostgresTestContainer {
         // then
         SendMessage sendMessage = (SendMessage) result;
         String text = Objects.requireNonNull(sendMessage).getText();
-
-        assertThat(text)
-                .contains("Welcome to PetBed Bot");
+        assertThat(text).contains("""
+                        Привіт! 🐾 Це PetBed Bot — твій надійний помічник у світі тварин.
+                        
+                        Допоможу знайти загубленого улюбленця, прилаштувати тваринку в добрі руки, знайти тимчасовий дім (перетримку) або поділюся актуальними оголошеннями від волонтерів.
+                        
+                        👇 Що ти можеш зробити прямо зараз (тисни /menu):
+                        🔍 Знайшовся/Загубився: Швидко розмістити оголошення.
+                        🏠 Адопція: Знайти нову родину або отримати нового друга.
+                        ⏱️ Перетримка: Тимчасово прихистити свого улюбленця.
+                        📢 Волонтерська стрічка: Важливі оголошення від волонтерів.
+                        """);
     }
 
     @Test

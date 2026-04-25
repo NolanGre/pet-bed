@@ -149,7 +149,7 @@ class FormServiceTest {
 
             // then
             String text = extractText(result);
-            assertThat(text).contains("Очікується текст");
+            assertThat(text).contains("ℹ️ Очікується саме текст.");
         }
 
         @Test
@@ -173,38 +173,6 @@ class FormServiceTest {
 
     @Nested
     class ConfirmForm {
-
-        @Test
-        void complete_form_deletes_entity() {
-            // This test verifies the form deletion path. Handler invocation is tested
-            // with a simplified stub due to Mockito generic type constraints.
-            // Full integration is tested in Spring Boot integration tests.
-            Long userId = 123L;
-            Long chatId = 456L;
-            FormEntity entity = FormEntity.initiate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
-            // Fill all 10 steps
-            entity.applyStep(new FormInput.Text("Барсик"));           // 0: name
-            entity.applyStep(new FormInput.Text("cat"));               // 1: type
-            entity.applyStep(new FormInput.Photo("file123"));          // 2: photo
-            entity.applyStep(new FormInput.Text("Persian"));           // 3: breed
-            entity.applyStep(new FormInput.Text("white"));             // 4: color
-            entity.applyStep(new FormInput.Text("solid"));             // 5: pattern
-            entity.applyStep(new FormInput.Text("3"));                 // 6: age
-            entity.applyStep(new FormInput.Text("male"));              // 7: gender
-            entity.applyStep(new FormInput.Text("small"));             // 8: size
-            entity.applyStep(new FormInput.Text("friendly"));          // 9: notes
-            given(formRepository.findById(userId)).willReturn(Optional.of(entity));
-
-            FormService underTest = new FormService(formRepository, List.of());
-
-            // when - call will throw but still verify delete is called
-            try {
-                underTest.confirmForm(userId, chatId);
-            } catch (Exception expected) {
-                // Expects handler - but delete should have been called after find
-            }
-            // Note: due to exception, delete verification auth differs
-        }
 
         @Test
         void incomplete_form_returns_form_not_complete_message() {

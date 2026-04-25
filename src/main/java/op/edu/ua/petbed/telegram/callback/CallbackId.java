@@ -136,7 +136,10 @@ public enum CallbackId {
     FOSTERING_POST_DELETE(74121, "✅ Підтвердити", FOSTERING_POST_TRY_DELETE),
 
     // PAGINATION STUB
-    PAGINATION_PAGE_INDICATOR(900, "", null);
+    PAGINATION_PAGE_INDICATOR(900, "", null),
+
+    FORM_ENUM_LIST(91, "", null),
+    FORM_ENUM_SELECT(911, "", FORM_ENUM_LIST),;
 
     public static final String BACK_BUTTON_LABEL = "⬅️ Повернутись";
 

@@ -3,6 +3,7 @@ package op.edu.ua.petbed.telegram.service;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
+import op.edu.ua.petbed.telegram.callback.CallbackData;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.form.FormEntity;
 import op.edu.ua.petbed.telegram.form.FormRepository;
@@ -10,9 +11,14 @@ import op.edu.ua.petbed.telegram.form.handler.FormSubmissionHandler;
 import op.edu.ua.petbed.telegram.form.scheme.FormInput;
 import op.edu.ua.petbed.telegram.form.scheme.FormStep;
 import op.edu.ua.petbed.telegram.form.scheme.FormType;
+import op.edu.ua.petbed.telegram.response.CallbackListItem;
 import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
+import op.edu.ua.petbed.telegram.response.KeyboardLayout;
 import op.edu.ua.petbed.telegram.response.ResponseBuilder;
 import org.jspecify.annotations.NullMarked;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 
@@ -84,6 +90,16 @@ public class FormService {
             return formCompleteMessage(entity.getChatId());
         }
 
+        if (entity.nextStep().isChoice()) {
+            return ResponseBuilder.telegram()
+                    .chatId(entity.getChatId())
+                    .text(entity.nextStep().prompt())
+                    .keyboard(InlineKeyboardBuilder.builder()
+                            .paginatedList(toPageDto(entity.nextStep()), new CallbackData(CallbackId.FORM_ENUM_LIST.id(), null, 0))
+                            .build())
+                    .build();
+        }
+
         return ResponseBuilder.telegram()
                 .chatId(entity.getChatId())
                 .text(entity.nextStep().prompt())
@@ -143,6 +159,81 @@ public class FormService {
         return formRepository.existsById(userInternalId);
     }
 
+    /**
+     * Returns the active form entity for the user.
+     *
+     * @throws PetBedException if no active form exists
+     */
+    public FormEntity getActiveFormOrThrow(Long internalUserId) {
+        return formRepository.findById(internalUserId)
+                .orElseThrow(() -> new PetBedException("No active form for user", PetBedException.ErrorCode.INTERNAL_ERROR));
+    }
+
+    /**
+     * Returns the enum keyboard for the current step with pagination.
+     * Used by FormEnumListCallbackHandler for pagination navigation.
+     */
+    public BotApiMethod<?> getEnumKeyboardPage(Long internalUserId, int page, Integer messageId) {
+        var entity = formRepository.findById(internalUserId).orElse(null);
+
+        if (entity == null || !entity.nextStep().isChoice()) {
+            return noActiveFormMessage(internalUserId);
+        }
+
+        FormStep step = entity.nextStep();
+        int pageSize = KeyboardLayout.DEFAULT.pageSize();
+        List<? extends Enum<?>> allValues = step.enumValues();
+
+        if (allValues == null || allValues.isEmpty()) {
+            throw new PetBedException("Enum is empty.", PetBedException.ErrorCode.INTERNAL_ERROR);
+        }
+
+        List<CallbackListItem> pagedItems = allValues.stream()
+                .skip((long) page * pageSize)
+                .limit(pageSize)
+                .map(e -> new CallbackListItem(
+                        CallbackId.FORM_ENUM_SELECT,
+                        (long) e.ordinal(),
+                        e.name()
+                ))
+                .toList();
+
+        Page<CallbackListItem> pageDto = new PageImpl<>(
+                pagedItems, PageRequest.of(page, pageSize), allValues.size()
+        );
+
+        return ResponseBuilder.telegram()
+                .chatId(entity.getChatId())
+                .text(step.prompt())
+                .keyboard(InlineKeyboardBuilder.builder()
+                        .paginatedList(pageDto, new CallbackData(CallbackId.FORM_ENUM_LIST.id(), null, page))
+                        .build())
+                .editMessage(messageId)
+                .build();
+    }
+
+    private Page<CallbackListItem> toPageDto(FormStep step) {
+        int pageSize = KeyboardLayout.DEFAULT.pageSize();
+        List<? extends Enum<?>> allValues = step.enumValues();
+
+        if (allValues == null || allValues.isEmpty()) {
+            throw new PetBedException("Enum is empty.", PetBedException.ErrorCode.INTERNAL_ERROR);
+        }
+
+        List<CallbackListItem> pagedItems = allValues.stream()
+                .limit(pageSize)
+                .map(e -> new CallbackListItem(
+                        CallbackId.FORM_ENUM_SELECT,
+                        (long) e.ordinal(),
+                        e.name()
+                ))
+                .toList();
+
+        return new PageImpl<>(
+                pagedItems, PageRequest.of(0, pageSize), allValues.size()
+        );
+    }
+
     private static BotApiMethod<?> noActiveFormMessage(Long chatId) {
         return ResponseBuilder.telegram()
                 .chatId(chatId)
@@ -152,9 +243,11 @@ public class FormService {
 
     private static BotApiMethod<?> inputValidationMessage(FormStep step, FormEntity entity) {
         String errorMessage = switch (step.input()) {
-            case FormInput.Text _ -> "ℹ️ Очікується текст. Надішліть повідомленням.";
+            case FormInput.Text _ -> "ℹ️ Очікується саме текст.";
             case FormInput.Photo _ -> "ℹ️ Очікується фото. Надішліть фото.";
             case FormInput.Location _ -> "ℹ️ Очікується геолокація. Надішліть геолокацію.";
+            case FormInput.Number _ -> "ℹ️ Очікується ціле число.";
+            case FormInput.Choice _ -> "ℹ️ Оберіть варіант з клавіатури вище ☝️";
         };
         return ResponseBuilder.telegram()
                 .chatId(entity.getChatId())

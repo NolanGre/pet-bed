@@ -53,19 +53,19 @@ public class AddPetHandled implements FormSubmissionHandler {
                 .build();
     }
 
-    private static CreatePetDTO mapToDto(FormData data, Long userId) {
+private static CreatePetDTO mapToDto(FormData data, Long userId) {
         List<FormStep> steps = FormType.ADD_PET.steps();
         return CreatePetDTO.builder()
                 .ownerId(userId)
                 .name(data.text(steps.get(0)))
-                .type(PetType.valueOf(data.text(steps.get(1)).toUpperCase()))
+                .type(PetType.valueOf(data.choice(steps.get(1)).toUpperCase()))
                 .photoId(data.photo(steps.get(2)))
                 .breed(data.text(steps.get(3)))
                 .color(data.text(steps.get(4)))
                 .colorPattern(data.text(steps.get(5)))
-                .age(Integer.parseInt(data.text(steps.get(6))))
-                .sex(PetSex.valueOf(data.text(steps.get(7)).toUpperCase()))
-                .size(PetSize.valueOf(data.text(steps.get(8)).toUpperCase()))
+                .age(data.number(steps.get(6)))
+                .sex(PetSex.valueOf(data.choice(steps.get(7)).toUpperCase()))
+                .size(PetSize.valueOf(data.choice(steps.get(8)).toUpperCase()))
                 .specialMarks(data.text(steps.get(9)))
                 .build();
     }

@@ -24,7 +24,7 @@ public class MenuHandler implements CommandHandler {
     public BotApiMethod<?> handle(CommandContext context) {
         return ResponseBuilder.telegram()
                 .chatId(context.chatId())
-                .text(getCommand().getLabel())
+                .text("🏠 Меню")
                 .keyboard(InlineKeyboardBuilder.builder()
                         .navButtonsFor(CallbackId.MENU)
                         .build())

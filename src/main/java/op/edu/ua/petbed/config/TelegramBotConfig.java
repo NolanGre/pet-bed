@@ -20,9 +20,6 @@ import org.telegram.telegrambots.webhook.starter.SpringTelegramWebhookBot;
 @RequiredArgsConstructor
 public class TelegramBotConfig {
 
-    @Value("${telegram.bot.token}")
-    private String botToken;
-
     @Value("${telegram.bot.path}")
     private String botPath;
 
@@ -30,11 +27,6 @@ public class TelegramBotConfig {
     private String webhookUrl;
 
     private final TelegramUpdateRouter telegramUpdateRouter;
-
-    @Bean
-    public TelegramClient telegramClient() {
-        return new OkHttpTelegramClient(botToken);
-    }
 
     @Bean
     public SpringTelegramWebhookBot petBedBot(TelegramClient telegramClient) {

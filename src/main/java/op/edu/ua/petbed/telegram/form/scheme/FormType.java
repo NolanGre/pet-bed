@@ -1,5 +1,9 @@
 package op.edu.ua.petbed.telegram.form.scheme;
 
+import op.edu.ua.petbed.common.model.PetSex;
+import op.edu.ua.petbed.common.model.PetSize;
+import op.edu.ua.petbed.common.model.PetType;
+
 import java.util.List;
 
 import static op.edu.ua.petbed.telegram.form.scheme.FormStep.*;
@@ -8,17 +12,17 @@ import static op.edu.ua.petbed.telegram.form.scheme.FormStep.*;
  * Defines available form types and their ordered steps.
  */
 public enum FormType {
-    ADD_PET(List.of(
-            new FormStep("✏️ Введіть ім'я тварини", FormInput.TEXT, NON_BLANK_TEXT),
-            new FormStep("🐾 Оберіть тип тварини", FormInput.TEXT, NON_BLANK_TEXT),
-            new FormStep("📷 Надішліть фото тварини", FormInput.PHOTO, NON_BLANK_PHOTO),
-            new FormStep("🏷️ Введіть породу", FormInput.TEXT, FormStep.NON_BLANK_TEXT),
-            new FormStep("🎨 Введіть колір забарвлення", FormInput.TEXT, FormStep.NON_BLANK_TEXT),
-            new FormStep("✨ Введіть тип забарвлення", FormInput.TEXT, FormStep.NON_BLANK_TEXT),
-            new FormStep("🔢 Введіть кількість повних років", FormInput.TEXT, NON_BLANK_TEXT),
-            new FormStep("⚤ Оберіть стать (male/female)", FormInput.TEXT, FormStep.NON_BLANK_TEXT),
-            new FormStep("📏 Оберіть розмір (small/medium/large)", FormInput.TEXT, FormStep.NON_BLANK_TEXT),
-            new FormStep("📝 Введіть особливі примітки", FormInput.TEXT, NON_BLANK_TEXT)
+ADD_PET(List.of(
+            FormStep.text("✏️ Введіть ім'я тварини"),
+            FormStep.choice("🐾 Оберіть тип тварини", List.of(PetType.values())),
+            FormStep.photo("📷 Надішліть фото тварини"),
+            FormStep.text("🏷️ Введіть породу"),
+            FormStep.text("🎨 Введіть колір забарвлення"),
+            FormStep.text("✨ Введіть тип забарвлення"),
+            FormStep.number("🔢 Введіть кількість повних років"),
+            FormStep.choice("⚤ Оберіть стать", List.of(PetSex.values())),
+            FormStep.choice("📏 Оберіть розмір", List.of(PetSize.values())),
+            FormStep.text("📝 Введіть особливі прикмети")
     ));
 
     private final List<FormStep> steps;

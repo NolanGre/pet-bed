@@ -25,7 +25,7 @@ class FormDataTest {
         @Test
         void text_correctType_returnsValue() {
             // given
-            FormStep step = new FormStep("Name", FormInput.TEXT, s -> true);
+            FormStep step = new FormStep("Name", FormInput.TEXT, s -> true, null);
             var answers = new LinkedHashMap<FormStep, FormInput>();
             answers.put(step, new FormInput.Text("Barsik"));
             FormData data = new FormData(1L, 123L, CallbackId.MY_PETS, answers);
@@ -40,8 +40,8 @@ class FormDataTest {
         @Test
         void text_wrongType_throwsPetBedException() {
             // given
-            FormStep step = new FormStep("Name", FormInput.TEXT, s -> true);
-            FormStep wrongStep = new FormStep("Photo", FormInput.PHOTO, s -> true);
+            FormStep step = new FormStep("Name", FormInput.TEXT, s -> true, null);
+            FormStep wrongStep = new FormStep("Photo", FormInput.PHOTO, s -> true, null);
             var answers = new LinkedHashMap<FormStep, FormInput>();
             answers.put(step, new FormInput.Text("Barsik"));
             answers.put(wrongStep, new FormInput.Photo("abc123"));
@@ -62,7 +62,7 @@ class FormDataTest {
         @Test
         void photo_correctType_returnsValue() {
             // given
-            FormStep step = new FormStep("Photo", FormInput.PHOTO, s -> true);
+            FormStep step = new FormStep("Photo", FormInput.PHOTO, s -> true, null);
             var answers = new LinkedHashMap<FormStep, FormInput>();
             answers.put(step, new FormInput.Photo("abc123"));
             FormData data = new FormData(1L, 123L, CallbackId.MY_PETS, answers);
@@ -77,8 +77,8 @@ class FormDataTest {
         @Test
         void photo_wrongType_throwsPetBedException() {
             // given
-            FormStep step = new FormStep("Photo", FormInput.PHOTO, s -> true);
-            FormStep wrongStep = new FormStep("Name", FormInput.TEXT, s -> true);
+            FormStep step = new FormStep("Photo", FormInput.PHOTO, s -> true, null);
+            FormStep wrongStep = new FormStep("Name", FormInput.TEXT, s -> true, null);
             var answers = new LinkedHashMap<FormStep, FormInput>();
             answers.put(step, new FormInput.Photo("abc123"));
             answers.put(wrongStep, new FormInput.Text("Barsik"));
@@ -99,7 +99,7 @@ class FormDataTest {
         @Test
         void location_correctType_returnsValue() {
             // given
-            FormStep step = new FormStep("Location", FormInput.LOCATION, s -> true);
+            FormStep step = new FormStep("Location", FormInput.LOCATION, s -> true, null);
             var answers = new LinkedHashMap<FormStep, FormInput>();
             answers.put(step, new FormInput.Location(50.45, 30.52));
             FormData data = new FormData(1L, 123L, CallbackId.MY_PETS, answers);
@@ -115,8 +115,8 @@ class FormDataTest {
         @Test
         void location_wrongType_throwsPetBedException() {
             // given
-            FormStep step = new FormStep("Location", FormInput.LOCATION, s -> true);
-            FormStep wrongStep = new FormStep("Name", FormInput.TEXT, s -> true);
+            FormStep step = new FormStep("Location", FormInput.LOCATION, s -> true, null);
+            FormStep wrongStep = new FormStep("Name", FormInput.TEXT, s -> true, null);
             var answers = new LinkedHashMap<FormStep, FormInput>();
             answers.put(step, new FormInput.Location(50.45, 30.52));
             answers.put(wrongStep, new FormInput.Text("Barsik"));

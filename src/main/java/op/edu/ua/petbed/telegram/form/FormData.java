@@ -31,4 +31,14 @@ public record FormData(
         if (answers.get(step) instanceof FormInput.Location loc) return loc;
         throw new PetBedException("Expected LOCATION at step: " + step.prompt(), INTERNAL_ERROR);
     }
+
+    public String choice(FormStep step) {
+        if (answers.get(step) instanceof FormInput.Choice(String v)) return v;
+        throw new PetBedException("Expected CHOICE at step: " + step.prompt(), INTERNAL_ERROR);
+    }
+
+    public int number(FormStep step) {
+        if (answers.get(step) instanceof FormInput.Number(int v)) return v;
+        throw new PetBedException("Expected NUMBER at step: " + step.prompt(), INTERNAL_ERROR);
+    }
 }

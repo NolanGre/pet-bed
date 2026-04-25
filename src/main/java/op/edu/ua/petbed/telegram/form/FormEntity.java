@@ -102,6 +102,8 @@ public class FormEntity extends AbstractAuditableEntity {
         return switch (step.input()) {
             case FormInput.Text _ -> new FormInput.Text(raw);
             case FormInput.Photo _ -> new FormInput.Photo(raw);
+            case FormInput.Number _ -> new FormInput.Number(Integer.parseInt(raw));
+            case FormInput.Choice _ -> new FormInput.Choice(raw);
             case FormInput.Location _ -> {
                 String[] parts = raw.split(",", 2);
                 yield new FormInput.Location(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
@@ -111,8 +113,10 @@ public class FormEntity extends AbstractAuditableEntity {
 
     private static String serialize(FormInput input) {
         return switch (input) {
-            case FormInput.Text(String value) -> value;
-            case FormInput.Photo(String fileId) -> fileId;
+            case FormInput.Text(String v) -> v;
+            case FormInput.Photo(String id) -> id;
+            case FormInput.Number(int v) -> String.valueOf(v);
+            case FormInput.Choice(String v) -> v;
             case FormInput.Location(double lat, double lon) -> lat + "," + lon;
         };
     }

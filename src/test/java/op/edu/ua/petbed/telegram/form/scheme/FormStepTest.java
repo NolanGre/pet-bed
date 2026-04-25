@@ -16,7 +16,7 @@ class FormStepTest {
         @Test
         void With_valid_text_true() {
             // given
-            var step = new FormStep("Name", FormInput.TEXT, FormStep.NON_BLANK_TEXT);
+            var step = FormStep.text("Name");
             FormInput input = new FormInput.Text("Барсик");
 
             // when
@@ -29,7 +29,7 @@ class FormStepTest {
         @Test
         void With_blank_false() {
             // given
-            var step = new FormStep("Name", FormInput.TEXT, FormStep.NON_BLANK_TEXT);
+            var step = FormStep.text("Name");
             FormInput input = new FormInput.Text("   ");
 
             // when
@@ -42,7 +42,7 @@ class FormStepTest {
         @Test
         void With_empty_false() {
             // given
-            var step = new FormStep("Name", FormInput.TEXT, FormStep.NON_BLANK_TEXT);
+            var step = FormStep.text("Name");
             FormInput input = new FormInput.Text("");
 
             // when
@@ -55,7 +55,7 @@ class FormStepTest {
         @Test
         void With_photo_type_false() {
             // given
-            var step = new FormStep("Name", FormInput.TEXT, FormStep.NON_BLANK_TEXT);
+            var step = FormStep.text("Name");
             FormInput input = new FormInput.Photo("file123");
 
             // when
@@ -68,7 +68,7 @@ class FormStepTest {
         @Test
         void With_location_type_false() {
             // given
-            var step = new FormStep("Name", FormInput.TEXT, FormStep.NON_BLANK_TEXT);
+            var step = FormStep.text("Name");
             FormInput input = new FormInput.Location(50.45, 30.52);
 
             // when
@@ -85,7 +85,7 @@ class FormStepTest {
         @Test
         void With_valid_photo_true() {
             // given
-            var step = new FormStep("Photo", FormInput.PHOTO, FormStep.NON_BLANK_PHOTO);
+            var step = FormStep.photo("Photo");
             FormInput input = new FormInput.Photo("file123");
 
             // when
@@ -98,7 +98,7 @@ class FormStepTest {
         @Test
         void With_blank_false() {
             // given
-            var step = new FormStep("Photo", FormInput.PHOTO, FormStep.NON_BLANK_PHOTO);
+            var step = FormStep.photo("Photo");
             FormInput input = new FormInput.Photo("");
 
             // when
@@ -111,7 +111,7 @@ class FormStepTest {
         @Test
         void With_text_type_false() {
             // given
-            var step = new FormStep("Photo", FormInput.PHOTO, FormStep.NON_BLANK_PHOTO);
+            var step = FormStep.photo("Photo");
             FormInput input = new FormInput.Text("name");
 
             // when
@@ -128,7 +128,7 @@ class FormStepTest {
         @Test
         void With_location_true() {
             // given
-            var step = new FormStep("Location", FormInput.LOCATION, FormStep.ANY_LOCATION);
+            var step = FormStep.location("Location");
             FormInput input = new FormInput.Location(50.45, 30.52);
 
             // when
@@ -141,7 +141,7 @@ class FormStepTest {
         @Test
         void With_text_type_false() {
             // given
-            var step = new FormStep("Location", FormInput.LOCATION, FormStep.ANY_LOCATION);
+            var step = FormStep.location("Location");
             FormInput input = new FormInput.Text("50.45,30.52");
 
             // when
@@ -154,7 +154,7 @@ class FormStepTest {
         @Test
         void With_photo_type_false() {
             // given
-            var step = new FormStep("Location", FormInput.LOCATION, FormStep.ANY_LOCATION);
+            var step = FormStep.location("Location");
             FormInput input = new FormInput.Photo("file123");
 
             // when

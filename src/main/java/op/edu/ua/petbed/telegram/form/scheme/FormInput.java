@@ -12,6 +12,8 @@ public sealed interface FormInput {
     Text TEXT = new Text("");
     Photo PHOTO = new Photo("");
     Location LOCATION = new Location(0, 0);
+    Number NUMBER = new Number(0);
+    Choice CHOICE = new Choice("");
 
     record Text(String value) implements FormInput {
     }
@@ -21,6 +23,12 @@ public sealed interface FormInput {
 
     record Location(double latitude, double longitude) implements FormInput {
     }
+
+    // Subtype of text
+    record Number(int value) implements FormInput {
+    }
+
+    record Choice(String value) implements FormInput {}
 
     /**
      * Converts a Telegram message to the appropriate input type.
@@ -37,7 +45,11 @@ public sealed interface FormInput {
             if (text == null || text.isBlank()) {
                 throw new PetBedException("Empty text input", ErrorCode.INVALID_FORM_INPUT);
             }
-            return new Text(text);
+            try {
+                return new Number(Integer.parseInt(text.trim()));
+            } catch (NumberFormatException e) {
+                return new Text(text);
+            }
         }
         throw new PetBedException("Unsupported message type", ErrorCode.INVALID_FORM_INPUT);
     }
