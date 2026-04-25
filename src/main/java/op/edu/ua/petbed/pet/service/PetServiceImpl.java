@@ -2,15 +2,14 @@ package op.edu.ua.petbed.pet.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import op.edu.ua.petbed.common.exceptions.PetBedException;
-import op.edu.ua.petbed.pet.PetService;
 import op.edu.ua.petbed.common.dto.CreatePetDTO;
 import op.edu.ua.petbed.common.dto.PetDTO;
 import op.edu.ua.petbed.common.dto.UpdatePetDTO;
+import op.edu.ua.petbed.common.exceptions.PetBedException;
+import op.edu.ua.petbed.pet.PetService;
 import op.edu.ua.petbed.pet.model.Pet;
 import op.edu.ua.petbed.pet.repository.PetRepository;
 import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -61,8 +60,9 @@ public class PetServiceImpl implements PetService {
     }
 
     @Override
-    public @Nullable PetDTO findById(Long id) {
-        return petRepository.findById(id).map(this::toDto).orElse(null);
+    public PetDTO findById(Long id) {
+        return petRepository.findById(id).map(this::toDto)
+                .orElseThrow(() -> new PetBedException("Pet not found with id: " + id, PetBedException.ErrorCode.PET_NOT_FOUND));
     }
 
     @Override

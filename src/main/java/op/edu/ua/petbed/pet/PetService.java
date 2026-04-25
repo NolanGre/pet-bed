@@ -4,7 +4,6 @@ import op.edu.ua.petbed.common.dto.CreatePetDTO;
 import op.edu.ua.petbed.common.dto.PetDTO;
 import op.edu.ua.petbed.common.dto.UpdatePetDTO;
 import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -17,7 +16,7 @@ public interface PetService {
 
     void delete(Long id);
 
-    @Nullable PetDTO findById(Long id);
+    PetDTO findById(Long id);
 
     Page<PetDTO> findAllByOwnerId(Long ownerId, Pageable pageable);
 }

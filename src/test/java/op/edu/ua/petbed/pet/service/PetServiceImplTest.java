@@ -131,15 +131,14 @@ class PetServiceImplTest {
         }
 
         @Test
-        void findById_notExists_returnsNull() {
+        void findById_notExists_throwsPetBedException() {
             // given
             given(petRepository.findById(999L)).willReturn(Optional.empty());
 
-            // when
-            PetDTO result = underTest.findById(999L);
+            // when + then
+            assertThatThrownBy(() -> underTest.findById(999L))
+                    .isInstanceOf(PetBedException.class);
 
-            // then
-            assertThat(result).isNull();
             verify(petRepository).findById(999L);
         }
     }
