@@ -20,6 +20,7 @@ import org.mockito.quality.Strictness;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 import java.util.List;
 import java.util.Objects;
@@ -49,21 +50,23 @@ class TelegramUpdateRouterImplTest {
     CallbackHandler callbackHandler;
 
     @Mock
+    TelegramClient telegramClient;
+
+    @Mock
     FormService formService;
 
     private TelegramUpdateRouterImpl underTest;
+
 
     @BeforeEach
     void setUp() {
         List<CommandHandler> commandHandlers = List.of(startHandler, defaultHandler, profileHandler);
         List<CallbackHandler> callbackHandlers = List.of(callbackHandler);
-
         given(startHandler.getCommand()).willReturn(Command.START);
         given(defaultHandler.getCommand()).willReturn(Command.DEFAULT);
         given(profileHandler.getCommand()).willReturn(Command.PROFILE);
         given(callbackHandler.getCallbackId()).willReturn(CallbackId.FEED_VIEW);
-
-        underTest = new TelegramUpdateRouterImpl(authService, commandHandlers, callbackHandlers, formService);
+        underTest = new TelegramUpdateRouterImpl(authService, commandHandlers, callbackHandlers, formService, telegramClient);
     }
 
     @Test

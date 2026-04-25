@@ -3,12 +3,14 @@
 ## Overview
 
 The UI layer maps domain DTOs into Telegram Bot API responses using a Builder Pattern. Handlers use private methods to
-build responses and return `BotApiMethod<?>`.
+build responses and return `PartialBotApiMethod<?>`.
 
 ## Architecture
 
 ```
-Handler (receives DTO from service) → mapToResponse() → BotApiMethod<?>
+Handler (receives DTO from service) → mapToResponse() → PartialBotApiMethod<?>
+                        ↓
+                    Router.deliver(response)
 ```
 
 ### Flow
@@ -16,6 +18,57 @@ Handler (receives DTO from service) → mapToResponse() → BotApiMethod<?>
 1. Handler calls domain service → gets DTO
 2. Handler calls private `mapToResponse(DTO)`
 3. `mapToResponse()` builds response and returns to router
+4. Router determines delivery method based on response type
+
+---
+
+## New Approach: deliver() Method
+
+The router uses `deliver()` to determine how to send the response to Telegram:
+
+```java
+private void deliver(PartialBotApiMethod<?> response) throws TelegramApiException {
+    // Webhook return — router does nothing, Telegram handles it
+    if (response instanceof BotApiMethod<?> m) {
+        return;
+    }
+
+    // Media/files — execute directly via TelegramClient
+    if (response instanceof SendPhoto p)        telegramClient.execute(p);
+    if (response instanceof SendDocument d)     telegramClient.execute(d);
+    if (response instanceof SendVideo v)        telegramClient.execute(v);
+    if (response instanceof SendLocation l)    telegramClient.execute(l);
+    if (response instanceof EditMessageMedia e) telegramClient.execute(e);
+    // ... other media types
+}
+```
+
+### Response Method Types
+
+Telegram Bot API methods split into two transport categories:
+
+| Transport | Methods | Delivery |
+|-----------|---------|----------|
+| **Webhook return** | `BotApiMethod<?>` — text, edit, answer | Router returns via webhook |
+| **execute()** | Media, files, location, contacts, stickers | Router calls `telegramClient.execute()` |
+
+**Why this matters:**
+- Text messages (`SendMessage`) → return via webhook (fast, no additional call)
+- Photos/videos/documents → require `execute()` call to Telegram API
+- The handler doesn't care — router handles delivery transparently
+
+### Auto AnswerCallbackQuery
+
+The router automatically answers callback queries:
+
+```java
+// In router.route() method
+return AnswerCallbackQuery.builder()
+        .callbackQueryId(context.callbackQuery().getId())
+        .build();
+```
+
+**Handlers should NOT return `AnswerCallbackQuery`** — it's handled automatically.
 
 ## Response Builder
 
@@ -24,12 +77,12 @@ All responses use Builder Pattern for flexible composition.
 ### Example: Pet List with Pagination
 
 ```java
-public BotApiMethod<?> handle(CommandContext context) {
+public PartialBotApiMethod<?> handle(CommandContext context) {
     Page<PetDTO> pets = petService.findAdoptable(page, userId);
     return mapToResponse(context, pets);
 }
 
-private BotApiMethod<?> mapToResponse(CommandContext context, Page<PetDTO> pets) {
+private PartialBotApiMethod<?> mapToResponse(CommandContext context, Page<PetDTO> pets) {
     return ResponseBuilder.sendMessage(context.chatId())
             .text(message)
             .keyboard(petListKeyboard(pets))
@@ -48,7 +101,7 @@ private InlineKeyboardMarkup petListKeyboard(Page<PetDTO> pets) {
 ### Example: Text + Photo + Buttons
 
 ```java
-private BotApiMethod<?> mapToResponse(PetDTO pet) {
+private PartialBotApiMethod<?> mapToResponse(PetDTO pet) {
     return ResponseBuilder.sendPhoto(context.chatId(), pet.photoUrl())
             .caption(formatPetInfo(pet))
             .keyboard(petActionKeyboard(pet))
@@ -59,10 +112,50 @@ private BotApiMethod<?> mapToResponse(PetDTO pet) {
 ### Example: Edit Message (on callback)
 
 ```java
-private BotApiMethod<?> mapToResponse(CallbackQueryContext context, PetDTO pet) {
+private PartialBotApiMethod<?> mapToResponse(CallbackQueryContext context, PetDTO pet) {
     return ResponseBuilder.editMessage(context.chatId(), context.messageId())
             .text(formatPetInfo(pet))
             .keyboard(petActionKeyboard(pet))
+            .build();
+}
+```
+
+### Example: Send Photo (new message)
+
+```java
+private PartialBotApiMethod<?> mapToResponse(PetDTO pet) {
+    // sendPhoto returns SendPhoto — router will execute() it
+    return ResponseBuilder.sendPhoto(chatId, pet.photoUrl())
+            .caption("🐕 " + pet.name())
+            .keyboard(InlineKeyboardBuilder.builder()
+                    .navButtonsFor(CallbackId.PET_DETAIL, pet.id())
+                    .backButtonFor(CallbackId.PET_DETAIL)
+                    .build())
+            .build();
+}
+```
+
+### Example: Edit Photo (on callback)
+
+```java
+private PartialBotApiMethod<?> mapToResponse(CallbackQueryContext context, PetDTO pet) {
+    // editPhoto returns EditMessageMedia — router will execute() it
+    return ResponseBuilder.editPhoto(context.chatId(), context.messageId(), pet.photoUrl())
+            .caption("🐕 " + pet.name())
+            .keyboard(InlineKeyboardBuilder.builder()
+                    .navButtonsFor(CallbackId.PET_DETAIL, pet.id())
+                    .backButtonFor(CallbackId.PET_DETAIL)
+                    .build())
+            .build();
+}
+```
+
+### Example: Send Location
+
+```java
+private PartialBotApiMethod<?> mapToResponse(LocationDTO location) {
+    // sendLocation returns SendLocation — router will execute() it
+    return ResponseBuilder.sendLocation(chatId, location.latitude(), location.longitude())
             .build();
 }
 ```
@@ -154,7 +247,9 @@ src/main/java/op/edu/ua/petbed/telegram/
 
 1. **One private mapping method per DTO** — keeps handler focused
 2. **Builder Pattern** — flexible composition of text/photo/keyboard
-3. **Return BotApiMethod<?>** — router expects this type
+3. **Return PartialBotApiMethod<?>** — router handles delivery transparently
 4. **EditMessage for callbacks** — update existing message on button click
 5. **Use InlineKeyboardBuilder** — all keyboards use this builder
 6. **Always provide text for new messages** — Telegram will NOT deliver callbacks if message has no text (only keyboard). This rule does NOT apply for editMessage.
+7. **Handler never calls execute()** — router's deliver() method handles all transport
+8. **Handler never returns AnswerCallbackQuery** — router adds it automatically

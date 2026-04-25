@@ -21,18 +21,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
-import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -67,19 +63,14 @@ class MyPetsCallbackHandlerTest {
         }
 
         @Test
-        void handle_offsetNotNull_callsTelegramMessageServiceAndReturnsAnswerCallbackQuery() {
+        void handle_offsetNotNull_returnsSendMessage() {
             // given
             int offset = 0;
-            Integer messageId = 456;
             Long chatId = 123L;
             UserAuthContext auth = new UserAuthContext(123L, 1L, UserType.REGULAR, "testuser");
-            CallbackQuery callbackQuery = mock(CallbackQuery.class);
-            given(callbackQuery.getId()).willReturn("callbackId123");
             given(context.auth()).willReturn(auth);
             given(context.chatId()).willReturn(chatId);
             given(context.callbackData()).willReturn(CallbackData.of(CallbackId.MY_PETS, null, offset));
-            given(context.messageId()).willReturn(messageId);
-            given(context.callbackQuery()).willReturn(callbackQuery);
 
             PetDTO pet1 = new PetDTO(1L, 1L, "Barsik", PetType.CAT, "abc123", "Persian", "White", "Solid", 3, PetSex.MALE, PetSize.SMALL, "None", PetStatus.DEFAULT);
             PetDTO pet2 = new PetDTO(2L, 1L, "Murzik", PetType.CAT, "def456", "Siamese", "Cream", "Point", 5, PetSex.FEMALE, PetSize.SMALL, "None", PetStatus.DEFAULT);
@@ -87,39 +78,37 @@ class MyPetsCallbackHandlerTest {
             given(petService.findAllByOwnerId(1L, PageRequest.of(offset, KeyboardLayout.DEFAULT.pageSize()))).willReturn(page);
 
             // when
-            BotApiMethod<?> result = underTest.handle(context);
+            PartialBotApiMethod<?> result = underTest.handle(context);
 
             // then
-            assertThat(result).isInstanceOf(AnswerCallbackQuery.class);
-            verify(telegramMessageService).editOrReplace(eq(messageId), any());
+            assertThat(result).isInstanceOf(SendMessage.class);
+            SendMessage message = (SendMessage) result;
+            assertThat(message.getText()).isEqualTo("🐾 Мої улюбленці");
+            assertThat(message.getChatId()).isEqualTo(chatId.toString());
             verify(petService).findAllByOwnerId(1L, PageRequest.of(offset, KeyboardLayout.DEFAULT.pageSize()));
         }
+    }
 
-        @Test
-        void handle_emptyPage_returnsAnswerCallbackQuery() {
-            // given
-            int offset = 0;
-            Integer messageId = 456;
-            Long chatId = 123L;
-            UserAuthContext auth = new UserAuthContext(123L, 1L, UserType.REGULAR, "testuser");
-            CallbackQuery callbackQuery = mock(CallbackQuery.class);
-            given(callbackQuery.getId()).willReturn("callbackId123");
-            given(context.auth()).willReturn(auth);
-            given(context.chatId()).willReturn(chatId);
-            given(context.callbackData()).willReturn(CallbackData.of(CallbackId.MY_PETS, null, offset));
-            given(context.messageId()).willReturn(messageId);
-            given(context.callbackQuery()).willReturn(callbackQuery);
+    @Test
+    void handle_emptyPage_returnsSendMessage() {
+        // given
+        int offset = 0;
+        Long chatId = 123L;
+        UserAuthContext auth = new UserAuthContext(123L, 1L, UserType.REGULAR, "testuser");
+        given(context.auth()).willReturn(auth);
+        given(context.chatId()).willReturn(chatId);
+        given(context.callbackData()).willReturn(CallbackData.of(CallbackId.MY_PETS, null, offset));
 
-            Page<PetDTO> page = new PageImpl<>(List.of(), PageRequest.of(offset, KeyboardLayout.DEFAULT.pageSize()), 0);
-            given(petService.findAllByOwnerId(1L, PageRequest.of(offset, KeyboardLayout.DEFAULT.pageSize()))).willReturn(page);
+        Page<PetDTO> page = new PageImpl<>(List.of(), PageRequest.of(offset, KeyboardLayout.DEFAULT.pageSize()), 0);
+        given(petService.findAllByOwnerId(1L, PageRequest.of(offset, KeyboardLayout.DEFAULT.pageSize()))).willReturn(page);
 
-            // when
-            BotApiMethod<?> result = underTest.handle(context);
+        // when
+        PartialBotApiMethod<?> result = underTest.handle(context);
 
-            // then
-            assertThat(result).isInstanceOf(AnswerCallbackQuery.class);
-            verify(telegramMessageService).editOrReplace(eq(messageId), any());
-            verify(petService).findAllByOwnerId(1L, PageRequest.of(offset, KeyboardLayout.DEFAULT.pageSize()));
-        }
+        // then
+        assertThat(result).isInstanceOf(SendMessage.class);
+        SendMessage message = (SendMessage) result;
+        assertThat(message.getText()).isEqualTo("🐾 Мої улюбленці");
+        verify(petService).findAllByOwnerId(1L, PageRequest.of(offset, KeyboardLayout.DEFAULT.pageSize()));
     }
 }

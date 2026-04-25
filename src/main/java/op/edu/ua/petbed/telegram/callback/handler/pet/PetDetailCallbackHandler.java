@@ -12,12 +12,9 @@ import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
 import op.edu.ua.petbed.telegram.response.ResponseBuilder;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
-import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageMedia;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 @NullMarked
 @Component
@@ -25,7 +22,6 @@ import org.telegram.telegrambots.meta.generics.TelegramClient;
 public class PetDetailCallbackHandler implements CallbackHandler {
 
     private final PetService petService;
-    private final TelegramClient telegramClient;
 
     @Override
     public CallbackId getCallbackId() {
@@ -33,25 +29,16 @@ public class PetDetailCallbackHandler implements CallbackHandler {
     }
 
     @Override
-    public BotApiMethod<?> handle(CallbackQueryContext context) {
+    public PartialBotApiMethod<?> handle(CallbackQueryContext context) {
         var entityId = context.callbackData().entityId();
         if (entityId == null) {
             throw new PetBedException("Entity ID is required for PET_DETAIL", PetBedException.ErrorCode.INVALID_CALLBACK);
         }
         PetDTO pet = petService.findById(entityId);
 
-        EditMessageMedia photo = ResponseBuilder.editPhoto(context.chatId(), context.messageId(), pet.photoId())
-            .caption(pet.formatInfo())
-            .keyboard(actionKeyboard(pet))
-            .build();
-        try {
-            telegramClient.execute(photo);
-        } catch (TelegramApiException e) {
-            throw new PetBedException("Failed to send pet photo", PetBedException.ErrorCode.INTERNAL_ERROR);
-        }
-
-        return AnswerCallbackQuery.builder()
-                .callbackQueryId(context.callbackQuery().getId())
+        return ResponseBuilder.editPhoto(context.chatId(), context.messageId(), pet.photoId())
+                .caption(pet.formatInfo())
+                .keyboard(actionKeyboard(pet))
                 .build();
     }
 

@@ -1,7 +1,7 @@
 package op.edu.ua.petbed.telegram.command;
 
 import org.jspecify.annotations.NullMarked;
-import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
 
 /**
  * Handler for bot commands.
@@ -25,7 +25,7 @@ public interface CommandHandler {
      * Handles the command.
      *
      * @param context containing message and user info
-     * @return BotApiMethod response (usually SendMessage)
+     * @return PartialBotApiMethod response (text, media, or other Telegram API method)
      */
-    BotApiMethod<?> handle(CommandContext context);
+    PartialBotApiMethod<?> handle(CommandContext context);
 }

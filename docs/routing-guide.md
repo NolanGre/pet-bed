@@ -83,14 +83,31 @@ UI hierarchy is defined in `CallbackId` enum (see `docs/callback-tree.md`).
 
 ### Examples
 
-TODO
+```java
+// Menu with back button
+InlineKeyboardBuilder.builder()
+        .navButtonsFor(getCallbackId())
+        .backButtonFor(getCallbackId())
+        .build();
+```
+```java
+// Pet list
+InlineKeyboardBuilder.builder()
+        .navButtonsFor(getCallbackId())
+        .backButtonFor(getCallbackId())
+        .paginatedList(pets)
+        .build();
+```
+
 ---
 
 ## Working with Callbacks (Handler)
 
 ```java
 @Component
-public class PetDetailHandler implements CallbackHandler {
+public class PetDetailCallbackHandler implements CallbackHandler {
+
+    private final PetService petService;
 
     @Override
     public CallbackId getCallbackId() {
@@ -99,14 +116,29 @@ public class PetDetailHandler implements CallbackHandler {
 
     @Override
     public PartialBotApiMethod<?> handle(CallbackQueryContext context) {
+        long entityId = context.callbackData().entityId();
+        if (entityId == null) {
+            throw new PetBedException("Entity ID is required for PET_DETAIL", PetBedException.ErrorCode.INVALID_CALLBACK);
+        }
         PetDTO pet = petService.findById(entityId);
-        return mapToResponse(context, pet);
+        return ResponseBuilder.editPhoto(context.chatId(), context.messageId(), pet.photoId())
+                .caption(pet.formatInfo())
+                .keyboard(actionKeyboard(pet))
+                .build();
     }
 
-    private PartialBotApiMethod<?> mapToResponse(CallbackQueryContext context, PetDTO pet) {
-        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
-                .text(formatPetInfo(pet))
-                .keyboard(petKeyboard(pet))
+    private InlineKeyboardMarkup actionKeyboard(PetDTO pet) {
+        return InlineKeyboardBuilder.builder()
+                .navButtonsFor(CallbackId.PET_DETAIL, pet.id(), child -> {
+                    if (child == CallbackId.PET_UPDATE) {
+                        return pet.status() == PetStatus.DEFAULT;
+                    }
+                    if (child == CallbackId.PET_DELETE) {
+                        return pet.status().canDelete();
+                    }
+                    return false;
+                })
+                .backButtonFor(CallbackId.PET_DETAIL)
                 .build();
     }
 }
@@ -165,7 +197,7 @@ ResponseBuilder.editMessage(chatId, messageId)
 
 ### PartialBotApiMethod<?> Hierarchy
 
-Telegram Bot API methods split into two transport categories:
+Telegram Bot API methods are split into two transport categories based on how they can be delivered:
 
 ```
 PartialBotApiMethod<?>
@@ -189,6 +221,10 @@ PartialBotApiMethod<?>
     └── ...
 ```
 
+**Why this matters:**
+- `BotApiMethod<?>` methods send a JSON response back to Telegram via the webhook return mechanism
+- Methods requiring `execute()` need the bot to make an outgoing API call — this happens after the webhook response is sent
+
 ### Rule
 
 | Transport | Methods |
@@ -208,8 +244,6 @@ public interface CallbackHandler {
 
 ### Router Delivery
 
-Router knows how to deliver the response. All transport logic lives here.
-
 ```java
 private void deliver(PartialBotApiMethod<?> response) throws TelegramApiException {
     if (response instanceof BotApiMethod<?> m) {
@@ -222,7 +256,7 @@ private void deliver(PartialBotApiMethod<?> response) throws TelegramApiExceptio
     if (response instanceof SendVideo v)        telegramClient.execute(v);
     if (response instanceof SendLocation l)     telegramClient.execute(l);
     if (response instanceof EditMessageMedia e) telegramClient.execute(e);
-    // ...
+    // ... additional media types
 }
 ```
 
@@ -240,8 +274,7 @@ private void deliver(PartialBotApiMethod<?> response) throws TelegramApiExceptio
 
 ### Quick Test
 
-> If the method takes a file or media → use `execute()`.  
-> If it's pure JSON without attachments → can use webhook.
+If the method takes a file or media → use `execute()`. Else it can be returned via webhook.
 
 ---
 
@@ -250,35 +283,18 @@ private void deliver(PartialBotApiMethod<?> response) throws TelegramApiExceptio
 Use `TelegramMessageService` when you need to edit a text message that was previously a media message.
 
 ### Rule
-
-- **Webhook return** — preferred for text edits
-- **editOrReplace** — only in handlers that are back/nav actions from a media screen
-
-Currently this only applies to `MyPetsCallbackHandler` (back from `PET_DETAIL` which is a photo).
-
-### Usage
+- Webhook return is preferred for text edits
+- `editOrReplace` is only required when the previous message was media (back/nav actions)
 
 ```java
 @Component
 @RequiredArgsConstructor
-public class MyPetsCallbackHandler implements CallbackHandler {
+public class TelegramMessageService {
+    private final TelegramClient telegramClient;
 
-    private final TelegramMessageService telegramMessageService;
-
-    @Override
-    public BotApiMethod<?> handle(CallbackQueryContext context) {
-        // Build message
-        SendMessage message = ResponseBuilder.sendMessage(context.chatId())
-                .text("🐾 Мої улюбленці")
-                .keyboard(keyboard)
-                .build();
-
-        // Try edit, if previous was media → delete & send new
-        telegramMessageService.editOrReplace(context.messageId(), message);
-
-        return AnswerCallbackQuery.builder()
-                .callbackQueryId(context.callbackQuery().getId())
-                .build();
+    public void editOrReplace(Integer messageId, SendMessage message) {
+        // Implementation unchanged — it retries with delete+send if edit fails
     }
 }
 ```
+

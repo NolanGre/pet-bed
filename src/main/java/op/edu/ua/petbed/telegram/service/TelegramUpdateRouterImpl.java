@@ -18,10 +18,14 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.send.*;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageMedia;
 import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 import java.util.List;
 import java.util.Map;
@@ -35,13 +39,15 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
 
     private final TelegramAuthService authService;
     private final FormService formService;
+    private final TelegramClient telegramClient;
 
     private final Map<Command, CommandHandler> commandHandlerMap;
     private final Map<CallbackId, CallbackHandler> callbackHandlerMap;
 
-    public TelegramUpdateRouterImpl(TelegramAuthService authService, List<CommandHandler> commandHandlers, List<CallbackHandler> callbackHandlers, FormService formService) {
+    public TelegramUpdateRouterImpl(TelegramAuthService authService, List<CommandHandler> commandHandlers, List<CallbackHandler> callbackHandlers, FormService formService, TelegramClient telegramClient) {
         this.authService = authService;
         this.formService = formService;
+        this.telegramClient = telegramClient;
 
         this.commandHandlerMap = Map.copyOf(commandHandlers.stream()
                 .collect(Collectors.toMap(CommandHandler::getCommand, Function.identity())));
@@ -96,9 +102,9 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
             return defaultResponse(context.chatId());
         }
 
-        BotApiMethod<?> response = handler.handle(context);
+        PartialBotApiMethod<?> response = handler.handle(context);
         log.debug("Command {} handled, response sent to chat: {}", command, context.chatId());
-        return response;
+        return deliver(response, null);
     }
 
     private BotApiMethod<?> handleCallback(Update update) {
@@ -120,9 +126,9 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
             return defaultCallbackResponse(context.callbackQuery().getId());
         }
 
-        BotApiMethod<?> response = handler.handle(context);
+        PartialBotApiMethod<?> response = handler.handle(context);
         log.debug("Callback {} handled, response sent to chat: {}", callbackId, context.chatId());
-        return response;
+        return deliver(response, context.callbackQuery().getId());
     }
 
     // Hande all type of message: text, photo, location etc.
@@ -167,6 +173,29 @@ public class TelegramUpdateRouterImpl implements TelegramUpdateRouter {
         return SendMessage.builder()
                 .chatId(chatId)
                 .text("Не зрозумів 🤔")
+                .build();
+    }
+
+    private BotApiMethod<?> deliver(PartialBotApiMethod<?> response, @Nullable String callbackQueryId) {
+        if (response instanceof BotApiMethod<?> method) {
+            return method; // SendMessage, EditMessageText, SendLocation...
+        }
+
+        try {
+            switch (response) {
+                case SendPhoto p -> telegramClient.execute(p);
+                case SendDocument d -> telegramClient.execute(d);
+                case SendVideo v -> telegramClient.execute(v);
+                case EditMessageMedia e -> telegramClient.execute(e);
+                default -> log.error("Unsupported media type for deliver: {}", response.getClass().getSimpleName());
+            }
+        } catch (TelegramApiException e) {
+            log.error("Failed to deliver media response", e);
+        }
+
+        // Stub for webhook response
+        return AnswerCallbackQuery.builder()
+                .callbackQueryId(callbackQueryId != null ? callbackQueryId : "")
                 .build();
     }
 }
