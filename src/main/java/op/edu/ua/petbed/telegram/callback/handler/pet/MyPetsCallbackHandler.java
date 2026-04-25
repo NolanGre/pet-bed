@@ -11,11 +11,14 @@ import op.edu.ua.petbed.telegram.response.CallbackListItem;
 import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
 import op.edu.ua.petbed.telegram.response.KeyboardLayout;
 import op.edu.ua.petbed.telegram.response.ResponseBuilder;
+import op.edu.ua.petbed.telegram.service.TelegramMessageService;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 @NullMarked
@@ -24,6 +27,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 public class MyPetsCallbackHandler implements CallbackHandler {
 
     private final PetService petService;
+    private final TelegramMessageService messageService;
 
     @Override
     public CallbackId getCallbackId() {
@@ -39,11 +43,18 @@ public class MyPetsCallbackHandler implements CallbackHandler {
         var result = petService.findAllByOwnerId(context.auth().userInternalId(),
                 PageRequest.of(callbackData.offset(), KeyboardLayout.DEFAULT.pageSize()));
 
-        return ResponseBuilder.sendMessage(context.chatId())
+        SendMessage message = ResponseBuilder.sendMessage(context.chatId())
                 .text("🐾 Мої улюбленці")
                 .keyboard(buildKeyboard(context, result))
                 .build();
+
+        messageService.editOrReplace(context.messageId(), message);
+
+        return AnswerCallbackQuery.builder()
+                .callbackQueryId(context.callbackQuery().getId())
+                .build();
     }
+
 
     private InlineKeyboardMarkup buildKeyboard(CallbackQueryContext context, Page<PetDTO> result) {
         return InlineKeyboardBuilder.builder()

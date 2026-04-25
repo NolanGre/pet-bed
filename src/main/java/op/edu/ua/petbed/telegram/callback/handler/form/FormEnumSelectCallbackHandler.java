@@ -1,6 +1,7 @@
 package op.edu.ua.petbed.telegram.callback.handler.form;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
@@ -11,16 +12,19 @@ import op.edu.ua.petbed.telegram.service.FormService;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 import static op.edu.ua.petbed.common.exceptions.PetBedException.ErrorCode.INTERNAL_ERROR;
 
+@Slf4j
 @NullMarked
 @Component
 @RequiredArgsConstructor
 public class FormEnumSelectCallbackHandler implements CallbackHandler {
 
     private final FormService formService;
+    private final TelegramClient telegramClient;
 
     @Override
     public CallbackId getCallbackId() {
@@ -42,15 +46,15 @@ public class FormEnumSelectCallbackHandler implements CallbackHandler {
             throw new PetBedException("Invalid enum index: " + index, INTERNAL_ERROR);
         }
         String selectedValue = enumValues.get(index.intValue()).name();
-
-        // Return EditMessageText instead of executing directly
-        EditMessageText editMessage = ResponseBuilder.editMessage(entity.getChatId(), context.messageId())
-                .text(step.prompt() + "\n\n✅ " + selectedValue)
-                .build();
+        try {
+            telegramClient.execute(ResponseBuilder.editMessage(entity.getChatId(), context.messageId())
+                    .text(step.prompt() + "\n\n✅ " + selectedValue)
+                    .build());
+        } catch (TelegramApiException e) {
+            log.error("Failed to edit enum selection message", e);
+        }
 
         // Process input and return the response
-        formService.processInput(new FormInput.Choice(selectedValue), context.auth().userInternalId(), entity.getChatId());
-
-        return editMessage;
+        return formService.processInput(new FormInput.Choice(selectedValue), context.auth().userInternalId(), entity.getChatId());
     }
 }
