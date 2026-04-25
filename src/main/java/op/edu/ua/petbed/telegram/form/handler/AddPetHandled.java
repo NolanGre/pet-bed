@@ -44,8 +44,7 @@ public class AddPetHandled implements FormSubmissionHandler {
         var userId = userService.findById(data.userId()).id();
         var result = petService.create(mapToDto(data, userId));
 
-        return ResponseBuilder.telegram()
-                .chatId(data.chatId())
+        return ResponseBuilder.sendMessage(data.chatId())
                 .text("🟢 " + result.name() + " був доданий")
                 .keyboard(InlineKeyboardBuilder.builder()
                         .backButtonTo(data.returnCallback())

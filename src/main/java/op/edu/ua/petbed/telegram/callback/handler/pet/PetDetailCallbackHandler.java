@@ -14,8 +14,6 @@ import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageMedia;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -42,20 +40,16 @@ public class PetDetailCallbackHandler implements CallbackHandler {
         }
         PetDTO pet = petService.findById(entityId);
 
-
-        PartialBotApiMethod<?> photo = ResponseBuilder.telegram()
-                .chatId(context.chatId())
-                .editMessage(context.messageId())
-                .photo(pet.photoId())
-                .text(pet.formatInfo())
-                .keyboard(actionKeyboard(pet))
-                .buildPhoto();
+        EditMessageMedia photo = ResponseBuilder.editPhoto(
+                context.chatId(),
+                context.messageId(),
+                pet.photoId()
+            )
+            .caption(pet.formatInfo())
+            .keyboard(actionKeyboard(pet))
+            .build();
         try {
-            if (photo instanceof EditMessageMedia edit) {
-                telegramClient.execute(edit);
-            } else if (photo instanceof SendPhoto send) {
-                telegramClient.execute(send);
-            }
+            telegramClient.execute(photo);
         } catch (TelegramApiException e) {
             throw new PetBedException("Failed to send pet photo", PetBedException.ErrorCode.INTERNAL_ERROR);
         }

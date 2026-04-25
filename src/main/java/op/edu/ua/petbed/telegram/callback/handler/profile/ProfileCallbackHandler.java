@@ -41,16 +41,14 @@ public class ProfileCallbackHandler implements CallbackHandler {
 
                 %s
                 """,
-                auth.userTelegramId(),
+                auth.userInternalId(),
                 auth.username(),
                 formatUserType(auth.userType()),
                 getTypeDescription(auth.userType()));
 
-        return ResponseBuilder.telegram()
-                .chatId(context.chatId())
+        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                 .text(messageText)
                 .keyboard(profileKeyboard())
-                .editMessage(context.messageId())
                 .build();
     }
 

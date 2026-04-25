@@ -20,8 +20,7 @@ class ResponseBuilderTest {
     @Test
     @DisplayName("Text only - returns SendMessage")
     void build_text_only_returns_SendMessage() {
-        BotApiMethod<?> result = ResponseBuilder.telegram()
-                .chatId(123L)
+        BotApiMethod<?> result = ResponseBuilder.sendMessage(123L)
                 .text("Hello")
                 .build();
 
@@ -40,8 +39,7 @@ class ResponseBuilderTest {
                 .build();
         InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup(List.of(new InlineKeyboardRow(List.of(button))));
 
-        BotApiMethod<?> result = ResponseBuilder.telegram()
-                .chatId(456L)
+        BotApiMethod<?> result = ResponseBuilder.sendMessage(456L)
                 .text("Choose:")
                 .keyboard(keyboard)
                 .build();
@@ -56,9 +54,7 @@ class ResponseBuilderTest {
     @Test
     @DisplayName("Edit message - returns EditMessageText")
     void build_edit_message_returns_EditMessageText() {
-        BotApiMethod<?> result = ResponseBuilder.telegram()
-                .chatId(123L)
-                .editMessage(10)
+        BotApiMethod<?> result = ResponseBuilder.editMessage(123L, 10)
                 .text("Updated")
                 .build();
 
@@ -78,9 +74,7 @@ class ResponseBuilderTest {
                 .build();
         InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup(List.of(new InlineKeyboardRow(List.of(button))));
 
-        BotApiMethod<?> result = ResponseBuilder.telegram()
-                .chatId(456L)
-                .editMessage(20)
+        BotApiMethod<?> result = ResponseBuilder.editMessage(456L, 20)
                 .text("Updated:")
                 .keyboard(keyboard)
                 .build();

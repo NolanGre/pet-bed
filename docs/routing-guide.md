@@ -105,11 +105,9 @@ public class PetDetailHandler implements CallbackHandler {
     }
 
     private BotApiMethod<?> mapToResponse(CallbackQueryContext context, PetDTO pet) {
-        return ResponseBuilder.telegram()
-                .chatId(context.chatId())
+        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                 .text(formatPetInfo(pet))
                 .keyboard(petKeyboard(pet))
-                .editMessage(context.messageId())
                 .build();
     }
 }
@@ -139,29 +137,25 @@ public class PetDetailHandler implements CallbackHandler {
 
 ### SendMessage (text reply)
 
-```
-SendMessage.builder()
-        .chatId(chatId)
+```java
+ResponseBuilder.sendMessage(chatId)
         .text("Hello!")
         .build();
 ```
 
 ### SendMessage with Keyboard
 
-```
-SendMessage.builder()
-        .chatId(chatId)
+```java
+ResponseBuilder.sendMessage(chatId)
         .text("Choose option:")
-        .replyMarkup(keyboard)
+        .keyboard(keyboard)
         .build();
 ```
 
 ### EditMessageText (edit callback response)
 
-```
-EditMessageText.builder()
-        .chatId(chatId)
-        .messageId(messageId)
+```java
+ResponseBuilder.editMessage(chatId, messageId)
         .text("Updated text!")
         .build();
 ```

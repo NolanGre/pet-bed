@@ -26,8 +26,7 @@ public class ProfileHandler implements CommandHandler {
     @Override
     public BotApiMethod<?> handle(CommandContext context) {
         var auth = context.userAuthContext();
-        return ResponseBuilder.telegram()
-                .chatId(context.chatId())
+        return ResponseBuilder.sendMessage(context.chatId())
                 .text(String.format("""
                     👤 Your Profile
                     

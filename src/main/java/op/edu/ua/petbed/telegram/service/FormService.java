@@ -58,8 +58,7 @@ public class FormService {
         FormEntity entity = FormEntity.initiate(internalUserId, chatId, type, returnCallback);
         formRepository.save(entity);
 
-        return ResponseBuilder.telegram()
-                .chatId(chatId)
+        return ResponseBuilder.sendMessage(chatId)
                 .text(entity.nextStep().prompt() + "\n\nℹ️ Для скасування форми /cancel")
                 .build();
     }
@@ -91,8 +90,7 @@ public class FormService {
         }
 
         if (entity.nextStep().isChoice()) {
-            return ResponseBuilder.telegram()
-                    .chatId(entity.getChatId())
+            return ResponseBuilder.sendMessage(entity.getChatId())
                     .text(entity.nextStep().prompt())
                     .keyboard(InlineKeyboardBuilder.builder()
                             .paginatedList(toPageDto(entity.nextStep()), new CallbackData(CallbackId.FORM_ENUM_LIST.id(), null, 0))
@@ -100,8 +98,7 @@ public class FormService {
                     .build();
         }
 
-        return ResponseBuilder.telegram()
-                .chatId(entity.getChatId())
+        return ResponseBuilder.sendMessage(entity.getChatId())
                 .text(entity.nextStep().prompt())
                 .build();
     }
@@ -202,13 +199,11 @@ public class FormService {
                 pagedItems, PageRequest.of(page, pageSize), allValues.size()
         );
 
-        return ResponseBuilder.telegram()
-                .chatId(entity.getChatId())
+        return ResponseBuilder.editMessage(entity.getChatId(), messageId)
                 .text(step.prompt())
                 .keyboard(InlineKeyboardBuilder.builder()
                         .paginatedList(pageDto, new CallbackData(CallbackId.FORM_ENUM_LIST.id(), null, page))
                         .build())
-                .editMessage(messageId)
                 .build();
     }
 
@@ -235,8 +230,7 @@ public class FormService {
     }
 
     private static BotApiMethod<?> noActiveFormMessage(Long chatId) {
-        return ResponseBuilder.telegram()
-                .chatId(chatId)
+        return ResponseBuilder.sendMessage(chatId)
                 .text("📭 У вас немає активних форм")
                 .build();
     }
@@ -249,15 +243,13 @@ public class FormService {
             case FormInput.Number _ -> "ℹ️ Очікується ціле число.";
             case FormInput.Choice _ -> "ℹ️ Оберіть варіант з клавіатури вище ☝️";
         };
-        return ResponseBuilder.telegram()
-                .chatId(entity.getChatId())
+        return ResponseBuilder.sendMessage(entity.getChatId())
                 .text(errorMessage)
                 .build();
     }
 
     private static BotApiMethod<?> formCompleteMessage(Long chatId) {
-        return ResponseBuilder.telegram()
-                .chatId(chatId)
+        return ResponseBuilder.sendMessage(chatId)
                 .text("""
                         ✅ Ви завершили заповнення форми!
                         
@@ -268,15 +260,13 @@ public class FormService {
     }
 
     private static BotApiMethod<?> formNotCompleteMessage(Long chatId) {
-        return ResponseBuilder.telegram()
-                .chatId(chatId)
+        return ResponseBuilder.sendMessage(chatId)
                 .text("⛔ Форма ще не заповнена")
                 .build();
     }
 
     private static BotApiMethod<?> formCancelledMessage(Long chatId, CallbackId returnCallback) {
-        return ResponseBuilder.telegram()
-                .chatId(chatId)
+        return ResponseBuilder.sendMessage(chatId)
                 .text("🗑️ Форму скасовано")
                 .keyboard(InlineKeyboardBuilder.builder()
                         .backButtonTo(returnCallback)

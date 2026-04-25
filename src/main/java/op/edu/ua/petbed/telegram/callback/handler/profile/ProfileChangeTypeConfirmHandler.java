@@ -52,11 +52,9 @@ public class ProfileChangeTypeConfirmHandler implements CallbackHandler {
                 .backButtonTo(CallbackId.PROFILE)
                 .build();
 
-        return ResponseBuilder.telegram()
-                .chatId(context.chatId())
+        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                 .text(messageText)
                 .keyboard(keyboard)
-                .editMessage(context.messageId())
                 .build();
     }
 }

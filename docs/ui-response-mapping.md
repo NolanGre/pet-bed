@@ -30,8 +30,7 @@ public BotApiMethod<?> handle(CommandContext context) {
 }
 
 private BotApiMethod<?> mapToResponse(CommandContext context, Page<PetDTO> pets) {
-    return ResponseBuilder.telegram()
-            .chatId(context.chatId())
+    return ResponseBuilder.sendMessage(context.chatId())
             .text(message)
             .keyboard(petListKeyboard(pets))
             .build();
@@ -50,9 +49,8 @@ private InlineKeyboardMarkup petListKeyboard(Page<PetDTO> pets) {
 
 ```java
 private BotApiMethod<?> mapToResponse(PetDTO pet) {
-    return ResponseBuilder.telegram()
-            .text(formatPetInfo(pet))
-            .photo(pet.photoUrl())
+    return ResponseBuilder.sendPhoto(context.chatId(), pet.photoUrl())
+            .caption(formatPetInfo(pet))
             .keyboard(petActionKeyboard(pet))
             .build();
 }
@@ -62,8 +60,7 @@ private BotApiMethod<?> mapToResponse(PetDTO pet) {
 
 ```java
 private BotApiMethod<?> mapToResponse(CallbackQueryContext context, PetDTO pet) {
-    return ResponseBuilder.telegram()
-            .editMessage(context.messageId())
+    return ResponseBuilder.editMessage(context.chatId(), context.messageId())
             .text(formatPetInfo(pet))
             .keyboard(petActionKeyboard(pet))
             .build();

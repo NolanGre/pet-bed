@@ -171,8 +171,7 @@ public class AddPetHandled implements FormSubmissionHandler {
         
         // Бізнес-логіка
         
-        return ResponseBuilder.telegram()
-                .chatId(formEntity.getChatId())
+        return ResponseBuilder.sendMessage(formEntity.getChatId())
                 .text("Тварину успішно додано")
                 .keyboard(InlineKeyboardBuilder.builder()
                         .backButtonTo(formEntity.getReturnCallback())

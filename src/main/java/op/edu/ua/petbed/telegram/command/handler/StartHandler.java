@@ -19,8 +19,7 @@ public class StartHandler implements CommandHandler {
 
     @Override
     public BotApiMethod<?> handle(CommandContext context) {
-        return ResponseBuilder.telegram()
-                .chatId(context.chatId())
+        return ResponseBuilder.sendMessage(context.chatId())
                 .text("""
                         Привіт! 🐾 Це PetBed Bot — твій надійний помічник у світі тварин.
                         

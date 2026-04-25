@@ -38,15 +38,13 @@ public class ProfileChangeTypeHandler implements CallbackHandler {
                 """;
 
         InlineKeyboardMarkup keyboard = InlineKeyboardBuilder.builder()
-                .navButtonsFor(CallbackId.PROFILE_CHANGE_TYPE, context.auth().userTelegramId())
+                .navButtonsFor(CallbackId.PROFILE_CHANGE_TYPE, context.auth().userInternalId())
                 .backButtonFor(CallbackId.PROFILE_CHANGE_TYPE)
                 .build();
 
-        return ResponseBuilder.telegram()
-                .chatId(context.chatId())
+        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                 .text(messageText)
                 .keyboard(keyboard)
-                .editMessage(context.messageId())
                 .build();
     }
 }

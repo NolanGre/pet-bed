@@ -20,13 +20,11 @@ public class MenuCallbackHandler implements CallbackHandler {
 
     @Override
     public BotApiMethod<?> handle(CallbackQueryContext context) {
-        return ResponseBuilder.telegram()
-                .chatId(context.chatId())
+        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                 .text("Меню")
                 .keyboard(InlineKeyboardBuilder.builder()
                         .navButtonsFor(CallbackId.MENU)
                         .build())
-                .editMessage(context.messageId())
                 .build();
     }
 }

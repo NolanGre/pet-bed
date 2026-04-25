@@ -22,8 +22,7 @@ public class MenuHandler implements CommandHandler {
 
     @Override
     public BotApiMethod<?> handle(CommandContext context) {
-        return ResponseBuilder.telegram()
-                .chatId(context.chatId())
+        return ResponseBuilder.sendMessage(context.chatId())
                 .text("🏠 Меню")
                 .keyboard(InlineKeyboardBuilder.builder()
                         .navButtonsFor(CallbackId.MENU)
