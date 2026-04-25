@@ -40,11 +40,7 @@ public class PetDetailCallbackHandler implements CallbackHandler {
         }
         PetDTO pet = petService.findById(entityId);
 
-        EditMessageMedia photo = ResponseBuilder.editPhoto(
-                context.chatId(),
-                context.messageId(),
-                pet.photoId()
-            )
+        EditMessageMedia photo = ResponseBuilder.editPhoto(context.chatId(), context.messageId(), pet.photoId())
             .caption(pet.formatInfo())
             .keyboard(actionKeyboard(pet))
             .build();

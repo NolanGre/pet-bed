@@ -12,7 +12,6 @@ import org.telegram.telegrambots.meta.api.objects.Update;
  * Contains all information needed to handle button callback:
  * <ul>
  *     <li>{@link #callbackData()} - parsed action and payload from button</li>
- *     <li>{@link #userTelegramId()} - user who clicked</li>
  *     <li>{@link #chatId()} - chat where button was clicked</li>
  *     <li>{@link #messageId()} - message containing the button</li>
  * </ul>
