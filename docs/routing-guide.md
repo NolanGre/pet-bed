@@ -191,6 +191,24 @@ ResponseBuilder.editMessage(chatId, messageId)
         .build();
 ```
 
+### SendPhoto (new photo message)
+
+```java
+ResponseBuilder.sendPhoto(chatId, photoId)
+        .caption("Pet photo")
+        .keyboard(keyboard)
+        .build();
+```
+
+### EditPhoto (edit existing photo)
+
+```java
+ResponseBuilder.editPhoto(chatId, messageId, newPhotoId)
+        .caption("Updated caption")
+        .keyboard(keyboard)
+        .build();
+```
+
 ---
 
 ## Response Method Types
@@ -276,25 +294,21 @@ private void deliver(PartialBotApiMethod<?> response) throws TelegramApiExceptio
 
 If the method takes a file or media → use `execute()`. Else it can be returned via webhook.
 
+**Router delivers automatically:** handler returns `PartialBotApiMethod<?>`, router calls `execute()` for media, returns via webhook for text. No manual `execute()` in handlers.
+
 ---
 
 ## TelegramMessageService
 
-Use `TelegramMessageService` when you need to edit a text message that was previously a media message.
+**When to use:** only when navigating from a media message (e.g., PET_DETAIL with photo) back to a text list (e.g., MY_PETS).
 
-### Rule
-- Webhook return is preferred for text edits
-- `editOrReplace` is only required when the previous message was media (back/nav actions)
+**Telegram API limitation:** cannot editMessageText on a message that was sent as media. Workaround: try edit, if fail → delete + send new.
 
 ```java
-@Component
-@RequiredArgsConstructor
-public class TelegramMessageService {
-    private final TelegramClient telegramClient;
-
-    public void editOrReplace(Integer messageId, SendMessage message) {
-        // Implementation unchanged — it retries with delete+send if edit fails
-    }
-}
+// In handler
+messageService.editOrReplace(context.messageId(), message);
+return AnswerCallbackQuery.builder()
+        .callbackQueryId(context.callbackQuery().getId())
+        .build();
 ```
 

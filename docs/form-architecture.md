@@ -165,16 +165,16 @@ public class AddPetHandled implements FormSubmissionHandler {
     }
 
     @Override
-    public BotApiMethod<?> handle(FormEntity formEntity) {
-        // Отримання даних з formEntity
+    public BotApiMethod<?> handle(FormData formData) {
+        // Отримання даних з formData
         // Map<Integer, String> rawSteps = ... (або через метод доступу)
-        
+
         // Бізнес-логіка
-        
-        return ResponseBuilder.sendMessage(formEntity.getChatId())
+
+        return ResponseBuilder.sendMessage(formData.getChatId())
                 .text("Тварину успішно додано")
                 .keyboard(InlineKeyboardBuilder.builder()
-                        .backButtonTo(formEntity.getReturnCallback())
+                        .backButtonTo(formData.getReturnCallback())
                         .build())
                 .build();
     }
@@ -269,7 +269,7 @@ public class MyNewFormHandler implements FormSubmissionHandler {
     }
 
     @Override
-    public BotApiMethod<?> handle(FormEntity formEntity) {
+    public BotApiMethod<?> handle(FormData formData) {
         // Обробка даних
     }
 }
