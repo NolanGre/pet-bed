@@ -32,7 +32,8 @@ public class PetBedException extends RuntimeException {
         PET_NOT_FOUND("Pet not found"),
         PET_CANNOT_UPDATE("Cannot update pet with non-default status"),
         PET_CANNOT_DELETE("Cannot delete pet in fostered status"),
-        FEED_POST_NOT_FOUND("Post not found");
+        FEED_POST_NOT_FOUND("Post not found"),
+        FEED_ACCESS_DENIED("You cannot delete this post");
 
         private final String userMessage;
     }

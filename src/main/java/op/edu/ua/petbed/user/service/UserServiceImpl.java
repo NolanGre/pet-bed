@@ -75,7 +75,8 @@ public class UserServiceImpl implements UserService {
                 user.getIdOrThrow(),
                 user.getTelegramId(),
                 user.getTelegramUsername(),
-                user.getType()
+                user.getType(),
+                user.getLocation()
         );
     }
 }

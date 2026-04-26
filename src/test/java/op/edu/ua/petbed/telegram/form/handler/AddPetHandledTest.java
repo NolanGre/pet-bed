@@ -56,7 +56,7 @@ class AddPetHandledTest {
             // given
             FormData data = getFormData();
 
-            UserDTO user = new UserDTO(10L, 123L, "testuser", UserType.REGULAR);
+            UserDTO user = new UserDTO(10L, 123L, "testuser", UserType.REGULAR, null);
             given(userService.findById(1L)).willReturn(user);
 
             PetDTO createdPet = new PetDTO(

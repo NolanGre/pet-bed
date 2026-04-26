@@ -36,4 +36,6 @@ public interface FeedPostRepository extends JpaRepository<FeedPost, Long> {
     FeedPost findNextFeedPostByDate(@Param("userId") Long userId);
 
     Page<FeedPost> findByPublisherIdOrderByCreatedAtDesc(Long publisherId, Pageable pageable);
+
+    void deleteAllByPublisherId(Long publisherId);
 }

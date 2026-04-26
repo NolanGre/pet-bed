@@ -32,7 +32,7 @@ class TelegramAuthServiceTest {
         // given
         Long telegramId = 123L;
         String username = "testuser";
-        UserDTO userDTO = new UserDTO(1L, telegramId, username, UserType.REGULAR);
+        UserDTO userDTO = new UserDTO(1L, telegramId, username, UserType.REGULAR, null);
         given(userService.registerOrGet(telegramId, username)).willReturn(userDTO);
 
         // when
@@ -51,7 +51,7 @@ class TelegramAuthServiceTest {
         // given
         Long telegramId = 456L;
         String username = "newuser";
-        UserDTO userDTO = new UserDTO(2L, telegramId, username, UserType.VOLUNTEER);
+        UserDTO userDTO = new UserDTO(2L, telegramId, username, UserType.VOLUNTEER, null);
         given(userService.registerOrGet(telegramId, username)).willReturn(userDTO);
 
         // when
@@ -69,7 +69,7 @@ class TelegramAuthServiceTest {
         // given
         Long telegramId = 123L;
         String username = "volunteer";
-        UserDTO userDTO = new UserDTO(1L, telegramId, username, UserType.VOLUNTEER);
+        UserDTO userDTO = new UserDTO(1L, telegramId, username, UserType.VOLUNTEER, null);
         given(userService.registerOrGet(telegramId, username)).willReturn(userDTO);
 
         // when
@@ -87,7 +87,7 @@ class TelegramAuthServiceTest {
         // given
         Long telegramId = 123L;
         String username = "regular";
-        UserDTO userDTO = new UserDTO(1L, telegramId, username, UserType.REGULAR);
+        UserDTO userDTO = new UserDTO(1L, telegramId, username, UserType.REGULAR, null);
         given(userService.registerOrGet(telegramId, username)).willReturn(userDTO);
 
         // when/then

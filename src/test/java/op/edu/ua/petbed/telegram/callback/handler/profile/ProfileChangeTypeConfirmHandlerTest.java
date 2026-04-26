@@ -64,7 +64,7 @@ class ProfileChangeTypeConfirmHandlerTest {
             given(context.callbackData()).willReturn(new CallbackData(112, userId, null));
 
             given(userService.toggleUserType(userId))
-                    .willReturn(new UserDTO(1L, userId, "username", UserType.VOLUNTEER));
+                    .willReturn(new UserDTO(1L, userId, "username", UserType.VOLUNTEER, null));
 
             // when
             underTest.handle(context);
@@ -90,7 +90,7 @@ class ProfileChangeTypeConfirmHandlerTest {
             given(context.callbackData()).willReturn(new CallbackData(112, userId, null));
 
             given(userService.toggleUserType(userId))
-                    .willReturn(new UserDTO(1L, userId, "username", UserType.VOLUNTEER));
+                    .willReturn(new UserDTO(1L, userId, "username", UserType.VOLUNTEER, null));
 
             // when
             BotApiMethod<?> result = underTest.handle(context);
@@ -121,7 +121,7 @@ class ProfileChangeTypeConfirmHandlerTest {
             given(context.callbackData()).willReturn(new CallbackData(112, userId, null));
 
             given(userService.toggleUserType(userId))
-                    .willReturn(new UserDTO(1L, userId, "username", UserType.VOLUNTEER));
+                    .willReturn(new UserDTO(1L, userId, "username", UserType.VOLUNTEER, null));
 
             // when
             BotApiMethod<?> result = underTest.handle(context);
@@ -161,7 +161,7 @@ class ProfileChangeTypeConfirmHandlerTest {
             given(context.callbackData()).willReturn(new CallbackData(112, userId, null));
 
             given(userService.toggleUserType(userId))
-                    .willReturn(new UserDTO(1L, userId, "username", UserType.VOLUNTEER));
+                    .willReturn(new UserDTO(1L, userId, "username", UserType.VOLUNTEER, null));
 
             // when
             BotApiMethod<?> result = underTest.handle(context);
