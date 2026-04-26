@@ -8,6 +8,9 @@ import op.edu.ua.petbed.common.model.UserType;
 import org.hibernate.proxy.HibernateProxy;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 
 import java.util.Objects;
 
@@ -43,12 +46,25 @@ public class User extends AbstractAuditableEntity {
     @Column(name = "fostering_history_offset", nullable = false)
     private Integer fosteringHistoryOffset = 0;
 
+    @Column(name = "location", columnDefinition = "geography(Point, 4326)")
+    private @Nullable Point location;
+
+    private static final GeometryFactory geometryFactory = new GeometryFactory();
+
     public static User create(Long telegramId, String telegramUsername) {
-        return new User(null, telegramId, telegramUsername, UserType.REGULAR, 0, 0);
+        return new User(null, telegramId, telegramUsername, UserType.REGULAR, 0, 0, null);
     }
 
     public void switchType() {
         this.type = (this.type == UserType.REGULAR) ? UserType.VOLUNTEER : UserType.REGULAR;
+    }
+
+    public void setLocation(double latitude, double longitude) {
+        this.location = geometryFactory.createPoint(new Coordinate(longitude, latitude));
+    }
+
+    public @Nullable Point getLocation() {
+        return location;
     }
 
     public long getIdOrThrow() {
