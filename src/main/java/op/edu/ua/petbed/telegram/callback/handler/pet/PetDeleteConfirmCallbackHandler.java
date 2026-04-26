@@ -1,9 +1,7 @@
 package op.edu.ua.petbed.telegram.callback.handler.pet;
 
 import lombok.RequiredArgsConstructor;
-import op.edu.ua.petbed.common.dto.PetDTO;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
-import op.edu.ua.petbed.common.model.PetStatus;
 import op.edu.ua.petbed.pet.PetService;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
@@ -18,41 +16,35 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 @NullMarked
 @Component
 @RequiredArgsConstructor
-public class PetDetailCallbackHandler implements CallbackHandler {
+public class PetDeleteConfirmCallbackHandler implements CallbackHandler {
 
     private final PetService petService;
 
     @Override
     public CallbackId getCallbackId() {
-        return CallbackId.PET_DETAIL;
+        return CallbackId.PET_DELETE_CONFIRM;
     }
 
     @Override
     public PartialBotApiMethod<?> handle(CallbackQueryContext context) {
-        var entityId = context.callbackData().entityId();
+        Long entityId = context.callbackData().entityId();
         if (entityId == null) {
-            throw new PetBedException("Entity ID is required for PET_DETAIL", PetBedException.ErrorCode.INVALID_CALLBACK);
+            throw new PetBedException("Entity ID is required for PET_DELETE_CONFIRM", PetBedException.ErrorCode.INVALID_CALLBACK);
         }
-        PetDTO pet = petService.findById(entityId);
 
-        return ResponseBuilder.editPhoto(context.chatId(), context.messageId(), pet.photoId())
-                .caption(pet.formatInfo())
-                .keyboard(actionKeyboard(pet))
+        petService.delete(entityId);
+
+        var keyboard = getInlineKeyboardMarkup();
+
+        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
+                .text("✅ Анкету тварини видалено")
+                .keyboard(keyboard)
                 .build();
     }
 
-    private InlineKeyboardMarkup actionKeyboard(PetDTO pet) {
+    private InlineKeyboardMarkup getInlineKeyboardMarkup() {
         return InlineKeyboardBuilder.builder()
-                .navButtonsFor(CallbackId.PET_DETAIL, pet.id(), child -> {
-                    if (child == CallbackId.PET_UPDATE) {
-                        return pet.status() == PetStatus.DEFAULT;
-                    }
-                    if (child == CallbackId.PET_DELETE) {
-                        return pet.status().canDelete();
-                    }
-                    return false;
-                })
-                .backButtonFor(CallbackId.PET_DETAIL)
+                .backButtonTo(CallbackId.MY_PETS)
                 .build();
     }
 }

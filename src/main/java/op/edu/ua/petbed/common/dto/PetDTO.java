@@ -34,7 +34,7 @@ public record PetDTO(
 
         String fullColor = color;
         if (!colorPattern.isBlank()) {
-            fullColor = color + " " + colorPattern;
+            fullColor = color + ". " + colorPattern;
         }
         if (!fullColor.isBlank()) {
             sb.append("🎨 Колір: ").append(fullColor).append("\n");
