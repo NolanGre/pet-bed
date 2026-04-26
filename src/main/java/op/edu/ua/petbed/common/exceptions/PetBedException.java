@@ -31,7 +31,8 @@ public class PetBedException extends RuntimeException {
         PET_NOT_PERSISTED("Pet is not persisted yet"),
         PET_NOT_FOUND("Pet not found"),
         PET_CANNOT_UPDATE("Cannot update pet with non-default status"),
-        PET_CANNOT_DELETE("Cannot delete pet in fostered status");
+        PET_CANNOT_DELETE("Cannot delete pet in fostered status"),
+        FEED_POST_NOT_FOUND("Post not found");
 
         private final String userMessage;
     }
