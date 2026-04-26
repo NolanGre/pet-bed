@@ -6,5 +6,6 @@
     <include file="/db/changelog/0003-add-form-state-columns.xml"/>
     <include file="/db/changelog/0004-add-pet-status.xml"/>
     <include file="/db/changelog/0005-add-entity-id.xml"/>
+    <include file="/db/changelog/0006-add-user-location.xml"/>
 
 </databaseChangeLog>
