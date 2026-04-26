@@ -16,6 +16,7 @@ import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
 import op.edu.ua.petbed.telegram.response.KeyboardLayout;
 import op.edu.ua.petbed.telegram.response.ResponseBuilder;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -52,14 +53,29 @@ public class FormService {
      * Returns the first step prompt.
      */
     @Transactional
-    public BotApiMethod<?> startForm(FormType type, CallbackId returnCallback, Long internalUserId, Long chatId) {
+    public BotApiMethod<?> startCreateForm(FormType type, CallbackId returnCallback, Long internalUserId, Long chatId) {
         formRepository.deleteById(internalUserId);
 
-        FormEntity entity = FormEntity.initiate(internalUserId, chatId, type, returnCallback);
+        FormEntity entity = FormEntity.initiateCreate(internalUserId, chatId, type, returnCallback);
         formRepository.save(entity);
 
         return ResponseBuilder.sendMessage(chatId)
                 .text(entity.nextStep().prompt() + "\n\nℹ️ Для скасування форми /cancel")
+                .build();
+    }
+
+    /**
+     * Starts a new form session with an entity to update.
+     */
+    @Transactional
+    public BotApiMethod<?> startUpdateForm(FormType type, CallbackId returnCallback, Long internalUserId, Long chatId, Long entityId) {
+        formRepository.deleteById(internalUserId);
+
+        FormEntity entity = FormEntity.initiateUpdate(internalUserId, chatId, type, returnCallback, entityId);
+        formRepository.save(entity);
+
+        return ResponseBuilder.sendMessage(chatId)
+                .text(entity.nextStep().prompt() + "\n\nℹ️ Для скасування форми /cancel\nℹ️ Для пропуску кроку /skip")
                 .build();
     }
 
@@ -85,22 +101,31 @@ public class FormService {
         entity.applyStep(input);
         formRepository.save(entity);
 
-        if (entity.isComplete()) {
-            return formCompleteMessage(entity.getChatId());
+        return nextStepOrCompleteMessage(entity);
+    }
+
+    @Transactional
+    public BotApiMethod<?> skipStep(Long internalUserId, Long fallbackChatId) {
+        var entity = formRepository.findById(internalUserId).orElse(null);
+        if (entity == null) {
+            return noActiveFormMessage(fallbackChatId);
         }
 
-        if (entity.nextStep().isChoice()) {
-            return ResponseBuilder.sendMessage(entity.getChatId())
-                    .text(entity.nextStep().prompt())
-                    .keyboard(InlineKeyboardBuilder.builder()
-                            .paginatedList(toPageDto(entity.nextStep()), new CallbackData(CallbackId.FORM_ENUM_LIST.id(), null, 0))
-                            .build())
-                    .build();
+        FormStep currentStep = entity.nextStep();
+        if (!currentStep.canSkip()) {
+            return cantSkipMessage(currentStep, entity.getChatId());
         }
 
-        return ResponseBuilder.sendMessage(entity.getChatId())
-                .text(entity.nextStep().prompt())
-                .build();
+        entity.skipStep();
+        formRepository.save(entity);
+        return nextStepOrCompleteMessage(entity);
+    }
+
+    public boolean canSkipCurrentStep(Long internalUserId) {
+        return formRepository.findById(internalUserId)
+                .filter(e -> !e.isComplete())
+                .map(e -> e.nextStep().canSkip())
+                .orElse(false);
     }
 
     /**
@@ -143,10 +168,11 @@ public class FormService {
 
         Long chatId = entity.getChatId();
         CallbackId returnCallbackId = entity.getReturnCallback();
+        Long entityId = entity.getEntityId();
 
         formRepository.delete(entity);
 
-        return formCancelledMessage(chatId, returnCallbackId);
+        return formCancelledMessage(chatId, returnCallbackId, entityId);
     }
 
     /**
@@ -207,6 +233,22 @@ public class FormService {
                 .build();
     }
 
+    private BotApiMethod<?> nextStepOrCompleteMessage(FormEntity entity) {
+        if (entity.isComplete()) return formCompleteMessage(entity.getChatId());
+
+        FormStep next = entity.nextStep();
+        var builder = ResponseBuilder.sendMessage(entity.getChatId())
+                .text(next.prompt());
+
+        if (next.isChoice()) {
+            builder.keyboard(InlineKeyboardBuilder.builder()
+                    .paginatedList(toPageDto(next), new CallbackData(CallbackId.FORM_ENUM_LIST.id(), null, 0))
+                    .build());
+        }
+
+        return builder.build();
+    }
+
     private Page<CallbackListItem> toPageDto(FormStep step) {
         int pageSize = KeyboardLayout.DEFAULT.pageSize();
         List<? extends Enum<?>> allValues = step.enumValues();
@@ -265,12 +307,23 @@ public class FormService {
                 .build();
     }
 
-    private static BotApiMethod<?> formCancelledMessage(Long chatId, CallbackId returnCallback) {
+    private static BotApiMethod<?> formCancelledMessage(Long chatId, CallbackId returnCallback, @Nullable Long entityId) {
+        InlineKeyboardBuilder keyboard = InlineKeyboardBuilder.builder();
+
+        if (entityId == null) {
+            keyboard.backButtonTo(returnCallback);
+        } else {
+            keyboard.backButtonTo(returnCallback, entityId);
+        }
+
         return ResponseBuilder.sendMessage(chatId)
                 .text("🗑️ Форму скасовано")
-                .keyboard(InlineKeyboardBuilder.builder()
-                        .backButtonTo(returnCallback)
-                        .build())
+                .keyboard(keyboard.build())
                 .build();
+    }
+
+    private BotApiMethod<?> cantSkipMessage(FormStep step, Long chatId) {
+        return ResponseBuilder.sendMessage(chatId)
+                .text("⚠️ Цей крок неможливо пропустити.\n\n" + step.prompt()).build();
     }
 }

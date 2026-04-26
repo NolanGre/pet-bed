@@ -14,7 +14,8 @@ public record FormStep(
         String prompt,
         FormInput input,
         Predicate<FormInput> validator,
-        @Nullable List<? extends Enum<?>> enumValues
+        @Nullable List<? extends Enum<?>> enumValues,
+        boolean skippable
 ) {
 
     public static final Predicate<FormInput> NON_BLANK_TEXT =
@@ -37,31 +38,40 @@ public record FormStep(
         return validator.test(input);
     }
 
+    public boolean canSkip() {
+        return skippable;
+    }
+
     public boolean isChoice() {
         return this.input instanceof FormInput.Choice;
     }
 
     public static FormStep text(String prompt) {
-        return new FormStep(prompt, FormInput.TEXT, NON_BLANK_TEXT, null);
+        return new FormStep(prompt, FormInput.TEXT, NON_BLANK_TEXT, null, false);
     }
 
     public static FormStep photo(String prompt) {
-        return new FormStep(prompt, FormInput.PHOTO, NON_BLANK_PHOTO, null);
+        return new FormStep(prompt, FormInput.PHOTO, NON_BLANK_PHOTO, null, false);
     }
 
     public static FormStep location(String prompt) {
-        return new FormStep(prompt, FormInput.LOCATION, ANY_LOCATION, null);
+        return new FormStep(prompt, FormInput.LOCATION, ANY_LOCATION, null, false);
     }
 
     public static FormStep number(String prompt) {
-        return new FormStep(prompt, FormInput.NUMBER, NON_NEGATIVE_INTEGER, null);
+        return new FormStep(prompt, FormInput.NUMBER, NON_NEGATIVE_INTEGER, null, false);
     }
 
     public static FormStep number(String prompt, Predicate<FormInput> validator) {
-        return new FormStep(prompt, FormInput.NUMBER, validator, null);
+        return new FormStep(prompt, FormInput.NUMBER, validator, null, false);
     }
 
     public static <E extends Enum<E>> FormStep choice(String prompt, List<E> values) {
-        return new FormStep(prompt, FormInput.CHOICE, i -> i instanceof FormInput.Choice, List.copyOf(values));
+        return new FormStep(prompt, FormInput.CHOICE, i -> i instanceof FormInput.Choice, List.copyOf(values), false);
+    }
+
+    // --- Modifier -------------------
+    public FormStep optional() {
+        return new FormStep(prompt, input, validator, enumValues, true);
     }
 }

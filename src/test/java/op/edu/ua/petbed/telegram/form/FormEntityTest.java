@@ -21,7 +21,7 @@ class FormEntityTest {
         @Test
         void Sets_all_fields() {
             // when
-            FormEntity entity = FormEntity.initiate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
+            FormEntity entity = FormEntity.initiateCreate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
 
             // then
             assertThat(entity.getUserId()).isEqualTo(123L);
@@ -37,7 +37,7 @@ class FormEntityTest {
         @Test
         void Returns_first_step_when_empty() {
             // given
-            FormEntity entity = FormEntity.initiate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
+            FormEntity entity = FormEntity.initiateCreate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
 
             // when
             var step = entity.nextStep();
@@ -49,7 +49,7 @@ class FormEntityTest {
         @Test
         void Returns_next_unfilled_step() {
             // given
-            FormEntity entity = FormEntity.initiate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
+            FormEntity entity = FormEntity.initiateCreate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
             entity.applyStep(new FormInput.Text("Барсик"));
 
             // when
@@ -62,7 +62,7 @@ class FormEntityTest {
         @Test
         void When_complete_throws_PetBedException() {
             // given - fill all 10 steps
-            FormEntity entity = FormEntity.initiate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
+            FormEntity entity = FormEntity.initiateCreate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
             entity.applyStep(new FormInput.Text("Барсик"));           // 0: name
             entity.applyStep(new FormInput.Text("cat"));               // 1: type
             entity.applyStep(new FormInput.Photo("file123"));          // 2: photo
@@ -87,7 +87,7 @@ class FormEntityTest {
         @Test
         void All_steps_filled_true() {
             // given - fill all 10 steps
-            FormEntity entity = FormEntity.initiate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
+            FormEntity entity = FormEntity.initiateCreate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
             entity.applyStep(new FormInput.Text("Барсик"));           // 0: name
             entity.applyStep(new FormInput.Text("cat"));               // 1: type
             entity.applyStep(new FormInput.Photo("file123"));          // 2: photo
@@ -109,7 +109,7 @@ class FormEntityTest {
         @Test
         void Not_all_filled_false() {
             // given
-            FormEntity entity = FormEntity.initiate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
+            FormEntity entity = FormEntity.initiateCreate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
             entity.applyStep(new FormInput.Text("Барсик"));
 
             // when
@@ -122,7 +122,7 @@ class FormEntityTest {
         @Test
         void Empty_form_false() {
             // given
-            FormEntity entity = FormEntity.initiate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
+            FormEntity entity = FormEntity.initiateCreate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
 
             // when
             boolean result = entity.isComplete();
@@ -138,7 +138,7 @@ class FormEntityTest {
         @Test
         void Saves_text_input() {
             // given
-            FormEntity entity = FormEntity.initiate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
+            FormEntity entity = FormEntity.initiateCreate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
 
             // when
             entity.applyStep(new FormInput.Text("Барсик"));
@@ -152,7 +152,7 @@ class FormEntityTest {
         @Test
         void Saves_photo_input() {
             // given
-            FormEntity entity = FormEntity.initiate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
+            FormEntity entity = FormEntity.initiateCreate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
             entity.applyStep(new FormInput.Text("Барсик"));           // 0: name
             entity.applyStep(new FormInput.Text("cat"));               // 1: type
 
@@ -167,7 +167,7 @@ class FormEntityTest {
         @Test
         void Saves_location_input() {
             // given - fill 9 steps (all except last)
-            FormEntity entity = FormEntity.initiate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
+            FormEntity entity = FormEntity.initiateCreate(123L, 456L, FormType.ADD_PET, CallbackId.MY_PETS);
             entity.applyStep(new FormInput.Text("Барсик"));           // 0: name
             entity.applyStep(new FormInput.Text("cat"));               // 1: type
             entity.applyStep(new FormInput.Photo("file123"));          // 2: photo

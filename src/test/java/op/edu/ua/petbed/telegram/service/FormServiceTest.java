@@ -46,7 +46,7 @@ class FormServiceTest {
             FormService underTest = new FormService(formRepository, List.of());
 
             // when
-            BotApiMethod<?> result = underTest.startForm(FormType.ADD_PET, CallbackId.MY_PETS, userId, chatId);
+            BotApiMethod<?> result = underTest.startCreateForm(FormType.ADD_PET, CallbackId.MY_PETS, userId, chatId);
 
             // then
             verify(formRepository).deleteById(userId);
@@ -67,7 +67,7 @@ class FormServiceTest {
             FormService underTest = new FormService(formRepository, List.of());
 
             // when
-            underTest.startForm(FormType.ADD_PET, CallbackId.MY_PETS, userId, chatId);
+            underTest.startCreateForm(FormType.ADD_PET, CallbackId.MY_PETS, userId, chatId);
 
             // then
             verify(formRepository).deleteById(userId);
@@ -83,7 +83,7 @@ class FormServiceTest {
             // given
             Long userId = 123L;
             Long chatId = 456L;
-            FormEntity entity = FormEntity.initiate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
+            FormEntity entity = FormEntity.initiateCreate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
             given(formRepository.findById(userId)).willReturn(Optional.of(entity));
             FormService underTest = new FormService(formRepository, List.of());
 
@@ -105,7 +105,7 @@ class FormServiceTest {
             // given - fill 9 steps, last step is step 9 (index 9)
             Long userId = 123L;
             Long chatId = 456L;
-            FormEntity entity = FormEntity.initiate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
+            FormEntity entity = FormEntity.initiateCreate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
             entity.applyStep(new FormInput.Text("Барсик"));           // 0: name
             entity.applyStep(new FormInput.Text("cat"));               // 1: type
             entity.applyStep(new FormInput.Photo("file123"));          // 2: photo
@@ -138,7 +138,7 @@ class FormServiceTest {
             // given
             Long userId = 123L;
             Long chatId = 456L;
-            FormEntity entity = FormEntity.initiate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
+            FormEntity entity = FormEntity.initiateCreate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
             given(formRepository.findById(userId)).willReturn(Optional.of(entity));
             FormService underTest = new FormService(formRepository, List.of());
 
@@ -179,7 +179,7 @@ class FormServiceTest {
             // given
             Long userId = 123L;
             Long chatId = 456L;
-            FormEntity entity = FormEntity.initiate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
+            FormEntity entity = FormEntity.initiateCreate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
             entity.applyStep(new FormInput.Text("Барсик"));
             given(formRepository.findById(userId)).willReturn(Optional.of(entity));
             FormService underTest = new FormService(formRepository, List.of());
@@ -213,7 +213,7 @@ class FormServiceTest {
             // given - fill all 10 steps
             Long userId = 123L;
             Long chatId = 456L;
-            FormEntity entity = FormEntity.initiate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
+            FormEntity entity = FormEntity.initiateCreate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
             entity.applyStep(new FormInput.Text("Барсик"));           // 0: name
             entity.applyStep(new FormInput.Text("cat"));               // 1: type
             entity.applyStep(new FormInput.Photo("file123"));          // 2: photo
@@ -243,7 +243,7 @@ class FormServiceTest {
             // given
             Long userId = 123L;
             Long chatId = 456L;
-            FormEntity entity = FormEntity.initiate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
+            FormEntity entity = FormEntity.initiateCreate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
             given(formRepository.findById(userId)).willReturn(Optional.of(entity));
             FormService underTest = new FormService(formRepository, List.of());
 
@@ -306,6 +306,66 @@ class FormServiceTest {
         }
     }
 
+    @Nested
+    class SkipStep {
+
+        @Test
+        void skip_mandatory_step_returns_warning_with_text() {
+            // given - ADD_PET has mandatory steps (cannot skip)
+            Long userId = 123L;
+            Long chatId = 456L;
+            FormEntity entity = FormEntity.initiateCreate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
+            given(formRepository.findById(userId)).willReturn(Optional.of(entity));
+            FormService underTest = new FormService(formRepository, List.of());
+
+            // when
+            BotApiMethod<?> result = underTest.skipStep(userId, chatId);
+
+            // then
+            verify(formRepository, never()).save(any());  // not saved - still on same step
+
+            String text = extractText(result);
+            assertThat(text).contains("неможливо пропустити");
+        }
+
+        @Test
+        void skip_choice_step_returns_warning() {
+            // given - step is choice (type selection)
+            Long userId = 123L;
+            Long chatId = 456L;
+            FormEntity entity = FormEntity.initiateCreate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
+            entity.applyStep(new FormInput.Text("Барсик"));  // skip name
+            given(formRepository.findById(userId)).willReturn(Optional.of(entity));
+            FormService underTest = new FormService(formRepository, List.of());
+
+            // when
+            BotApiMethod<?> result = underTest.skipStep(userId, chatId);
+
+            // then
+            verify(formRepository, never()).save(any());  // not saved - still on same step
+
+            String text = extractText(result);
+            assertThat(text).contains("неможливо пропустити");
+            assertThat(text).contains("Оберіть тип тварини");
+        }
+
+        @Test
+        void no_active_form_returns_no_active_form_message() {
+            // given
+            Long userId = 123L;
+            Long chatId = 456L;
+            given(formRepository.findById(userId)).willReturn(Optional.empty());
+            FormService underTest = new FormService(formRepository, List.of());
+
+            // when
+            BotApiMethod<?> result = underTest.skipStep(userId, chatId);
+
+            // then
+            String text = extractText(result);
+            assertThat(text).contains("немає активних форм");
+        }
+    }
+
     // Helper methods
     private static String extractText(BotApiMethod<?> method) {
         try {
@@ -314,6 +374,16 @@ class FormServiceTest {
             return (String) field.get(method);
         } catch (Exception e) {
             throw new RuntimeException("Failed to extract text", e);
+        }
+    }
+
+    private static Object extractReplyMarkup(BotApiMethod<?> method) {
+        try {
+            var field = method.getClass().getDeclaredField("replyMarkup");
+            field.setAccessible(true);
+            return field.get(method);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to extract replyMarkup", e);
         }
     }
 }

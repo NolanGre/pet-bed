@@ -20,7 +20,8 @@ public enum Command {
     PROFILE("/profile"),
     DEFAULT(""),
     SUBMIT_FORM("/submit"),
-    CANCEL_FORM("/cancel");
+    CANCEL_FORM("/cancel"),
+    SKIP_FORM_STEP("/skip");
 
     private final String label;
 

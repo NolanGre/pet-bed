@@ -31,6 +31,8 @@ import static op.edu.ua.petbed.common.exceptions.PetBedException.ErrorCode.INTER
 @Table(name = "user_form_states")
 public class FormEntity extends AbstractAuditableEntity {
 
+    private static final String SKIP_SENTINEL = "";
+
     @Id
     @Column(name = "user_id", nullable = false)
     private Long userId;
@@ -51,15 +53,28 @@ public class FormEntity extends AbstractAuditableEntity {
     @Getter(AccessLevel.PRIVATE)
     private Map<Integer, String> rawSteps = new LinkedHashMap<>();
 
+    @Column(name = "entity_id")
+    private @Nullable Long entityId;
+
     /**
      * Creates a new empty form session for the given user.
      */
-    public static FormEntity initiate(Long internalId, Long chatId, FormType formType, CallbackId returnCallback) {
+    public static FormEntity initiateCreate(Long internalId, Long chatId, FormType formType, CallbackId returnCallback) {
         FormEntity e = new FormEntity();
         e.userId = internalId;
         e.chatId = chatId;
         e.returnCallback = returnCallback;
         e.formType = formType;
+        return e;
+    }
+
+    /**
+     * Create a new empty form session for given user. <p>
+     * Can contain empty fields in result, used for update.
+     */
+    public static FormEntity initiateUpdate(Long internalId, Long chatId, FormType formType, CallbackId returnCallback, Long entityId) {
+        FormEntity e = initiateCreate(internalId, chatId, formType, returnCallback);
+        e.entityId = entityId;
         return e;
     }
 
@@ -71,6 +86,13 @@ public class FormEntity extends AbstractAuditableEntity {
             throw new PetBedException("Form already completed", INTERNAL_ERROR);
         }
         return formType.steps().get(rawSteps.size());
+    }
+
+    /**
+     * Skip step by putting empty string to the next step.
+     */
+    public void skipStep() {
+        rawSteps.put(rawSteps.size(), SKIP_SENTINEL);
     }
 
     /**
@@ -87,15 +109,23 @@ public class FormEntity extends AbstractAuditableEntity {
         rawSteps.put(rawSteps.size(), serialize(input));
     }
 
+    /**
+     * Convert entity to form data. <p>
+     * Exclude empty value.
+     */
     public FormData toFormData() {
         if (!isComplete()) {
             throw new PetBedException("Form is not complete yet", INTERNAL_ERROR);
         }
+
         List<FormStep> steps = formType.steps();
         SequencedMap<FormStep, FormInput> answers = new LinkedHashMap<>();
-        rawSteps.forEach((i, raw) ->
-                answers.put(steps.get(i), deserialize(steps.get(i), raw)));
-        return new FormData(userId, chatId, returnCallback, answers);
+        rawSteps.forEach((i, raw) -> {
+            if (!raw.isEmpty()) {
+                answers.put(steps.get(i), deserialize(steps.get(i), raw));
+            }
+        });
+        return new FormData(userId, chatId, returnCallback, answers, entityId);
     }
 
     private static FormInput deserialize(FormStep step, String raw) {

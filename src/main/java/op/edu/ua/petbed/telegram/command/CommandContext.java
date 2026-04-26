@@ -38,13 +38,6 @@ public record CommandContext(
      */
     public static CommandContext from(Update update, Command command, UserAuthContext authContext) {
         var msg = update.getMessage();
-        return new CommandContext(
-                command,
-                update,
-                msg,
-                msg.getChatId(),
-                authContext,
-                msg.getText()
-        );
+        return new CommandContext(command, update, msg, msg.getChatId(), authContext, msg.getText());
     }
 }

@@ -1,8 +1,8 @@
 package op.edu.ua.petbed.telegram.form.handler;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import op.edu.ua.petbed.common.dto.CreatePetDTO;
-import op.edu.ua.petbed.common.dto.UserDTO;
 import op.edu.ua.petbed.common.model.PetSex;
 import op.edu.ua.petbed.common.model.PetSize;
 import op.edu.ua.petbed.common.model.PetType;
@@ -22,15 +22,11 @@ import java.util.List;
 @Slf4j
 @Component
 @NullMarked
+@RequiredArgsConstructor
 public class AddPetHandled implements FormSubmissionHandler {
 
     private final PetService petService;
     private final UserService userService;
-
-    public AddPetHandled(PetService petService, UserService userService) {
-        this.petService = petService;
-        this.userService = userService;
-    }
 
     @Override
     public FormType getFormType() {
@@ -52,7 +48,7 @@ public class AddPetHandled implements FormSubmissionHandler {
                 .build();
     }
 
-private static CreatePetDTO mapToDto(FormData data, Long userId) {
+    private static CreatePetDTO mapToDto(FormData data, Long userId) {
         List<FormStep> steps = FormType.ADD_PET.steps();
         return CreatePetDTO.builder()
                 .ownerId(userId)

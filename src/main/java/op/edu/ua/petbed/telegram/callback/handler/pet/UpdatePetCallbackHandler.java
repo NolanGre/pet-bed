@@ -1,5 +1,6 @@
 package op.edu.ua.petbed.telegram.callback.handler.pet;
 
+import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -11,21 +12,32 @@ import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 
 @NullMarked
 @Component
-public class AddPetCallbackHandler implements CallbackHandler {
+public class UpdatePetCallbackHandler implements CallbackHandler {
 
     private final FormService formService;
 
-    public AddPetCallbackHandler(FormService formService) {
+    public UpdatePetCallbackHandler(FormService formService) {
         this.formService = formService;
     }
 
     @Override
     public CallbackId getCallbackId() {
-        return CallbackId.ADD_PET;
+        return CallbackId.PET_UPDATE;
     }
 
     @Override
     public BotApiMethod<?> handle(CallbackQueryContext context) {
-        return formService.startCreateForm(FormType.ADD_PET, CallbackId.MY_PETS, context.auth().userInternalId(), context.chatId());
+        var entityId = context.callbackData().entityId();
+        if (entityId == null) {
+            throw new PetBedException("Entity ID is required for PET_UPDATE", PetBedException.ErrorCode.INVALID_CALLBACK);
+        }
+
+        return formService.startUpdateForm(
+                FormType.UPDATE_PET,
+                CallbackId.PET_DETAIL,
+                context.auth().userInternalId(),
+                context.chatId(),
+                entityId
+        );
     }
 }

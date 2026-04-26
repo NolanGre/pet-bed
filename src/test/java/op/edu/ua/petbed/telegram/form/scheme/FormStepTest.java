@@ -1,9 +1,12 @@
 package op.edu.ua.petbed.telegram.form.scheme;
 
+import op.edu.ua.petbed.common.model.PetSex;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -162,6 +165,170 @@ class FormStepTest {
 
             // then
             assertThat(result).isFalse();
+        }
+    }
+
+    @Nested
+    class IsChoice {
+
+        @Test
+        void choice_step_returns_true() {
+            // given
+            var step = FormStep.choice("Оберіть стать", List.of(PetSex.values()));
+
+            // when
+            boolean result = step.isChoice();
+
+            // then
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        void text_step_returns_false() {
+            // given
+            var step = FormStep.text("Ім'я");
+
+            // when
+            boolean result = step.isChoice();
+
+            // then
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        void photo_step_returns_false() {
+            // given
+            var step = FormStep.photo("Фото");
+
+            // when
+            boolean result = step.isChoice();
+
+            // then
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        void number_step_returns_false() {
+            // given
+            var step = FormStep.number("Вік");
+
+            // when
+            boolean result = step.isChoice();
+
+            // then
+            assertThat(result).isFalse();
+        }
+    }
+
+    @Nested
+    class CanSkip {
+
+        @Test
+        void choice_step_returns_false() {
+            // given
+            var step = FormStep.choice("Оберіть стать", List.of(PetSex.values()));
+
+            // when
+            boolean result = step.canSkip();
+
+            // then
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        void text_step_returns_false_by_default() {
+            // given
+            var step = FormStep.text("Ім'я");
+
+            // when
+            boolean result = step.canSkip();
+
+            // then
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        void optional_text_step_returns_true() {
+            // given
+            var step = FormStep.text("Ім'я").optional();
+
+            // when
+            boolean result = step.canSkip();
+
+            // then
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        void photo_step_returns_false_by_default() {
+            // given
+            var step = FormStep.photo("Фото");
+
+            // when
+            boolean result = step.canSkip();
+
+            // then
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        void optional_photo_step_returns_true() {
+            // given
+            var step = FormStep.photo("Фото").optional();
+
+            // when
+            boolean result = step.canSkip();
+
+            // then
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        void number_step_returns_false_by_default() {
+            // given
+            var step = FormStep.number("Вік");
+
+            // when
+            boolean result = step.canSkip();
+
+            // then
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        void optional_number_step_returns_true() {
+            // given
+            var step = FormStep.number("Вік").optional();
+
+            // when
+            boolean result = step.canSkip();
+
+            // then
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        void location_step_returns_false_by_default() {
+            // given
+            var step = FormStep.location("Локація");
+
+            // when
+            boolean result = step.canSkip();
+
+            // then
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        void optional_location_step_returns_true() {
+            // given
+            var step = FormStep.location("Локація").optional();
+
+            // when
+            boolean result = step.canSkip();
+
+            // then
+            assertThat(result).isTrue();
         }
     }
 }

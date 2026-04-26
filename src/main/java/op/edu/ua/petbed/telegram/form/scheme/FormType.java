@@ -6,13 +6,11 @@ import op.edu.ua.petbed.common.model.PetType;
 
 import java.util.List;
 
-import static op.edu.ua.petbed.telegram.form.scheme.FormStep.*;
-
 /**
  * Defines available form types and their ordered steps.
  */
 public enum FormType {
-ADD_PET(List.of(
+    ADD_PET(List.of(
             FormStep.text("✏️ Введіть ім'я тварини"),
             FormStep.choice("🐾 Оберіть тип тварини", List.of(PetType.values())),
             FormStep.photo("📷 Надішліть фото тварини"),
@@ -23,6 +21,17 @@ ADD_PET(List.of(
             FormStep.choice("⚤ Оберіть стать", List.of(PetSex.values())),
             FormStep.choice("📏 Оберіть розмір", List.of(PetSize.values())),
             FormStep.text("📝 Введіть особливі прикмети")
+    )),
+    UPDATE_PET(List.of(
+            FormStep.text("✏️ Введіть ім'я тварини").optional(),
+            FormStep.photo("📷 Надішліть фото тварини").optional(),
+            FormStep.text("🏷️ Введіть породу").optional(),
+            FormStep.text("🎨 Введіть колір забарвлення").optional(),
+            FormStep.text("✨ Введіть тип забарвлення").optional(),
+            FormStep.number("🔢 Введіть кількість повних років").optional(),
+            FormStep.choice("⚤ Оберіть стать", List.of(PetSex.values())).optional(),
+            FormStep.choice("📏 Оберіть розмір", List.of(PetSize.values())).optional(),
+            FormStep.text("📝 Введіть особливі прикмети").optional()
     ));
 
     private final List<FormStep> steps;

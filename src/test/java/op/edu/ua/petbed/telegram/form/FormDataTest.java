@@ -17,15 +17,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class FormDataTest {
 
-    // .text() --------------------------------------------------------------------
-
     @Nested
     class Text {
 
         @Test
         void text_correctType_returnsValue() {
             // given
-            FormStep step = new FormStep("Name", FormInput.TEXT, s -> true, null);
+            FormStep step = FormStep.text("Name");
             var answers = new LinkedHashMap<FormStep, FormInput>();
             answers.put(step, new FormInput.Text("Barsik"));
             FormData data = new FormData(1L, 123L, CallbackId.MY_PETS, answers);
@@ -40,8 +38,8 @@ class FormDataTest {
         @Test
         void text_wrongType_throwsPetBedException() {
             // given
-            FormStep step = new FormStep("Name", FormInput.TEXT, s -> true, null);
-            FormStep wrongStep = new FormStep("Photo", FormInput.PHOTO, s -> true, null);
+            FormStep step = FormStep.text("Name");
+            FormStep wrongStep = FormStep.photo("Photo");
             var answers = new LinkedHashMap<FormStep, FormInput>();
             answers.put(step, new FormInput.Text("Barsik"));
             answers.put(wrongStep, new FormInput.Photo("abc123"));
@@ -54,15 +52,13 @@ class FormDataTest {
         }
     }
 
-    // .photo() -------------------------------------------------------------------
-
     @Nested
     class Photo {
 
         @Test
         void photo_correctType_returnsValue() {
             // given
-            FormStep step = new FormStep("Photo", FormInput.PHOTO, s -> true, null);
+            FormStep step = FormStep.photo("Photo");
             var answers = new LinkedHashMap<FormStep, FormInput>();
             answers.put(step, new FormInput.Photo("abc123"));
             FormData data = new FormData(1L, 123L, CallbackId.MY_PETS, answers);
@@ -77,8 +73,8 @@ class FormDataTest {
         @Test
         void photo_wrongType_throwsPetBedException() {
             // given
-            FormStep step = new FormStep("Photo", FormInput.PHOTO, s -> true, null);
-            FormStep wrongStep = new FormStep("Name", FormInput.TEXT, s -> true, null);
+            FormStep step = FormStep.photo("Photo");
+            FormStep wrongStep = FormStep.text("Name");
             var answers = new LinkedHashMap<FormStep, FormInput>();
             answers.put(step, new FormInput.Photo("abc123"));
             answers.put(wrongStep, new FormInput.Text("Barsik"));
@@ -91,15 +87,13 @@ class FormDataTest {
         }
     }
 
-    // .location() -----------------------------------------------------------------
-
     @Nested
     class Location {
 
         @Test
         void location_correctType_returnsValue() {
             // given
-            FormStep step = new FormStep("Location", FormInput.LOCATION, s -> true, null);
+            FormStep step = FormStep.location("Location");
             var answers = new LinkedHashMap<FormStep, FormInput>();
             answers.put(step, new FormInput.Location(50.45, 30.52));
             FormData data = new FormData(1L, 123L, CallbackId.MY_PETS, answers);
@@ -115,8 +109,8 @@ class FormDataTest {
         @Test
         void location_wrongType_throwsPetBedException() {
             // given
-            FormStep step = new FormStep("Location", FormInput.LOCATION, s -> true, null);
-            FormStep wrongStep = new FormStep("Name", FormInput.TEXT, s -> true, null);
+            FormStep step = FormStep.location("Location");
+            FormStep wrongStep = FormStep.text("Name");
             var answers = new LinkedHashMap<FormStep, FormInput>();
             answers.put(step, new FormInput.Location(50.45, 30.52));
             answers.put(wrongStep, new FormInput.Text("Barsik"));

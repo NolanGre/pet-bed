@@ -52,6 +52,16 @@ public record PetDTO(
         }
         sb.append("🎂 Вік: ").append(ageText).append("\n");
 
+        String sexEmoji = switch (sex) {
+            case MALE -> "♂️";
+            case FEMALE -> "♀️";
+        };
+        String sexText = switch (sex) {
+            case MALE -> "він";
+            case FEMALE -> "вона";
+        };
+        sb.append(sexEmoji).append(" Стать: ").append(sexText).append("\n");
+
         String sizeText = switch (size) {
             case SMALL -> "малий";
             case MEDIUM -> "середній";

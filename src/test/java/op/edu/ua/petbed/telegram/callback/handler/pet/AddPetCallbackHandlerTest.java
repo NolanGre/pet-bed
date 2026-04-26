@@ -52,14 +52,14 @@ class AddPetCallbackHandlerTest {
             given(context.auth()).willReturn(auth);
             given(context.chatId()).willReturn(chatId);
             given(context.callbackData()).willReturn(CallbackData.of(CallbackId.ADD_PET, null, 0));
-            given(formService.startForm(FormType.ADD_PET, CallbackId.MY_PETS, internalId, chatId)).willReturn(null);
+            given(formService.startCreateForm(FormType.ADD_PET, CallbackId.MY_PETS, internalId, chatId)).willReturn(null);
 
             // when
             BotApiMethod<?> result = underTest.handle(context);
 
             // then
             assertThat(result).isNull();
-            verify(formService).startForm(FormType.ADD_PET, CallbackId.MY_PETS, internalId, chatId);
+            verify(formService).startCreateForm(FormType.ADD_PET, CallbackId.MY_PETS, internalId, chatId);
         }
     }
 }
