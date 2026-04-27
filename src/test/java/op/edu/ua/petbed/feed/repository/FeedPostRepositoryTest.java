@@ -13,6 +13,8 @@ import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
+import java.util.Objects;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
@@ -109,7 +111,7 @@ class FeedPostRepositoryTest extends PostgresTestContainer {
             em.clear();
 
             // savedPost (50.0, 30.0) — найближчий до USER_LAT/LON
-            FeedPost result = underTest.findNextFeedPost(publisherId, USER_LAT, USER_LON);
+            FeedPost result = Objects.requireNonNull(underTest.findNextFeedPost(publisherId, USER_LAT, USER_LON));
 
             assertThat(result.getIdOrThrow()).isEqualTo(savedPost.getIdOrThrow());
         }
@@ -122,7 +124,7 @@ class FeedPostRepositoryTest extends PostgresTestContainer {
             em.flush();
             em.clear();
 
-            FeedPost result = underTest.findNextFeedPost(publisherId, USER_LAT, USER_LON);
+            FeedPost result = Objects.requireNonNull(underTest.findNextFeedPost(publisherId, USER_LAT, USER_LON));
 
             assertThat(result.getIdOrThrow()).isEqualTo(next.getIdOrThrow());
         }
@@ -159,7 +161,7 @@ class FeedPostRepositoryTest extends PostgresTestContainer {
             em.flush();
             em.clear();
 
-            FeedPost result = underTest.findNextFeedPostByDate(publisherId);
+            FeedPost result = Objects.requireNonNull(underTest.findNextFeedPostByDate(publisherId));
 
             assertThat(result.getIdOrThrow()).isEqualTo(newer.getIdOrThrow());
         }
@@ -172,7 +174,7 @@ class FeedPostRepositoryTest extends PostgresTestContainer {
 
             markViewed(publisherId, newer.getIdOrThrow());
 
-            FeedPost result = underTest.findNextFeedPostByDate(publisherId);
+            FeedPost result = Objects.requireNonNull(underTest.findNextFeedPostByDate(publisherId));
 
             assertThat(result.getIdOrThrow()).isEqualTo(savedPost.getIdOrThrow());
         }

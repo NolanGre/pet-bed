@@ -14,8 +14,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 
 import java.time.Instant;
 
@@ -66,23 +66,25 @@ class FeedViewCallbackHandlerTest {
         }
 
         @Test
-        void handle_noPosts_returnsTextMessage() {
+        void handle_noPosts_returnsEditMessage() {
             // given
             Long userId = 1L;
             Long chatId = 123L;
+            Integer messageId = 456;
             UserAuthContext auth = new UserAuthContext(123L, userId, UserType.REGULAR, "testuser");
 
             given(context.auth()).willReturn(auth);
             given(context.chatId()).willReturn(chatId);
+            given(context.messageId()).willReturn(messageId);
             given(feedService.findNextPostAndMarkAsViewed(userId)).willReturn(null);
 
             // when
             PartialBotApiMethod<?> result = underTest.handle(context);
 
             // then
-            assertThat(result).isInstanceOf(SendMessage.class);
-            SendMessage message = (SendMessage) result;
-            assertThat(message.getText()).contains("Немає публікацій");
+            assertThat(result).isInstanceOf(EditMessageText.class);
+            EditMessageText message = (EditMessageText) result;
+            assertThat(message.getText()).contains("Немає актуальних публікацій");
         }
 
         @Test

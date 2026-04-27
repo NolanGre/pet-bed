@@ -12,6 +12,7 @@ import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 @NullMarked
@@ -32,7 +33,7 @@ public class FeedViewCallbackHandler implements CallbackHandler {
 
         FeedPostDTO post = feedService.findNextPostAndMarkAsViewed(userId);
         if (post == null) {
-            return noPostsMessage(context.chatId());
+            return noPostsMessage(context.chatId(), context.messageId());
         }
 
         return mapToResponse(context, post);
@@ -45,9 +46,9 @@ public class FeedViewCallbackHandler implements CallbackHandler {
                 .build();
     }
 
-    private SendMessage noPostsMessage(Long chatId) {
-        return ResponseBuilder.sendMessage(chatId)
-                .text("📭 Немає публікацій")
+    private EditMessageText noPostsMessage(Long chatId, Integer messageId) {
+        return ResponseBuilder.editMessage(chatId, messageId)
+                .text("📭 Немає актуальних публікацій")
                 .keyboard(InlineKeyboardBuilder.builder()
                         .backButtonFor(CallbackId.FEED)
                         .build())

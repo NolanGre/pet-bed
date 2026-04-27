@@ -37,7 +37,7 @@ public class FeedMenuCallbackHandler implements CallbackHandler {
         String messageText = """
                 📋 Стрічка оголошень
 
-                Тут ви можете переглянути оголошення про тварин, знайдені поблизу.
+                Тут ви можете переглянути оголошення від волонтерів.
                 """;
 
         return ResponseBuilder.editMessage(context.chatId(), context.messageId())

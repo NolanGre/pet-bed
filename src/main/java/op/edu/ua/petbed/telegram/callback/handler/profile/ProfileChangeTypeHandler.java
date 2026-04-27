@@ -1,6 +1,7 @@
 package op.edu.ua.petbed.telegram.callback.handler.profile;
 
 import lombok.RequiredArgsConstructor;
+import op.edu.ua.petbed.common.model.UserType;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -27,6 +28,11 @@ public class ProfileChangeTypeHandler implements CallbackHandler {
     }
 
     private BotApiMethod<?> mapToResponse(CallbackQueryContext context) {
+        var userType = context.auth().userType();
+        String warning = (userType == UserType.VOLUNTEER)
+                ? "\n\n⚠️ Увага! Якщо ви зміните тип на Звичайний, ваші публікації буде видалено."
+                : "";
+
         String messageText = """
                 📋 Зміна типу профілю
 
@@ -34,8 +40,8 @@ public class ProfileChangeTypeHandler implements CallbackHandler {
                 🌟 Волонтер — додаткові функції:
                 • Створення оголошень
 
-                💡 Ви можете змінити тип акаунту.
-                """;
+                💡 Ви можете змінити тип акаунту.%s
+                """.formatted(warning);
 
         InlineKeyboardMarkup keyboard = InlineKeyboardBuilder.builder()
                 .navButtonsFor(CallbackId.PROFILE_CHANGE_TYPE, context.auth().userInternalId())

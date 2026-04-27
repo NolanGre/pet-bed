@@ -2,6 +2,7 @@ package op.edu.ua.petbed.feed.repository;
 
 import op.edu.ua.petbed.feed.model.FeedPost;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,7 +24,7 @@ public interface FeedPostRepository extends JpaRepository<FeedPost, Long> {
                 ) ASC
             LIMIT 1
             """, nativeQuery = true)
-    FeedPost findNextFeedPost(@Param("userId") Long userId, @Param("userLat") double userLat, @Param("userLon") double userLon);
+    @Nullable FeedPost findNextFeedPost(@Param("userId") Long userId, @Param("userLat") double userLat, @Param("userLon") double userLon);
 
     @Query(value = """
             SELECT fp.* FROM feed_posts fp
@@ -33,7 +34,7 @@ public interface FeedPostRepository extends JpaRepository<FeedPost, Long> {
             ORDER BY fp.created_at DESC
             LIMIT 1
             """, nativeQuery = true)
-    FeedPost findNextFeedPostByDate(@Param("userId") Long userId);
+    @Nullable FeedPost findNextFeedPostByDate(@Param("userId") Long userId);
 
     Page<FeedPost> findByPublisherIdOrderByCreatedAtDesc(Long publisherId, Pageable pageable);
 

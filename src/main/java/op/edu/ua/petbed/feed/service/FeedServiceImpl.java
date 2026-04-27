@@ -75,6 +75,10 @@ public class FeedServiceImpl implements FeedService {
                 ? feedPostRepository.findNextFeedPost(userId, userLocation.getY(), userLocation.getX())
                 : feedPostRepository.findNextFeedPostByDate(userId);
 
+        if (post == null) {
+            return null;
+        }
+
         historyRepository.save(UserFeedHistory.of(userId, post.getIdOrThrow()));
         log.info("Marked post as viewed: postId={}, userId={}", post.getIdOrThrow(), userId);
 
