@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.AbstractAuditableEntity;
-import op.edu.ua.petbed.feed.dto.CreateFeedPostDTO;
+import op.edu.ua.petbed.common.dto.CreateFeedPostDTO;
 import org.hibernate.proxy.HibernateProxy;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;

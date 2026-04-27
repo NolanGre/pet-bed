@@ -35,6 +35,11 @@ public enum FormType {
     )),
     SET_GEOLOCATION(List.of(
             FormStep.location("📍 Надішліть вашу геолокацію")
+    )),
+    CREATE_FEED_POST(List.of(
+            FormStep.text("✏️ Введіть текст публікації"),
+            FormStep.photo("📷 Надішліть фото"),
+            FormStep.location("📍 Надішліть геолокацію")
     ));
 
     private final List<FormStep> steps;

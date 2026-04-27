@@ -12,7 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.feed.FeedService;
-import op.edu.ua.petbed.feed.dto.CreateFeedPostDTO;
+import op.edu.ua.petbed.common.dto.CreateFeedPostDTO;
 import op.edu.ua.petbed.common.dto.FeedPostDTO;
 import op.edu.ua.petbed.feed.model.FeedPost;
 import op.edu.ua.petbed.feed.model.UserFeedHistory;

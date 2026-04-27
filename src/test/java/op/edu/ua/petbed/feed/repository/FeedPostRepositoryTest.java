@@ -1,6 +1,6 @@
 package op.edu.ua.petbed.feed.repository;
 
-import op.edu.ua.petbed.feed.dto.CreateFeedPostDTO;
+import op.edu.ua.petbed.common.dto.CreateFeedPostDTO;
 import op.edu.ua.petbed.feed.model.FeedPost;
 import op.edu.ua.petbed.feed.model.UserFeedHistory;
 import op.edu.ua.petbed.testcontainers.PostgresTestContainer;

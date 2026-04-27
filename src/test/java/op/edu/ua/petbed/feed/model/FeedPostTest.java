@@ -1,7 +1,7 @@
 package op.edu.ua.petbed.feed.model;
 
 import op.edu.ua.petbed.common.exceptions.PetBedException;
-import op.edu.ua.petbed.feed.dto.CreateFeedPostDTO;
+import op.edu.ua.petbed.common.dto.CreateFeedPostDTO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.DisplayNameGeneration;
