@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 @NullMarked
 public interface UserFeedHistoryRepository extends JpaRepository<UserFeedHistory, UserFeedHistoryId> {
+    void deleteAllByPostId(Long postId);
+    void deleteAllByUserId(Long userId);
 }

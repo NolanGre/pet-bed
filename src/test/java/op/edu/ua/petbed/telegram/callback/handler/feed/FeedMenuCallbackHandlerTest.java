@@ -5,19 +5,21 @@ import op.edu.ua.petbed.common.model.UserType;
 import op.edu.ua.petbed.feed.FeedService;
 import op.edu.ua.petbed.telegram.auth.UserAuthContext;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
+import op.edu.ua.petbed.telegram.service.TelegramMessageService;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
@@ -25,7 +27,10 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
@@ -33,6 +38,9 @@ class FeedMenuCallbackHandlerTest {
 
     @Mock
     FeedService feedService;
+
+    @Mock
+    TelegramMessageService telegramMessageService;
 
     @Mock
     CallbackQueryContext context;
@@ -52,17 +60,20 @@ class FeedMenuCallbackHandlerTest {
 
             given(context.auth()).willReturn(auth);
             given(context.chatId()).willReturn(chatId);
-            given(context.messageId()).willReturn(1);
 
             Page<FeedPostDTO> postsPage = new PageImpl<>(List.of(), PageRequest.of(0, 1), 2);
             given(feedService.findMyPosts(userId, PageRequest.of(0, 1))).willReturn(postsPage);
+            given(telegramMessageService.editOrSend(eq(context), any(SendMessage.class)))
+                    .willReturn(AnswerCallbackQuery.builder().callbackQueryId("query-id").build());
 
             // when
-            PartialBotApiMethod<?> result = underTest.handle(context);
+            underTest.handle(context);
 
             // then
-            assertThat(result).isInstanceOf(EditMessageText.class);
-            EditMessageText message = (EditMessageText) result;
+            ArgumentCaptor<SendMessage> captor = ArgumentCaptor.forClass(SendMessage.class);
+            verify(telegramMessageService).editOrSend(eq(context), captor.capture());
+            
+            SendMessage message = captor.getValue();
             InlineKeyboardMarkup replyMarkup = (InlineKeyboardMarkup) message.getReplyMarkup();
             List<InlineKeyboardButton> allButtons = replyMarkup.getKeyboard().stream()
                     .flatMap(Collection::stream)
@@ -89,17 +100,20 @@ class FeedMenuCallbackHandlerTest {
 
             given(context.auth()).willReturn(auth);
             given(context.chatId()).willReturn(chatId);
-            given(context.messageId()).willReturn(1);
 
             Page<FeedPostDTO> postsPage = new PageImpl<>(List.of(), PageRequest.of(0, 1), 1);
             given(feedService.findMyPosts(userId, PageRequest.of(0, 1))).willReturn(postsPage);
+            given(telegramMessageService.editOrSend(eq(context), any(SendMessage.class)))
+                    .willReturn(AnswerCallbackQuery.builder().callbackQueryId("query-id").build());
 
             // when
-            PartialBotApiMethod<?> result = underTest.handle(context);
+            underTest.handle(context);
 
             // then
-            assertThat(result).isInstanceOf(EditMessageText.class);
-            EditMessageText message = (EditMessageText) result;
+            ArgumentCaptor<SendMessage> captor = ArgumentCaptor.forClass(SendMessage.class);
+            verify(telegramMessageService).editOrSend(eq(context), captor.capture());
+            
+            SendMessage message = captor.getValue();
             InlineKeyboardMarkup replyMarkup = (InlineKeyboardMarkup) message.getReplyMarkup();
             List<InlineKeyboardButton> allButtons = replyMarkup.getKeyboard().stream()
                     .flatMap(Collection::stream)
@@ -122,17 +136,20 @@ class FeedMenuCallbackHandlerTest {
 
             given(context.auth()).willReturn(auth);
             given(context.chatId()).willReturn(chatId);
-            given(context.messageId()).willReturn(1);
 
             Page<FeedPostDTO> postsPage = new PageImpl<>(List.of(), PageRequest.of(0, 1), 0);
             given(feedService.findMyPosts(userId, PageRequest.of(0, 1))).willReturn(postsPage);
+            given(telegramMessageService.editOrSend(eq(context), any(SendMessage.class)))
+                    .willReturn(AnswerCallbackQuery.builder().callbackQueryId("query-id").build());
 
             // when
-            PartialBotApiMethod<?> result = underTest.handle(context);
+            underTest.handle(context);
 
             // then
-            assertThat(result).isInstanceOf(EditMessageText.class);
-            EditMessageText message = (EditMessageText) result;
+            ArgumentCaptor<SendMessage> captor = ArgumentCaptor.forClass(SendMessage.class);
+            verify(telegramMessageService).editOrSend(eq(context), captor.capture());
+            
+            SendMessage message = captor.getValue();
             InlineKeyboardMarkup replyMarkup = (InlineKeyboardMarkup) message.getReplyMarkup();
             List<InlineKeyboardButton> allButtons = replyMarkup.getKeyboard().stream()
                     .flatMap(Collection::stream)
@@ -155,17 +172,20 @@ class FeedMenuCallbackHandlerTest {
 
             given(context.auth()).willReturn(auth);
             given(context.chatId()).willReturn(chatId);
-            given(context.messageId()).willReturn(1);
 
             Page<FeedPostDTO> postsPage = new PageImpl<>(List.of(), PageRequest.of(0, 1), 5);
             given(feedService.findMyPosts(userId, PageRequest.of(0, 1))).willReturn(postsPage);
+            given(telegramMessageService.editOrSend(eq(context), any(SendMessage.class)))
+                    .willReturn(AnswerCallbackQuery.builder().callbackQueryId("query-id").build());
 
             // when
-            PartialBotApiMethod<?> result = underTest.handle(context);
+            underTest.handle(context);
 
             // then
-            assertThat(result).isInstanceOf(EditMessageText.class);
-            EditMessageText message = (EditMessageText) result;
+            ArgumentCaptor<SendMessage> captor = ArgumentCaptor.forClass(SendMessage.class);
+            verify(telegramMessageService).editOrSend(eq(context), captor.capture());
+            
+            SendMessage message = captor.getValue();
             InlineKeyboardMarkup replyMarkup = (InlineKeyboardMarkup) message.getReplyMarkup();
             List<InlineKeyboardButton> allButtons = replyMarkup.getKeyboard().stream()
                     .flatMap(Collection::stream)

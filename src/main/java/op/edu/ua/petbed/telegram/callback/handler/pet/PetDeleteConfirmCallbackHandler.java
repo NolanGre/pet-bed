@@ -34,11 +34,9 @@ public class PetDeleteConfirmCallbackHandler implements CallbackHandler {
 
         petService.delete(entityId);
 
-        var keyboard = getInlineKeyboardMarkup();
-
         return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                 .text("✅ Анкету тварини видалено")
-                .keyboard(keyboard)
+                .keyboard(getInlineKeyboardMarkup())
                 .build();
     }
 

@@ -56,11 +56,7 @@ public class FeedMyPostsCallbackHandler implements CallbackHandler {
                 .keyboard(buildKeyboard(context, result))
                 .build();
 
-        messageService.editOrReplace(context.messageId(), message);
-
-        return AnswerCallbackQuery.builder()
-                .callbackQueryId(context.callbackQuery().getId())
-                .build();
+        return messageService.editOrReplace(context, message);
     }
 
     private EditMessageText noPostsExist(CallbackQueryContext context) {

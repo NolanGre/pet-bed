@@ -47,7 +47,7 @@ class FeedPostDeleteConfirmCallbackHandlerTest {
             Integer messageId = 456;
             Long postId = 10L;
             UserAuthContext auth = new UserAuthContext(123L, userId, UserType.REGULAR, "testuser");
-            CallbackData callbackData = CallbackData.of(CallbackId.FEED_POST_DELETE_CONFIRM, postId, null);
+            CallbackData callbackData = CallbackData.of(CallbackId.FEED_POST_DELETE, postId, null);
 
             given(context.auth()).willReturn(auth);
             given(context.callbackData()).willReturn(callbackData);
@@ -71,7 +71,7 @@ class FeedPostDeleteConfirmCallbackHandlerTest {
             // given
             Long userId = 1L;
             UserAuthContext auth = new UserAuthContext(123L, userId, UserType.REGULAR, "testuser");
-            CallbackData callbackData = CallbackData.of(CallbackId.FEED_POST_DELETE_CONFIRM, null, null);
+            CallbackData callbackData = CallbackData.of(CallbackId.FEED_POST_DELETE, null, null);
 
             given(context.callbackData()).willReturn(callbackData);
 

@@ -16,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,7 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,12 +37,6 @@ class PetDeleteCallbackHandlerTest {
 
     @InjectMocks
     PetDeleteCallbackHandler underTest;
-
-    private void mockCallbackQuery() {
-        CallbackQuery callbackQuery = mock(CallbackQuery.class);
-        given(callbackQuery.getId()).willReturn("query-id");
-        given(context.callbackQuery()).willReturn(callbackQuery);
-    }
 
     @Nested
     class GetCallbackId {
@@ -72,18 +64,15 @@ class PetDeleteCallbackHandlerTest {
             // given
             Long petId = 42L;
             Long chatId = 123L;
-            Integer messageId = 5;
             given(context.chatId()).willReturn(chatId);
-            given(context.messageId()).willReturn(messageId);
             given(context.callbackData()).willReturn(CallbackData.of(CallbackId.PET_DELETE, petId, null));
-            mockCallbackQuery();
 
             // when
             underTest.handle(context);
 
             // then
             verify(messageService).editOrReplace(
-                    eq(messageId),
+                    eq(context),
                     any(SendMessage.class)
             );
         }
@@ -92,8 +81,11 @@ class PetDeleteCallbackHandlerTest {
         void returns_AnswerCallbackQuery() {
             // given
             Long petId = 42L;
+            Long chatId = 123L;
+            given(context.chatId()).willReturn(chatId);
             given(context.callbackData()).willReturn(CallbackData.of(CallbackId.PET_DELETE, petId, null));
-            mockCallbackQuery();
+            given(messageService.editOrReplace(eq(context), any(SendMessage.class)))
+                    .willReturn(AnswerCallbackQuery.builder().callbackQueryId("query-id").build());
 
             // when
             var result = underTest.handle(context);
@@ -107,11 +99,8 @@ class PetDeleteCallbackHandlerTest {
             // given
             Long petId = 42L;
             Long chatId = 123L;
-            Integer messageId = 5;
             given(context.chatId()).willReturn(chatId);
-            given(context.messageId()).willReturn(messageId);
             given(context.callbackData()).willReturn(CallbackData.of(CallbackId.PET_DELETE, petId, null));
-            mockCallbackQuery();
 
             ArgumentCaptor<SendMessage> captor = ArgumentCaptor.forClass(SendMessage.class);
 
@@ -119,7 +108,7 @@ class PetDeleteCallbackHandlerTest {
             underTest.handle(context);
 
             // then
-            verify(messageService).editOrReplace(eq(messageId), captor.capture());
+            verify(messageService).editOrReplace(eq(context), captor.capture());
             assertThat(captor.getValue().getText())
                     .contains("⚠️")
                     .contains("видалити")
@@ -131,11 +120,8 @@ class PetDeleteCallbackHandlerTest {
             // given
             Long petId = 42L;
             Long chatId = 123L;
-            Integer messageId = 5;
             given(context.chatId()).willReturn(chatId);
-            given(context.messageId()).willReturn(messageId);
             given(context.callbackData()).willReturn(CallbackData.of(CallbackId.PET_DELETE, petId, null));
-            mockCallbackQuery();
 
             ArgumentCaptor<SendMessage> captor = ArgumentCaptor.forClass(SendMessage.class);
 
@@ -143,7 +129,7 @@ class PetDeleteCallbackHandlerTest {
             underTest.handle(context);
 
             // then
-            verify(messageService).editOrReplace(eq(messageId), captor.capture());
+            verify(messageService).editOrReplace(eq(context), captor.capture());
             var replyMarkup = (InlineKeyboardMarkup) captor.getValue().getReplyMarkup();
             assertThat(replyMarkup.getKeyboard()).isNotEmpty();
             assertThat(replyMarkup.getKeyboard().toString()).contains(String.valueOf(CallbackId.PET_DELETE_CONFIRM.id()));

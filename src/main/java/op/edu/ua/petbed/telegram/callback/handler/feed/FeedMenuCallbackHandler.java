@@ -7,6 +7,7 @@ import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
 import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
 import op.edu.ua.petbed.telegram.response.ResponseBuilder;
+import op.edu.ua.petbed.telegram.service.TelegramMessageService;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,7 @@ import static op.edu.ua.petbed.common.model.UserType.VOLUNTEER;
 public class FeedMenuCallbackHandler implements CallbackHandler {
 
     private final FeedService feedService;
+    private final TelegramMessageService telegramMessageService;
 
     @Override
     public CallbackId getCallbackId() {
@@ -36,14 +38,16 @@ public class FeedMenuCallbackHandler implements CallbackHandler {
         var auth = context.auth();
         String messageText = """
                 📋 Стрічка оголошень
-
+                
                 Тут ви можете переглянути оголошення від волонтерів.
                 """;
 
-        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
+
+        var response = ResponseBuilder.sendMessage(context.chatId())
                 .text(messageText)
                 .keyboard(feedKeyboard(auth.userInternalId(), auth.userType() == VOLUNTEER))
                 .build();
+        return telegramMessageService.editOrSend(context, response);
     }
 
     private InlineKeyboardMarkup feedKeyboard(Long userId, boolean isVolunteer) {

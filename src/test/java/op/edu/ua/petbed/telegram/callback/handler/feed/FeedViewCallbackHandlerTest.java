@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 import java.time.Instant;
 
@@ -32,6 +33,9 @@ class FeedViewCallbackHandlerTest {
     @Mock
     CallbackQueryContext context;
 
+    @Mock
+    TelegramClient telegramClient;
+
     @InjectMocks
     FeedViewCallbackHandler underTest;
 
@@ -43,10 +47,12 @@ class FeedViewCallbackHandlerTest {
             // given
             Long userId = 1L;
             Long chatId = 123L;
+            Integer messageId = 456;
             UserAuthContext auth = new UserAuthContext(123L, userId, UserType.REGULAR, "testuser");
 
             given(context.auth()).willReturn(auth);
             given(context.chatId()).willReturn(chatId);
+            given(context.messageId()).willReturn(messageId);
 
             FeedPostDTO post = new FeedPostDTO(
                     1L, 2L, "publisher", "Test post", "photo123",
@@ -92,10 +98,12 @@ class FeedViewCallbackHandlerTest {
             // given
             Long userId = 1L;
             Long chatId = 123L;
+            Integer messageId = 456;
             UserAuthContext auth = new UserAuthContext(123L, userId, UserType.REGULAR, "testuser");
 
             given(context.auth()).willReturn(auth);
             given(context.chatId()).willReturn(chatId);
+            given(context.messageId()).willReturn(messageId);
 
             FeedPostDTO post = new FeedPostDTO(
                     1L, 2L, "publisher", "Test post", "photo123",
@@ -117,10 +125,12 @@ class FeedViewCallbackHandlerTest {
             // given
             Long userId = 1L;
             Long chatId = 123L;
+            Integer messageId = 456;
             UserAuthContext auth = new UserAuthContext(123L, userId, UserType.REGULAR, "testuser");
 
             given(context.auth()).willReturn(auth);
             given(context.chatId()).willReturn(chatId);
+            given(context.messageId()).willReturn(messageId);
 
             FeedPostDTO post = new FeedPostDTO(
                     1L, 2L, "publisher", "Test post", "photo123",

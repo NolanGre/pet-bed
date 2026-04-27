@@ -5,7 +5,6 @@ import op.edu.ua.petbed.common.model.UserType;
 import op.edu.ua.petbed.feed.FeedService;
 import op.edu.ua.petbed.telegram.auth.UserAuthContext;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
-import op.edu.ua.petbed.telegram.service.TelegramMessageService;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Nested;
@@ -14,17 +13,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -36,13 +32,10 @@ class FeedViewNextCallbackHandlerTest {
     FeedService feedService;
 
     @Mock
-    TelegramMessageService messageService;
-
-    @Mock
     CallbackQueryContext context;
 
     @Mock
-    CallbackQuery callbackQuery;
+    TelegramClient telegramClient;
 
     @InjectMocks
     FeedViewNextCallbackHandler underTest;
@@ -92,16 +85,15 @@ class FeedViewNextCallbackHandlerTest {
             given(context.auth()).willReturn(auth);
             given(context.chatId()).willReturn(chatId);
             given(context.messageId()).willReturn(messageId);
-            given(context.callbackQuery()).willReturn(callbackQuery);
-            given(callbackQuery.getId()).willReturn("query123");
             given(feedService.findNextPostAndMarkAsViewed(userId)).willReturn(null);
 
             // when
             PartialBotApiMethod<?> result = underTest.handle(context);
 
             // then
-            assertThat(result).isInstanceOf(AnswerCallbackQuery.class);
-            verify(messageService).editOrReplace(eq(messageId), any(SendMessage.class));
+            assertThat(result).isInstanceOf(SendMessage.class);
+            SendMessage message = (SendMessage) result;
+            assertThat(message.getText()).contains("Більше публікацій немає");
         }
 
         @Test

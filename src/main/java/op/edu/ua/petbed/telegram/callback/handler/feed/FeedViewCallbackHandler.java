@@ -1,8 +1,9 @@
 package op.edu.ua.petbed.telegram.callback.handler.feed;
 
 import lombok.RequiredArgsConstructor;
-import op.edu.ua.petbed.feed.FeedService;
+import lombok.extern.slf4j.Slf4j;
 import op.edu.ua.petbed.common.dto.FeedPostDTO;
+import op.edu.ua.petbed.feed.FeedService;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -11,16 +12,20 @@ import op.edu.ua.petbed.telegram.response.ResponseBuilder;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.generics.TelegramClient;
 
+@Slf4j
 @NullMarked
 @Component
 @RequiredArgsConstructor
 public class FeedViewCallbackHandler implements CallbackHandler {
 
     private final FeedService feedService;
+    private final TelegramClient telegramClient;
 
     @Override
     public CallbackId getCallbackId() {
@@ -40,17 +45,29 @@ public class FeedViewCallbackHandler implements CallbackHandler {
     }
 
     private PartialBotApiMethod<?> mapToResponse(CallbackQueryContext context, FeedPostDTO post) {
+        tryDeleteMessage(context.chatId(), context.messageId());
         return ResponseBuilder.sendPhoto(context.chatId(), post.photoUrl())
                 .caption(formatPostInfo(post))
                 .keyboard(buildKeyboard())
                 .build();
     }
 
+    private void tryDeleteMessage(Long chatId, Integer messageId) {
+        try {
+            telegramClient.execute(DeleteMessage.builder()
+                    .chatId(chatId)
+                    .messageId(messageId)
+                    .build());
+        } catch (TelegramApiException e) {
+            log.error("Failed to delete message {}: {}", messageId, e.getMessage());
+        }
+    }
+
     private EditMessageText noPostsMessage(Long chatId, Integer messageId) {
         return ResponseBuilder.editMessage(chatId, messageId)
                 .text("📭 Немає актуальних публікацій")
                 .keyboard(InlineKeyboardBuilder.builder()
-                        .backButtonFor(CallbackId.FEED)
+                        .backButtonTo(CallbackId.FEED)
                         .build())
                 .build();
     }
@@ -58,7 +75,7 @@ public class FeedViewCallbackHandler implements CallbackHandler {
     private InlineKeyboardMarkup buildKeyboard() {
         return InlineKeyboardBuilder.builder()
                 .navButtonsFor(CallbackId.FEED_VIEW)
-                .backButtonFor(CallbackId.FEED)
+                .backButtonTo(CallbackId.FEED)
                 .build();
     }
 

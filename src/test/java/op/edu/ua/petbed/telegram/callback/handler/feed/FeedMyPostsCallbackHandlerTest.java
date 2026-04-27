@@ -70,10 +70,7 @@ class FeedMyPostsCallbackHandlerTest {
 
             given(context.auth()).willReturn(auth);
             given(context.chatId()).willReturn(chatId);
-            given(context.messageId()).willReturn(messageId);
-            given(context.callbackQuery()).willReturn(callbackQuery);
             given(context.callbackData()).willReturn(callbackData);
-            given(callbackQuery.getId()).willReturn(callbackQueryId);
 
             FeedPostDTO post = new FeedPostDTO(
                     1L, userId, "publisher", "My post content", "photo123",
@@ -83,6 +80,8 @@ class FeedMyPostsCallbackHandlerTest {
 
             given(feedService.findMyPosts(eq(userId), any(PageRequest.class)))
                     .willReturn(postsPage);
+            given(messageService.editOrReplace(eq(context), any(SendMessage.class)))
+                    .willReturn(AnswerCallbackQuery.builder().callbackQueryId(callbackQueryId).build());
 
             // when
             PartialBotApiMethod<?> result = underTest.handle(context);
@@ -93,7 +92,7 @@ class FeedMyPostsCallbackHandlerTest {
             assertThat(answer.getCallbackQueryId()).isEqualTo(callbackQueryId);
 
             verify(feedService).findMyPosts(eq(userId), any(PageRequest.class));
-            verify(messageService).editOrReplace(eq(messageId), any(SendMessage.class));
+            verify(messageService).editOrReplace(eq(context), any(SendMessage.class));
         }
 
         @Test

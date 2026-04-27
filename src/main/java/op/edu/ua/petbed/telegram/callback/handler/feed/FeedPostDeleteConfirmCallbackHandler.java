@@ -35,11 +35,9 @@ public class FeedPostDeleteConfirmCallbackHandler implements CallbackHandler {
         Long userId = context.auth().userInternalId();
         feedService.delete(entityId, userId);
 
-        var keyboard = getInlineKeyboardMarkup();
-
         return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                 .text("✅ Оголошення видалено")
-                .keyboard(keyboard)
+                .keyboard(getInlineKeyboardMarkup())
                 .build();
     }
 

@@ -1,27 +1,31 @@
 package op.edu.ua.petbed.telegram.callback.handler.feed;
 
 import lombok.RequiredArgsConstructor;
-import op.edu.ua.petbed.feed.FeedService;
+import lombok.extern.slf4j.Slf4j;
 import op.edu.ua.petbed.common.dto.FeedPostDTO;
+import op.edu.ua.petbed.feed.FeedService;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
 import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
 import op.edu.ua.petbed.telegram.response.ResponseBuilder;
-import op.edu.ua.petbed.telegram.service.TelegramMessageService;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
+import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.generics.TelegramClient;
 
+@Slf4j
 @NullMarked
 @Component
 @RequiredArgsConstructor
 public class FeedViewNextCallbackHandler implements CallbackHandler {
 
     private final FeedService feedService;
-    private final TelegramMessageService messageService;
+    private final TelegramClient client;
 
     @Override
     public CallbackId getCallbackId() {
@@ -31,45 +35,45 @@ public class FeedViewNextCallbackHandler implements CallbackHandler {
     @Override
     public PartialBotApiMethod<?> handle(CallbackQueryContext context) {
         Long userId = context.auth().userInternalId();
-        Integer messageId = context.messageId();
-        Long chatId = context.chatId();
+
+        tryToDeleteKeyboardInMessage(context);
 
         FeedPostDTO post = feedService.findNextPostAndMarkAsViewed(userId);
         if (post == null) {
-            return noMorePostsMessage(chatId, messageId, context.callbackQuery().getId());
+            return noMorePostsMessage(context.chatId());
         }
 
-        return mapToResponse(context, post, messageId);
+        return mapToResponse(context, post, context.messageId());
+    }
+
+    private void tryToDeleteKeyboardInMessage(CallbackQueryContext context) {
+        try {
+            client.execute(EditMessageReplyMarkup.builder()
+                    .chatId(context.chatId())
+                    .messageId(context.messageId())
+                    .replyMarkup(InlineKeyboardMarkup.builder().build())
+                    .build());
+        } catch (TelegramApiException e) {
+            log.error("Failed to remove keyboard from message {}: {}", context.messageId(), e.getMessage(), e);
+        }
     }
 
     private PartialBotApiMethod<?> mapToResponse(CallbackQueryContext context, FeedPostDTO post, Integer messageId) {
-        ResponseBuilder.editMessage(context.chatId(), messageId)
-                .text("")
-                .build();
-
         return ResponseBuilder.sendPhoto(context.chatId(), post.photoUrl())
                 .caption(formatPostInfo(post))
-                .keyboard(buildKeyboard())
+                .keyboard(InlineKeyboardBuilder.builder()
+                        .navButtonsFor(CallbackId.FEED_VIEW)
+                        .backButtonTo(CallbackId.FEED)
+                        .build())
                 .build();
     }
 
-    private PartialBotApiMethod<?> noMorePostsMessage(Long chatId, Integer messageId, String callbackQueryId) {
-        messageService.editOrReplace(messageId, ResponseBuilder.sendMessage(chatId)
+    private BotApiMethod<?> noMorePostsMessage(Long chatId) {
+        return ResponseBuilder.sendMessage(chatId)
                 .text("📭 Більше публікацій немає")
                 .keyboard(InlineKeyboardBuilder.builder()
-                        .backButtonFor(CallbackId.FEED)
+                        .backButtonTo(CallbackId.FEED)
                         .build())
-                .build());
-
-        return AnswerCallbackQuery.builder()
-                .callbackQueryId(callbackQueryId)
-                .build();
-    }
-
-    private InlineKeyboardMarkup buildKeyboard() {
-        return InlineKeyboardBuilder.builder()
-                .navButtonsFor(CallbackId.FEED_VIEW)
-                .backButtonFor(CallbackId.FEED)
                 .build();
     }
 

@@ -30,7 +30,8 @@ public enum CallbackId {
 
     FEED_MY_POSTS(43, "📋 Мої оголошення", FEED),
     FEED_POST_DETAIL(431, "", FEED_MY_POSTS),
-    FEED_POST_DELETE_CONFIRM(4311, "✅ Видалити оголошення", FEED_POST_DETAIL),
+    FEED_POST_DELETE(4311, "🗑️ Видалити оголошення", FEED_POST_DETAIL),
+    FEED_POST_DELETE_CONFIRM(43111, "✅ Підтвердити видалення", FEED_POST_DELETE),
 
     FEED_VIEW(44, "👁️ Переглянути оголошення", FEED),  // When pressed, show first post by editing message
     FEED_VIEW_NEXT(441, "➡️ Наступне", FEED_VIEW),  // Send new message each time

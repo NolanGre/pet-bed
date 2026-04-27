@@ -1,7 +1,8 @@
-package op.edu.ua.petbed.telegram.callback.handler.pet;
+package op.edu.ua.petbed.telegram.callback.handler.feed;
 
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
+import op.edu.ua.petbed.feed.FeedService;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -13,28 +14,29 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 @NullMarked
 @Component
 @RequiredArgsConstructor
-public class PetDeleteCallbackHandler implements CallbackHandler {
+public class FeedPostDeleteCallbackHandler implements CallbackHandler {
 
     private final TelegramMessageService messageService;
 
     @Override
     public CallbackId getCallbackId() {
-        return CallbackId.PET_DELETE;
+        return CallbackId.FEED_POST_DELETE;
     }
 
     @Override
     public PartialBotApiMethod<?> handle(CallbackQueryContext context) {
         Long entityId = context.callbackData().entityId();
         if (entityId == null) {
-            throw new PetBedException("Entity ID is required for PET_DELETE", PetBedException.ErrorCode.INVALID_CALLBACK);
+            throw new PetBedException("Entity ID is required for FEED_POST_DELETE_CONFIRM", PetBedException.ErrorCode.INVALID_CALLBACK);
         }
 
         SendMessage message = ResponseBuilder.sendMessage(context.chatId())
-                .text("⚠️ Ви впевнені, що хочете видалити анкету тварини? Цю дію неможливо скасувати.")
+                .text("⚠️ Ви впевнені, що хочете видалити цей пост? Цю дію неможливо скасувати.")
                 .keyboard(InlineKeyboardBuilder.builder()
                         .navButtonsFor(getCallbackId(), entityId)
                         .backButtonFor(getCallbackId(), entityId)

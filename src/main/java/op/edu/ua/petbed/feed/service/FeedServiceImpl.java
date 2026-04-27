@@ -1,5 +1,6 @@
 package op.edu.ua.petbed.feed.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import op.edu.ua.petbed.common.dto.UserDTO;
@@ -34,6 +35,7 @@ public class FeedServiceImpl implements FeedService {
     private final UserService userRepository;
 
     @Override
+    @Transactional
     public FeedPostDTO create(CreateFeedPostDTO dto) {
         log.debug("Creating feed post for publisher: {}", dto.publisherId());
         FeedPost saved = feedPostRepository.save(FeedPost.create(dto));
@@ -50,22 +52,24 @@ public class FeedServiceImpl implements FeedService {
     }
 
     @Override
+    @Transactional
     public void delete(Long id, Long userId) {
         log.debug("Deleting feed post: id={}, userId={}", id, userId);
         FeedPost post = feedPostRepository.findById(id)
                 .orElseThrow(() -> new PetBedException("Post not found", PetBedException.ErrorCode.FEED_POST_NOT_FOUND));
 
         if (!post.getPublisherId().equals(userId)) {
-            log.warn("Access denied: userId={} attempted to delete post={} owned by publisherId={}",
-                    userId, id, post.getPublisherId());
+            log.warn("Access denied: userId={} attempted to delete post={} owned by publisherId={}", userId, id, post.getPublisherId());
             throw new PetBedException("Access denied", PetBedException.ErrorCode.FEED_ACCESS_DENIED);
         }
 
+        historyRepository.deleteAllByPostId(id);
         feedPostRepository.delete(post);
         log.info("Deleted feed post: id={}, userId={}", id, userId);
     }
 
     @Override
+    @Transactional
     public @Nullable FeedPostDTO findNextPostAndMarkAsViewed(Long userId) {
         log.debug("Finding next feed post for user: {}", userId);
         UserDTO user = userRepository.findById(userId);
@@ -93,8 +97,10 @@ public class FeedServiceImpl implements FeedService {
     }
 
     @Override
+    @Transactional
     public void deleteAllByPublisherId(Long publisherId) {
         log.info("Deleting all feed posts for publisher: {}", publisherId);
+        historyRepository.deleteAllByUserId(publisherId);
         feedPostRepository.deleteAllByPublisherId(publisherId);
         log.info("Deleted all feed posts for publisher: {}", publisherId);
     }
