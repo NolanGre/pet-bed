@@ -3,6 +3,7 @@ package op.edu.ua.petbed.telegram.callback.handler.profile;
 import op.edu.ua.petbed.common.dto.UserDTO;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.UserType;
+import op.edu.ua.petbed.feed.FeedService;
 import op.edu.ua.petbed.telegram.callback.CallbackData;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -22,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.verify;
+import static org.mockito.BDDMockito.never;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
@@ -29,6 +31,9 @@ class ProfileChangeTypeConfirmHandlerTest {
 
     @Mock
     UserService userService;
+
+    @Mock
+    FeedService feedService;
 
     @Mock
     CallbackQueryContext context;
@@ -182,5 +187,75 @@ class ProfileChangeTypeConfirmHandlerTest {
         assertThatThrownBy(() -> underTest.handle(context))
                 .isInstanceOf(PetBedException.class)
                 .hasMessageContaining("EntityId is required");
+    }
+
+    @Nested
+    @DisplayName("handle() feed integration")
+    class FeedIntegration {
+
+        @Test
+        void handle_changesToRegular_deletesAllPosts() {
+            // given
+            Long userId = 456L;
+            Long chatId = 123L;
+            Integer messageId = 1;
+
+            given(context.chatId()).willReturn(chatId);
+            given(context.messageId()).willReturn(messageId);
+            given(context.callbackData()).willReturn(new CallbackData(112, userId, null));
+
+            given(userService.toggleUserType(userId))
+                    .willReturn(new UserDTO(1L, userId, "username", UserType.REGULAR, null));
+
+            // when
+            underTest.handle(context);
+
+            // then
+            verify(feedService).deleteAllByPublisherId(userId);
+        }
+
+        @Test
+        void handle_changesToVolunteer_doesNotDeletePosts() {
+            // given
+            Long userId = 456L;
+            Long chatId = 123L;
+            Integer messageId = 1;
+
+            given(context.chatId()).willReturn(chatId);
+            given(context.messageId()).willReturn(messageId);
+            given(context.callbackData()).willReturn(new CallbackData(112, userId, null));
+
+            given(userService.toggleUserType(userId))
+                    .willReturn(new UserDTO(1L, userId, "username", UserType.VOLUNTEER, null));
+
+            // when
+            underTest.handle(context);
+
+            // then
+            verify(feedService, never()).deleteAllByPublisherId(userId);
+        }
+
+        @Test
+        void handle_changesToRegular_includesDeleteMessage() {
+            // given
+            Long userId = 456L;
+            Long chatId = 123L;
+            Integer messageId = 1;
+
+            given(context.chatId()).willReturn(chatId);
+            given(context.messageId()).willReturn(messageId);
+            given(context.callbackData()).willReturn(new CallbackData(112, userId, null));
+
+            given(userService.toggleUserType(userId))
+                    .willReturn(new UserDTO(1L, userId, "username", UserType.REGULAR, null));
+
+            // when
+            BotApiMethod<?> result = underTest.handle(context);
+
+            // then
+            EditMessageText editMessage = (EditMessageText) result;
+            assertThat(editMessage.getText())
+                    .contains("Ваші публікації видалено");
+        }
     }
 }

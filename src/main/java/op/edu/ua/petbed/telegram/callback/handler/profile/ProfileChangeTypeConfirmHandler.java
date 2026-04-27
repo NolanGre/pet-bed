@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.common.dto.UserDTO;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.UserType;
+import op.edu.ua.petbed.feed.FeedService;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -21,6 +22,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 public class ProfileChangeTypeConfirmHandler implements CallbackHandler {
 
     private final UserService userService;
+    private final FeedService feedService;
 
     @Override
     public CallbackId getCallbackId() {
@@ -35,6 +37,9 @@ public class ProfileChangeTypeConfirmHandler implements CallbackHandler {
         }
 
         UserDTO user = userService.toggleUserType(internalId);
+        if (user.type() == UserType.REGULAR) {
+            feedService.deleteAllByPublisherId(internalId);
+        }
         return mapToResponse(context, user.type());
     }
 
@@ -44,9 +49,11 @@ public class ProfileChangeTypeConfirmHandler implements CallbackHandler {
             case VOLUNTEER -> "🌟 Волонтер";
         };
 
+        String postsMessage = (newType == UserType.REGULAR) ? "\n\n🗑️ Ваші публікації видалено" : "";
+
         String messageText = """
-                ✅ Тип акаунту змінено на %s
-                """.formatted(typeText);
+                ✅ Тип акаунту змінено на %s%s
+                """.formatted(typeText, postsMessage);
 
         InlineKeyboardMarkup keyboard = InlineKeyboardBuilder.builder()
                 .backButtonTo(CallbackId.PROFILE)
