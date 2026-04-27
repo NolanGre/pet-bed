@@ -11,6 +11,7 @@ import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
 import op.edu.ua.petbed.telegram.response.KeyboardLayout;
 import op.edu.ua.petbed.telegram.response.ResponseBuilder;
 import op.edu.ua.petbed.telegram.service.TelegramMessageService;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 @NullMarked
@@ -38,27 +40,15 @@ public class FeedMyPostsCallbackHandler implements CallbackHandler {
         var callbackData = context.callbackData();
 
         if (!context.auth().isVolunteer()) {
-            return ResponseBuilder.sendMessage(context.chatId())
-                    .text("Тільки волонтери можуть переглядати публікації")
-                    .keyboard(InlineKeyboardBuilder.builder()
-                            .backButtonFor(CallbackId.FEED)
-                            .build())
-                    .build();
+            return onlyVolunteersCanDoThis(context);
         }
 
         int offset = callbackData.offset() != null ? callbackData.offset() : 0;
-        var result = feedService.findMyPosts(
-                context.auth().userInternalId(),
-                PageRequest.of(offset, KeyboardLayout.DEFAULT.pageSize())
-        );
+        var result = feedService.findMyPosts(context.auth().userInternalId(),
+                PageRequest.of(offset, KeyboardLayout.DEFAULT.pageSize()));
 
         if (result.isEmpty()) {
-            return ResponseBuilder.editMessage(context.chatId(), context.messageId())
-                    .text("У вас поки що немає публікацій")
-                    .keyboard(InlineKeyboardBuilder.builder()
-                            .backButtonFor(CallbackId.FEED)
-                            .build())
-                    .build();
+            return noPostsExist(context);
         }
 
         SendMessage message = ResponseBuilder.sendMessage(context.chatId())
@@ -70,6 +60,24 @@ public class FeedMyPostsCallbackHandler implements CallbackHandler {
 
         return AnswerCallbackQuery.builder()
                 .callbackQueryId(context.callbackQuery().getId())
+                .build();
+    }
+
+    private EditMessageText noPostsExist(CallbackQueryContext context) {
+        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
+                .text("У вас поки що немає публікацій")
+                .keyboard(InlineKeyboardBuilder.builder()
+                        .backButtonFor(CallbackId.FEED)
+                        .build())
+                .build();
+    }
+
+    private SendMessage onlyVolunteersCanDoThis(CallbackQueryContext context) {
+        return ResponseBuilder.sendMessage(context.chatId())
+                .text("Тільки волонтери можуть переглядати публікації")
+                .keyboard(InlineKeyboardBuilder.builder()
+                        .backButtonFor(CallbackId.FEED)
+                        .build())
                 .build();
     }
 

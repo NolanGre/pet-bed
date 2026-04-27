@@ -54,8 +54,8 @@ class FeedMenuCallbackHandlerTest {
             given(context.chatId()).willReturn(chatId);
             given(context.messageId()).willReturn(1);
 
-            Page<FeedPostDTO> postsPage = new PageImpl<>(List.of(), PageRequest.of(0, 2), 2);
-            given(feedService.findMyPosts(userId, PageRequest.of(0, 2))).willReturn(postsPage);
+            Page<FeedPostDTO> postsPage = new PageImpl<>(List.of(), PageRequest.of(0, 1), 2);
+            given(feedService.findMyPosts(userId, PageRequest.of(0, 1))).willReturn(postsPage);
 
             // when
             PartialBotApiMethod<?> result = underTest.handle(context);
@@ -81,7 +81,7 @@ class FeedMenuCallbackHandlerTest {
         }
 
         @Test
-        void handle_volunteerWithOnePost_hidesMyPostsButton() {
+        void handle_volunteerWithOnePost_showsMyPostsButton() {
             // given
             Long userId = 1L;
             Long chatId = 123L;
@@ -91,8 +91,8 @@ class FeedMenuCallbackHandlerTest {
             given(context.chatId()).willReturn(chatId);
             given(context.messageId()).willReturn(1);
 
-            Page<FeedPostDTO> postsPage = new PageImpl<>(List.of(), PageRequest.of(0, 2), 1);
-            given(feedService.findMyPosts(userId, PageRequest.of(0, 2))).willReturn(postsPage);
+            Page<FeedPostDTO> postsPage = new PageImpl<>(List.of(), PageRequest.of(0, 1), 1);
+            given(feedService.findMyPosts(userId, PageRequest.of(0, 1))).willReturn(postsPage);
 
             // when
             PartialBotApiMethod<?> result = underTest.handle(context);
@@ -109,8 +109,8 @@ class FeedMenuCallbackHandlerTest {
                     .map(InlineKeyboardButton::getText)
                     .toList();
 
-            assertThat(allButtons).hasSize(4);
-            assertThat(buttonTexts).doesNotContain("📋 Мої оголошення");
+            assertThat(allButtons).hasSize(5);
+            assertThat(buttonTexts).contains("📋 Мої оголошення");
         }
 
         @Test
@@ -124,8 +124,8 @@ class FeedMenuCallbackHandlerTest {
             given(context.chatId()).willReturn(chatId);
             given(context.messageId()).willReturn(1);
 
-            Page<FeedPostDTO> postsPage = new PageImpl<>(List.of(), PageRequest.of(0, 2), 0);
-            given(feedService.findMyPosts(userId, PageRequest.of(0, 2))).willReturn(postsPage);
+            Page<FeedPostDTO> postsPage = new PageImpl<>(List.of(), PageRequest.of(0, 1), 0);
+            given(feedService.findMyPosts(userId, PageRequest.of(0, 1))).willReturn(postsPage);
 
             // when
             PartialBotApiMethod<?> result = underTest.handle(context);
@@ -157,8 +157,8 @@ class FeedMenuCallbackHandlerTest {
             given(context.chatId()).willReturn(chatId);
             given(context.messageId()).willReturn(1);
 
-            Page<FeedPostDTO> postsPage = new PageImpl<>(List.of(), PageRequest.of(0, 2), 5);
-            given(feedService.findMyPosts(userId, PageRequest.of(0, 2))).willReturn(postsPage);
+            Page<FeedPostDTO> postsPage = new PageImpl<>(List.of(), PageRequest.of(0, 1), 5);
+            given(feedService.findMyPosts(userId, PageRequest.of(0, 1))).willReturn(postsPage);
 
             // when
             PartialBotApiMethod<?> result = underTest.handle(context);

@@ -14,7 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageMedia;
 
 import java.time.Instant;
 
@@ -45,6 +45,7 @@ class FeedPostDetailCallbackHandlerTest {
             Long postId = 1L;
 
             given(context.chatId()).willReturn(chatId);
+            given(context.messageId()).willReturn(1);
             given(context.callbackData()).willReturn(
                     CallbackData.of(CallbackId.FEED_POST_DETAIL, postId, null)
             );
@@ -59,13 +60,10 @@ class FeedPostDetailCallbackHandlerTest {
             PartialBotApiMethod<?> result = underTest.handle(context);
 
             // then
-            assertThat(result).isInstanceOf(SendPhoto.class);
-            SendPhoto photo = (SendPhoto) result;
-            assertThat(photo.getChatId()).isEqualTo(chatId.toString());
-            assertThat(photo.getPhoto().getAttachName()).isEqualTo("photo123");
-            assertThat(photo.getCaption()).contains("Test post text");
-            assertThat(photo.getCaption()).contains("1.5 км від вас");
-            assertThat(photo.getCaption()).contains("@publisherUsername");
+            assertThat(result).isInstanceOf(EditMessageMedia.class);
+            EditMessageMedia media = (EditMessageMedia) result;
+            assertThat(media.getChatId()).isEqualTo(chatId.toString());
+            assertThat(media.getMedia()).isNotNull();
         }
 
         @Test

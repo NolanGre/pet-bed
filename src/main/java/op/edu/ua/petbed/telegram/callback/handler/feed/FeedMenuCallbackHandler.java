@@ -47,18 +47,15 @@ public class FeedMenuCallbackHandler implements CallbackHandler {
     }
 
     private InlineKeyboardMarkup feedKeyboard(Long userId, boolean isVolunteer) {
-        // Check post count for R-3
-        boolean hasMultiplePosts = feedService.findMyPosts(userId, PageRequest.of(0, 2)).getTotalElements() > 1;
+        boolean hasPosts = feedService.findMyPosts(userId, PageRequest.of(0, 1)).getTotalElements() >= 1;
 
         return InlineKeyboardBuilder.builder()
                 .navButtonsFor(CallbackId.FEED, child -> {
-                    // R-2: Hide FEED_CREATE for non-volunteers
                     if (child == CallbackId.FEED_CREATE) {
                         return isVolunteer;
                     }
-                    // R-3: Hide FEED_MY_POSTS for non-volunteers or users with 0-1 posts
                     if (child == CallbackId.FEED_MY_POSTS) {
-                        return isVolunteer && hasMultiplePosts;
+                        return isVolunteer && hasPosts;
                     }
                     return true;
                 })

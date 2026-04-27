@@ -30,8 +30,7 @@ public class FeedPostDetailCallbackHandler implements CallbackHandler {
     public PartialBotApiMethod<?> handle(CallbackQueryContext context) {
         Long entityId = context.callbackData().entityId();
         if (entityId == null) {
-            throw new PetBedException("Entity ID is required for FEED_POST_DETAIL",
-                    PetBedException.ErrorCode.INVALID_CALLBACK);
+            throw new PetBedException("Entity ID is required for FEED_POST_DETAIL", PetBedException.ErrorCode.INVALID_CALLBACK);
         }
 
         FeedPostDTO post = feedService.findById(entityId);
@@ -39,7 +38,7 @@ public class FeedPostDetailCallbackHandler implements CallbackHandler {
     }
 
     private PartialBotApiMethod<?> mapToResponse(CallbackQueryContext context, FeedPostDTO post) {
-        return ResponseBuilder.sendPhoto(context.chatId(), post.photoUrl())
+        return ResponseBuilder.editPhoto(context.chatId(), context.messageId(), post.photoUrl())
                 .caption(formatPostInfo(post))
                 .keyboard(buildKeyboard(post.id()))
                 .build();
@@ -47,8 +46,8 @@ public class FeedPostDetailCallbackHandler implements CallbackHandler {
 
     private InlineKeyboardMarkup buildKeyboard(Long postId) {
         return InlineKeyboardBuilder.builder()
-                .navButtonsFor(CallbackId.FEED_POST_DETAIL, postId)
-                .backButtonFor(CallbackId.FEED_MY_POSTS)
+                .navButtonsFor(getCallbackId(), postId)
+                .backButtonFor(getCallbackId())
                 .build();
     }
 
