@@ -32,6 +32,9 @@ public enum FormType {
             FormStep.choice("⚤ Оберіть стать", List.of(PetSex.values())).optional(),
             FormStep.choice("📏 Оберіть розмір", List.of(PetSize.values())).optional(),
             FormStep.text("📝 Введіть особливі прикмети").optional()
+    )),
+    SET_GEOLOCATION(List.of(
+            FormStep.location("📍 Надішліть вашу геолокацію")
     ));
 
     private final List<FormStep> steps;

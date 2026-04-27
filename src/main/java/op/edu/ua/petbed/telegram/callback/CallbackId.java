@@ -25,16 +25,15 @@ public enum CallbackId {
     // FEED menu (4xx)
     FEED(4, "📋 Стрічка оголошень", MENU),
 
-    FEED_RADIUS(41, "📍 Обрати радіус", FEED),
-    FEED_GEOLOCATION(42, "🌍 Обрати геолокацію", FEED),
-    FEED_CREATE(43, "➕ Створити оголошення", FEED),
+    FEED_GEOLOCATION(41, "🌍 Обрати геолокацію", FEED),
+    FEED_CREATE(42, "➕ Створити оголошення", FEED),
 
-    FEED_MY_POSTS(44, "📋 Мої оголошення", FEED),
-    FEED_POST_DETAIL(441, "", FEED_MY_POSTS),
-    FEED_POST_DELETE_CONFIRM(4411, "✅ Видалити оголошення", FEED_POST_DETAIL),
+    FEED_MY_POSTS(43, "📋 Мої оголошення", FEED),
+    FEED_POST_DETAIL(431, "", FEED_MY_POSTS),
+    FEED_POST_DELETE_CONFIRM(4311, "✅ Видалити оголошення", FEED_POST_DETAIL),
 
-    FEED_VIEW(45, "👁️ Переглянути оголошення", FEED),  // When pressed, show first post by editing message
-    FEED_VIEW_NEXT(451, "➡️ Наступне", FEED_VIEW),  // Send new message each time
+    FEED_VIEW(44, "👁️ Переглянути оголошення", FEED),  // When pressed, show first post by editing message
+    FEED_VIEW_NEXT(441, "➡️ Наступне", FEED_VIEW),  // Send new message each time
 
     // LOST menu (5xx)
     LOST(5, "🔍 Пошук тварин", MENU),

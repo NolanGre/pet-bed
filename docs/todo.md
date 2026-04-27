@@ -1,169 +1,209 @@
-# Telegram Bot API — Міграція на новий підхід з deliver()
+# Feed Module — Telegram Integration Plan
 
-## Поточний стан
+## Попередні умови
 
-Поточна архітектура не відповідає гайдлайну:
-- **Роутер** повертає `BotApiMethod<?>` (тільки webhook)
-- **Хендлери** використовують `telegramClient.execute()` напряму для медіа
-- **Handler інтерфейс** повертає `BotApiMethod<?>`
+- FeedService вже реалізовано (CRUD + feed queries)
+- CallbackId.FEED та дочірні елементи вже існують (окрім FEED_RADIUS — треба прибрати)
+- Форми вже реалізовано (FormService, FormStep.location() вже є)
+- TelegramMessageService.editOrReplace() вже існує для медіа → текст конвертації
 
-## Цільовий стан
+## Важливі нюанси (з інших модулів)
 
-- **Роутер** повертає `PartialBotApiMethod<?>`
-- Хендлери **не використовують** `telegramClient.execute()` напряму
-- Роутер має метод `deliver()` що вирішує як відправити відповідь
-- Handler інтерфейс повертає `PartialBotApiMethod<?>`
+1. **TelegramMessageService.editOrReplace** — для перетворення медіа (фото) на текстове повідомлення. Використовується коли неможливо відредагувати медіа повідомлення (видаляє + відправляє нове).
 
----
+2. **R-10 (видалення клавіатури)** — при натисканні "Наступний" або "Повернутись":
+   - Спочатку видалити клавіатуру з поточного повідомлення (editMessageReplyMarkup)
+   - Потім показати новий контент
 
-## План міграції
+3. **ProfileChangeTypeConfirmHandler** — викликає userService.toggleUserType. Для R-4 треба:
+   - Або додати feedService.deleteAllByPublisherId всередину toggleUserType
+   - Або викликати його після toggleUserType в ProfileChangeTypeConfirmHandler
 
-### 1. Інтерфейси хендлерів
+4. **Динамічні кнопки (R-2, R-3)** — "Створити публікацію" тільки для волонтерів, "Мої публікації" тільки для волонтерів з >1 постом. Використовувати `navButtonsFor(CallbackId, Predicate)` або `navButtonsFor(CallbackId, Long, Predicate)`.
 
-#### 1.1 CallbackHandler
-- Змінити `BotApiMethod<?> handle()` → `PartialBotApiMethod<?> handle()`
-- Додати імпорт `PartialBotApiMethod`
+5. **FeedView → EditMessageMedia** — пости з фото, тому при навігації треба використовувати TelegramMessageService.
 
-#### 1.2 CommandHandler  
-- Змінити `BotApiMethod<?> handle()` → `PartialBotApiMethod<?> handle()`
-- Додати імпорт `PartialBotApiMethod`
+## Етапи інтеграції
 
-### 2. Роутер
+### Етап 0: Очищення CallbackId
 
-#### 2.1 TelegramUpdateRouterImpl
-- Додати `TelegramClient` як залежність
-- Додати метод `deliver(PartialBotApiMethod<?> response)`:
-  ```java
-  private void deliver(PartialBotApiMethod<?> response) throws TelegramApiException {
-      if (response instanceof BotApiMethod<?> m) {
-          // webhook return — нічого не робимо
-          return;
-      }
-      // медіа — execute напряму
-      if (response instanceof SendPhoto p)        telegramClient.execute(p);
-      if (response instanceof SendDocument d)     telegramClient.execute(d);
-      if (response instanceof SendVideo v)        telegramClient.execute(v);
-      if (response instanceof SendLocation l)    telegramClient.execute(l);
-      if (response instanceof EditMessageMedia e)  telegramClient.execute(e);
-      // ...
-  }
-  ```
-- У методі `route()` викликати `deliver()` після отримання відповіді від хендлера
+**Опис:** Прибрати FEED_RADIUS, бо геолокація без радіусу
 
-#### 2.2 ReturnCallback (AnswerCallbackQuery)
-- Роутер повинен автоматично відповідати на callback query
-- Хендлер **не повинен** повертати `AnswerCallbackQuery`
-- Додати автоматичну відповідь: `AnswerCallbackQuery.builder().callbackQueryId(context.callbackQuery().getId()).build()`
-
-### 3. ResponseBuilder
-
-#### 3.1 Методи для медіа
-Додати методи для створення медіа-повідомлень:
-- `sendPhoto(chatId, photoUrl)` → returns `SendPhoto`
-- `editPhoto(chatId, messageId, photoId)` → returns `EditMessageMedia`
-- `sendLocation(chatId, latitude, longitude)` → returns `SendLocation`
-- `sendVenue(chatId, latitude, longitude, title, address)` → returns `SendVenue`
-- `sendContact(chatId, phoneNumber, firstName)` → returns `SendContact`
-
-#### 3.2 Існуючі методи
-- Залишити `sendMessage()`, `editMessage()`, `answerCallback()` як є
-
-### 4. Хендлери для оновлення
-
-#### 4.1 PetDetailCallbackHandler
-**Було:**
-```java
-telegramClient.execute(photo);  //.execute() напряму
-return AnswerCallbackQuery.builder()...build();
-```
-**Має бути:**
-```java
-return ResponseBuilder.editPhoto(chatId, messageId, photoId())
-    .caption(..)
-    .keyboard(..)
-    .build();
-```
-
-#### 4.2 FormEnumSelectCallbackHandler
-**Було:**
-```java
-telegramClient.execute(EditMessageText...);  //execute() напряму
-```
-**Ма�� бути:**
-```java
-return ResponseBuilder.editMessage(chatId, messageId)
-    .text(..)
-    .keyboard(..)
-    .build();
-```
-
-#### 4.3 MyPetsCallbackHandler
-**Було:**
-```java
-telegramMessageService.editOrReplace(context.messageId(), message);
-return AnswerCallbackQuery.builder()...build();
-```
-**Має бути:**
-```java
-// Видалити виклик editOrReplace
-// Використовувати respondVia() або
-return ResponseBuilder.sendMessage(chatId)
-    .text(..)
-    .keyboard(..)
-    .build();
-```
-
-### 5. TelegramMessageService
-
-#### 5.1 Зміни
-- Залишити `editOrReplace()` для сумісності з випадками коли HTTP edit неможливий
-- Можливо видалити прямі виклики `execute()` в інших методах
-
-### 6. Документація
-
-#### 6.1 routing-guide.md
-Оновити секцію "Response Method Types":
-- Пояснити ієрархію `PartialBotApiMethod<?>`
-- Додати приклад `deliver()` методу
-- Пояснити правило: коли webhook, коли execute()
-
-#### 6.2 ui-response-mapping.md
-- Змінити `BotApiMethod<?>` → `PartialBotApiMethod<?>`
-- Додати приклади для sendPhoto, editPhoto
+**Кроки:**
+- [ ] 0.1 Видалити `FEED_RADIUS(41, "📍 Обрати радіус", FEED)` з CallbackId.java
+- [ ] 0.2 Оновити тести якщо треба
 
 ---
 
-## Файли для зміни
+### Етап 1: FEED_GEOLOCATION — Форма встановлення геолокації
 
-| Файл | Що змінити |
-|------|-----------|
-| `CallbackHandler.java` | Інтерфейс: BotApiMethod → PartialBotApiMethod |
-| `CommandHandler.java` | Інтерфейс: BotApiMethod → PartialBotApiMethod |
-| `TelegramUpdateRouterImpl.java` | Додати deliver() + TelegramClient |
-| `ResponseBuilder.java` | Додати методи для медіа |
-| `PetDetailCallbackHandler.java` | Return замість execute() |
-| `FormEnumSelectCallbackHandler.java` | Return замість execute() |
-| `MyPetsCallbackHandler.java` | Видалити editOrReplace |
-| `TelegramMessageService.java` | Опціонально: видалити зайві execute() |
-| `docs/routing-guide.md` | Оновити документацію |
-| `docs/ui-response-mapping.md` | Оновити документацію |
+**Опис:** Користувач встановлює свою геолокацію через форму (1 крок — приймає Location)
 
----
+**Кроки:**
+- [ ] 1.1 Додати `FormType.SET_GEOLOCATION` — 1 крок: `FormStep.location("📍 Надішліть вашу геолокацію")`
+- [ ] 1.2 Створити `SetGeolocationHandler` — обробляє завершення форми
+  - Викликає `userService.setLocation(userId, lat, lon)`
+  - Повертає повідомлення з підтвердженням + кнопка "Повернутись"
+- [ ] 1.3 Створити `FeedGeolocationCallbackHandler` — ініціює форму
+  - Викликає `formService.startCreateForm(FormType.SET_GEOLOCATION, CallbackId.FEED, ...)`
+  - Повертає перший prompt форми
 
-## Порядок виконання
+**Бізнес-логіка:**
+- Геолокація зберігається в `users.location`
+- Після збереження — показати підтвердження
 
-1. **Інтерфейси** (1.1, 1.2) — база
-2. **ResponseBuilder** (3.1, 3.2) — інструменти
-3. **Роутер** (2.1, 2.2) — ядро
-4. **Хендлери** (4.1, 4.2, 4.3) — споживачі
-5. **Документація** (6.1, 6.2) — після коду
+**Примітка:** Форма вже підтримує Location через `FormStep.location()` і `FormInput.Location`.
 
 ---
 
-## Критерії успіху
+### Етап 2: FEED_VIEW — Перегляд стрічки
 
-- **Пріоритет — webhook return**: завжди повертаємо відповідь через webhook (метод `route()` повертає `BotApiMethod<?>`)
-- **Execute() — тільки як fallback**: якщо метод НЕ підтримує webhook (медіа, файли, геолокація) — роутер викликає `telegramClient.execute()`
-- Жоден хендлер **не використовує** `telegramClient.execute()` напряму
-- Жоден хендлер **не повертає** `AnswerCallbackQuery` (роутер додає автоматично)
-- Роутер має метод `deliver()` що обробляє всі типи відповідей
+**Опис:** Користувач переглядає пости з можливістю навігації
+
+**Кроки:**
+- [ ] 2.1 Створити `FeedViewCallbackHandler` — обробляє натискання "Стрічка" (FEED_VIEW)
+  - Викликає `feedService.findNextPostAndMarkAsViewed(userId)`
+  - Якщо пост є — показує його з кнопками "Наступний" (FEED_VIEW_NEXT), "Повернутись"
+  - Якщо постів немає — показує повідомлення "Немає публікацій"
+- [ ] 2.2 Реалізувати `mapToResponse()` для відображення поста:
+  - Формат відстані: < 1km → "📍 {м}м від вас", >= 1km → "📍 {км} км від вас"
+  - Якщо немає геолокації користувача — не показувати відстань
+  - Використовує SendPhoto / EditMessageMedia (бо пости з фото)
+- [ ] 2.3 Створити `FeedViewNextCallbackHandler` — кнопка "Наступний" (FEED_VIEW_NEXT)
+  - Викликає `feedService.findNextPostAndMarkAsViewed(userId)`
+  - **R-10:** Спочатку видаляє клавіатуру з поточного повідомлення (editMessageReplyMarkup)
+  - Потім показує новий пост
+  - Потрібно використовувати TelegramMessageService.editOrReplace() бо пости з фото
+
+**Бізнес-логіка (R-5, R-6, R-7, R-8, R-13, R-14, R-15, R-16):**
+- Пост містить: фото + текст + відстань
+- Відстань < 1km — в метрах, >= 1km — в кілометрах
+- Без геолокації користувача — відстань не показується
+- Сортування: за відстанню (є геолокація) або за датою (немає)
+- Перегляд → додається в історію
+- Пропускаються вже переглянуті пости
+
+**Нюанси:**
+- CallbackId FEED_VIEW вже існує з коментарем "When pressed, show first post by editing message"
+- CallbackId FEED_VIEW_NEXT вже існує з коментарем "Send new message each time" — **треба змінити логіку**: спочатку видалити клавіатуру, пот показати новий пост
+
+---
+
+### Етап 3: FEED_CREATE — Створення поста (волонтери)
+
+**Опис:** Волонтер створює публікацію через форму
+
+**Кроки:**
+- [ ] 3.1 Додати `FormType.CREATE_FEED_POST` — 3 кроки:
+  1. Текст повідомлення: `FormStep.text("✏️ Введіть текст публікації")`
+  2. Фото: `FormStep.photo("📷 Надішліть фото")`
+  3. Геолокація: `FormStep.location("📍 Надішліть геолокацію")`
+- [ ] 3.2 Створити `CreateFeedPostHandler` — обробляє завершення форми
+  - Витягує дані з FormEntity: текст, photoId, lat/lon
+  - Викликає `feedService.create(dto)`
+  - Повертає повідомлення "Публікацію створено" + кнопка "Повернутись"
+- [ ] 3.3 Створити `FeedCreateCallbackHandler` — ініціює форму
+  - Перевіряє чи користувач волонтер (R-1)
+  - Якщо неволонтер — повертає повідомлення "Тільки волонтери можуть створювати публікації"
+  - Викликає `formService.startCreateForm(FormType.CREATE_FEED_POST, CallbackId.FEED, ...)`
+
+**Бізнес-логіка (R-1, R-2):**
+- Тільки волонтери можуть створювати пости
+- Кнопка "Створити пост" показується тільки волонтерам
+
+**Примітка:** CallbackId FEED_CREATE вже існує.
+
+---
+
+### Етап 4: FEED_MY_POSTS — Мої публікації (волонтери)
+
+**Опис:** Волонтер переглядає свої публікації
+
+**Кроки:**
+- [ ] 4.1 Створити `FeedMyPostsCallbackHandler` — показує список постів
+  - Перевіряє чи користувач волонтер (R-3)
+  - Якщо постів < 2 — **не показувати кнопку в меню** (або показати повідомлення "У вас поки що немає публікацій")
+  - Викликає `feedService.findMyPosts(userId, pageable)`
+  - Показує список з пагінацією + кнопка "Повернутись"
+- [ ] 4.2 Створити `FeedPostDetailCallbackHandler` — перегляд деталей (FEED_POST_DETAIL)
+  - Викликає `feedService.findById(postId)`
+  - Показує пост (фото + текст + відстань)
+  - Кнопки: "Видалити" (FEED_POST_DELETE_CONFIRM), "Повернутись"
+- [ ] 4.3 CallbackId FEED_POST_DELETE_CONFIRM вже існує
+  - Потрібно обробити підтвердження: `feedService.delete(postId, userId)`
+  - Видаляє пост та повертає до списку
+
+**Бізнес-логіка (R-3, R-7):**
+- Кнопка "Мої пости" тільки для волонтерів з > 1 постом
+- Власник може видалити свій пост
+
+**Примітка:** CallbackId FEED_MY_POSTS, FEED_POST_DETAIL, FEED_POST_DELETE_CONFIRM вже існують.
+
+---
+
+### Етап 5: FEED (Меню стрічки) — Динамічні кнопки
+
+**Опис:** Головне меню стрічки з динамічними кнопками (R-2, R-3)
+
+**Кроки:**
+- [ ] 5.1 Модифікувати існуючий FEED callback handler (або створити новий)
+  - Кнопки:
+    - "Стрічка" → FEED_VIEW (всі)
+    - "Моя геолокація" → FEED_GEOLOCATION (всі)
+    - "Створити публікацію" → FEED_CREATE (тільки волонтери, R-2)
+    - "Мої публікації" → FEED_MY_POSTS (волонтери з >1 постом, R-3)
+  - Кнопка "Назад" → MENU
+- [ ] 5.2 Реалізувати умовні кнопки (R-2, R-3) через `InlineKeyboardBuilder`:
+  - Для R-2: `navButtonsFor(CallbackId.FEED, child -> child != CallbackId.FEED_CREATE || isVolunteer)`
+  - Для R-3: `navButtonsFor(CallbackId.FEED, postCount -> postCount > 1 || isVolunteer)`
+
+**Бізнес-логіка (R-2, R-3):**
+- "Створити пост" — тільки волонтери
+- "Мої пости" — тільки волонтери з >1 постом
+
+**Примітка:** CallbackId.FEED вже існує і є батьком для всіх дочірніх елементів. Використовуємо його як меню.
+
+---
+
+### Етап 6: ProfileChangeTypeConfirm — видалення постів при зміні типу
+
+**Опис:** При зміні типу акаунту на REGULAR — видалити пости волонтера
+
+**Кроки:**
+- [ ] 6.1 Інтегрувати `feedService.deleteAllByPublisherId(userId)` в ProfileChangeTypeConfirmHandler
+  - Після виклику `userService.toggleUserType(internalId)` — перевірити новий тип
+  - Якщо новий тип == REGULAR → викликати `feedService.deleteAllByPublisherId(internalId)`
+  - Показати повідомлення "Ваші публікації видалено"
+
+**Бізнес-логіка (R-4):**
+- При зміні типу на REGULAR — пости видаляються + інформується користувач
+
+**Примітка:** ProfileChangeTypeConfirmHandler вже існує, треба модифікувати.
+
+---
+
+### Етап 7: Тестування end-to-end
+
+**Кроки:**
+- [ ] 7.1 Написати інтеграційні тести для всіх хендлерів
+- [ ] 7.2 Перевірити сортування за відстанню (TC-1)
+- [ ] 7.3 Перевірити формат відстані (TC-2, TC-3)
+- [ ] 7.4 Перевірити видалення постів при зміні типу (TC-4)
+- [ ] 7.5 Перевірити навігацію (TC-5, TC-6, TC-7)
+- [ ] 7.6 Перевірити умови показу кнопок (TC-8, TC-9)
+
+---
+
+## Пріоритети
+
+1. **Високий:** Етап 0 (очищення) → Етап 1 (GEOLOCATION) → Етап 2 (VIEW) → Етап 5 (FEED меню)
+2. **Середній:** Етап 3 (CREATE) → Етап 4 (MY_POSTS)
+3. **Низький:** Етап 6 (Profile change) → Етап 7 (тестування)
+
+## Нотатки
+
+- **Без радіуса:** FEED_RADIUS треба прибрати, геолокація зберігається, але фільтрація за радіусом НЕ реалізується
+- **Форма для геолокації:** Навіть для 1 кроку використовується FormService — це стандарт
+- **TelegramMessageService:** Використовується для конвертації медіа → текст при навігації
+- **R-10:** При натисканні будь-якої кнопки навігації — спочатку видалити клавіатуру, пот показати новий контент
+- **Динамічні кнопки:** Використовувати `navButtonsFor` з predicate для R-2, R-3
