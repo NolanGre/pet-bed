@@ -13,13 +13,11 @@ import org.springframework.stereotype.Service;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.feed.FeedService;
 import op.edu.ua.petbed.feed.dto.CreateFeedPostDTO;
-import op.edu.ua.petbed.feed.dto.FeedPostDTO;
+import op.edu.ua.petbed.common.dto.FeedPostDTO;
 import op.edu.ua.petbed.feed.model.FeedPost;
 import op.edu.ua.petbed.feed.model.UserFeedHistory;
 import op.edu.ua.petbed.feed.repository.FeedPostRepository;
 import op.edu.ua.petbed.feed.repository.UserFeedHistoryRepository;
-import op.edu.ua.petbed.user.model.User;
-import op.edu.ua.petbed.user.repository.UserRepository;
 
 import java.util.Objects;
 

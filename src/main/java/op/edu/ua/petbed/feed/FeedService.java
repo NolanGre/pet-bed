@@ -5,7 +5,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import op.edu.ua.petbed.feed.dto.CreateFeedPostDTO;
-import op.edu.ua.petbed.feed.dto.FeedPostDTO;
+import op.edu.ua.petbed.common.dto.FeedPostDTO;
 
 @NullMarked
 public interface FeedService {
