@@ -108,6 +108,10 @@ public class Pet extends AbstractAuditableEntity {
         return status.canDelete();
     }
 
+    public void changeStatus(PetStatus newStatus) {
+        this.status = newStatus;
+    }
+
     @Override
     public final boolean equals(@Nullable Object o) {
         if (this == o) return true;

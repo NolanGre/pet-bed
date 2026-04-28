@@ -3,6 +3,7 @@ package op.edu.ua.petbed.pet;
 import op.edu.ua.petbed.common.dto.CreatePetDTO;
 import op.edu.ua.petbed.common.dto.PetDTO;
 import op.edu.ua.petbed.common.dto.UpdatePetDTO;
+import op.edu.ua.petbed.common.model.PetStatus;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,4 +20,6 @@ public interface PetService {
     PetDTO findById(Long id);
 
     Page<PetDTO> findAllByOwnerId(Long ownerId, Pageable pageable);
+
+    void updateStatus(Long petId, PetStatus status);
 }

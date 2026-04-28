@@ -127,7 +127,7 @@ class MatchQueueRepositoryTest extends PostgresTestContainer {
             em.flush();
             em.clear();
             MatchQueueEntry confirmedEntry = underTest.save(createMatchQueueEntry(savedLostRequest, found2, new BigDecimal("0.7500")));
-            confirmedEntry.markAsViewed("test_user");
+            confirmedEntry.markAsViewed();
             underTest.save(confirmedEntry);
             em.flush();
             em.clear();

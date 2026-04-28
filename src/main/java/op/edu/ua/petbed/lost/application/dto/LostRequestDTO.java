@@ -1,4 +1,4 @@
-package op.edu.ua.petbed.common.dto.lost;
+package op.edu.ua.petbed.lost.application.dto;
 
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.PetType;

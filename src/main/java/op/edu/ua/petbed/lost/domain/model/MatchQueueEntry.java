@@ -55,11 +55,12 @@ public class MatchQueueEntry extends AbstractAuditableEntity {
         return id;
     }
 
-    public void markAsViewed(String viewedBy) {
-        if (viewedBy.isBlank()) {
-            throw new PetBedException("ViewedBy is required", PetBedException.ErrorCode.VIEWED_BY_REQUIRED);
-        }
+    public void markAsViewed() {
         this.viewingStatus = ViewingStatus.VIEWED;
+    }
+
+    public void markAsConfirmed() {
+        this.viewingStatus = ViewingStatus.CONFIRMED;
     }
 
     @Override

@@ -6,6 +6,7 @@ import op.edu.ua.petbed.common.dto.CreatePetDTO;
 import op.edu.ua.petbed.common.dto.PetDTO;
 import op.edu.ua.petbed.common.dto.UpdatePetDTO;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
+import op.edu.ua.petbed.common.model.PetStatus;
 import op.edu.ua.petbed.pet.PetService;
 import op.edu.ua.petbed.pet.model.Pet;
 import op.edu.ua.petbed.pet.repository.PetRepository;
@@ -70,6 +71,18 @@ public class PetServiceImpl implements PetService {
     public Page<PetDTO> findAllByOwnerId(Long ownerId, Pageable pageable) {
         Page<Pet> pets = petRepository.findByOwnerId(ownerId, pageable);
         return pets.map(this::toDto);
+    }
+
+    @Override
+    @Transactional
+    public void updateStatus(Long petId, PetStatus status) {
+        Pet pet = petRepository.findById(petId)
+                .orElseThrow(() -> new PetBedException("Pet not found with id: " + petId, PetBedException.ErrorCode.PET_NOT_FOUND));
+
+        pet.changeStatus(status);
+        petRepository.save(pet);
+
+        log.info("Updated pet status: id={}, status={}", petId, status);
     }
 
     private PetDTO toDto(Pet pet) {

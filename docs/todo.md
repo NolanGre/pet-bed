@@ -121,27 +121,116 @@ Created migration to align DB with new entity structure:
 
 ---
 
-## Next Stage: Stage 5 - Domain Services
-**Status:** Pending
+### Stage 5: Domain Services (COMPLETED ✅)
+**Status:** Completed
 **Goal:** Create service interfaces and implementations
 
+#### Completed Tasks:
+
+1. **LostRequestService** - interface + implementation ✅
+   - Interface: `LostRequestService.java` at module root (public API)
+   - Implementation: `LostRequestServiceImpl.java` in `domain/service/`
+   - Event: `LostRequestCreatedEvent.java` in `application/event/`
+   - Methods implemented:
+     - `create(Long petId, String contactInfo, Point location)` - checks for duplicates, creates request, publishes event
+     - `findById(Long id)` - finds and returns DTO
+     - `findActiveByOwnerId(Long ownerId)` - finds all lost requests for owner's pets
+     - `cancel(Long lostRequestId)` - deletes lost request by petId
+     - `existsByPetId(Long petId)` - delegates to repository
+
+#### Created Files:
+- `/home/nolan/Code/pet-bed/src/main/java/op/edu/ua/petbed/lost/LostRequestService.java`
+- `/home/nolan/Code/pet-bed/src/main/java/op/edu/ua/petbed/lost/domain/service/LostRequestServiceImpl.java`
+- `/home/nolan/Code/pet-bed/src/main/java/op/edu/ua/petbed/lost/application/event/LostRequestCreatedEvent.java`
+
+#### Verification:
+- ✅ All files compile successfully
+- ✅ All existing tests pass
+- ✅ Follows Spring Modulith public API pattern (interface at module root)
+- ✅ Uses `@NullMarked`, `@RequiredArgsConstructor`, `@Transactional`
+- ✅ Proper error handling with `PetBedException` and appropriate `ErrorCode`
+- ✅ Publishes `LostRequestCreatedEvent` for async matching
+- ✅ Uses `entity.getIdOrThrow()` pattern
+- ✅ SLF4J logging for operations
+
+---
+
+### Stage 5: Domain Services (COMPLETED ✅)
+**Status:** Completed
+**Goal:** Create service interfaces and implementations
+
+#### Completed Tasks:
+
+1. **LostRequestService** - interface + implementation ✅
+   - Interface: `LostRequestService.java` at module root (public API)
+   - Implementation: `LostRequestServiceImpl.java` in `domain/service/`
+   - Event: `LostRequestCreatedEvent.java` in `application/event/`
+   - Methods implemented:
+     - `create(Long petId, String contactInfo, Point location)` - checks for duplicates, creates request, publishes event
+     - `findById(Long id)` - finds and returns DTO
+     - `findActiveByOwnerId(Long ownerId)` - finds all lost requests for owner's pets
+     - `cancel(Long lostRequestId)` - deletes lost request by petId
+     - `existsByPetId(Long petId)` - delegates to repository
+
+2. **FoundRequestService** - interface + implementation ✅
+   - Interface: `FoundRequestService.java` at module root (public API)
+   - Implementation: `FoundRequestServiceImpl.java` in `domain/service/`
+   - Event: `FoundRequestCreatedEvent.java` in `application/event/`
+   - Methods implemented:
+     - `create(Long finderId, String photoUrl, PetType petType, Point location, String description)`
+     - `findById(Long id)`
+     - `findByFinderId(Long finderId)`
+
+3. **MatchQueueService** - implementation ✅
+   - Implementation: `MatchQueueService.java` in `domain/service/`
+   - Methods:
+     - `addMatch(LostRequest lost, FoundRequest found, BigDecimal score)` - prevents duplicates
+     - `getRecommendationsForOwner(Long lostRequestId)` - with distance calculation via PostGIS
+     - `markAsViewed(Long matchQueueId)` - marks entry as viewed
+     - `markAsConfirmed(Long matchQueueId)` - marks entry as confirmed
+
+4. **Entity Updates** ✅
+   - Updated `MatchQueueEntry.markAsViewed()` - removed viewedBy parameter
+   - Added `MatchQueueEntry.markAsConfirmed()` domain method
+   - Fixed test to use new method signature
+
+5. **Pet Status Integration** ✅
+   - Added `PetService.updateStatus(Long petId, PetStatus status)` method
+   - Added `Pet.changeStatus(PetStatus)` domain method
+   - Updated `LostRequestServiceImpl.create()` - changes Pet status to IN_LOST
+   - Updated `LostRequestServiceImpl.cancel()` - resets Pet status to DEFAULT
+
+#### Created Files:
+- `/home/nolan/Code/pet-bed/src/main/java/op/edu/ua/petbed/lost/LostRequestService.java`
+- `/home/nolan/Code/pet-bed/src/main/java/op/edu/ua/petbed/lost/domain/service/LostRequestServiceImpl.java`
+- `/home/nolan/Code/pet-bed/src/main/java/op/edu/ua/petbed/lost/application/event/LostRequestCreatedEvent.java`
+- `/home/nolan/Code/pet-bed/src/main/java/op/edu/ua/petbed/lost/FoundRequestService.java`
+- `/home/nolan/Code/pet-bed/src/main/java/op/edu/ua/petbed/lost/domain/service/FoundRequestServiceImpl.java`
+- `/home/nolan/Code/pet-bed/src/main/java/op/edu/ua/petbed/lost/application/event/FoundRequestCreatedEvent.java`
+- `/home/nolan/Code/pet-bed/src/main/java/op/edu/ua/petbed/lost/domain/service/MatchQueueService.java`
+
+#### Verification:
+- ✅ All files compile successfully
+- ✅ All 35 Lost module tests pass
+- ✅ Follows Spring Modulith public API pattern (interface at module root)
+- ✅ Uses `@NullMarked`, `@RequiredArgsConstructor`, `@Transactional`
+- ✅ Proper error handling with `PetBedException`
+- ✅ Event-driven architecture with `ApplicationEventPublisher`
+- ✅ DTOs in `common.dto.lost` package (public API)
+
+---
+
+## Next Stage: Stage 6 - FinderRecommendationCache
+**Status:** Pending
+**Goal:** Create in-memory cache for finder recommendations
+
 #### Planned Tasks:
-1. **LostRequestService** - interface + implementation
-   - `create(Long petId, String contactInfo, Point location)`
-   - `findById(Long id)`
-   - `findActiveByOwnerId(Long ownerId)`
-   - `cancel(Long lostRequestId)`
-   - `existsByPetId(Long petId)`
-
-2. **FoundRequestService** - interface + implementation
-   - `create(Long finderId, String photoUrl, PetType petType, Point location, String description)`
-   - `findById(Long id)`
-   - `findByFinderId(Long finderId)`
-
-3. **MatchQueueService** - implementation
-   - `addMatch(LostRequest lost, FoundRequest found, BigDecimal score)`
-   - `getRecommendationsForOwner(Long lostRequestId)`
-   - `markAsViewed(Long matchQueueId, String viewedBy)`
+- `FinderRecommendationCache` - ConcurrentHashMap with TTL
+  - `put(Long finderId, List<Long> lostRequestIds)`
+  - `pollNext(Long finderId)` - FIFO queue
+  - `hasRecommendations(Long finderId)`
+  - `remove(Long finderId)`
+  - `@Scheduled` eviction of expired entries
 
 ---
 
@@ -149,10 +238,10 @@ Created migration to align DB with new entity structure:
 - ✅ Stage 2: Domain Entities (abfcf39)
 - ✅ Stage 3: Repositories (5276083, 65e0a82)
 - ✅ Stage 4: DTOs
+- ✅ Stage 5: Domain Services
 
 ## Pending Stages:
-- ⏳ Stage 5: Domain Services (current)
-- ⏳ Stage 6: FinderRecommendationCache
+- ⏳ Stage 6: FinderRecommendationCache (current)
 - ⏳ Stage 7: Matching Algorithm
 - ⏳ Stage 8: Event System
 - ⏳ Stage 9: Cleanup Job

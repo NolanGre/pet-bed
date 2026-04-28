@@ -1,4 +1,4 @@
-package op.edu.ua.petbed.common.dto.lost;
+package op.edu.ua.petbed.lost.application.dto;
 
 import org.jspecify.annotations.NullMarked;
 import org.locationtech.jts.geom.Point;
