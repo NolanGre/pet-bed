@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.11.xsd">
+
+    <!-- ==================== REMOVE FOREIGN KEYS (entities use Long IDs, not relationships) ==================== -->
+
+    <changeSet id="0008-01-drop-fk-lost-requests-pet" author="developer">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="fk_lost_requests_pet"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="lost_requests" constraintName="fk_lost_requests_pet"/>
+    </changeSet>
+
+    <changeSet id="0008-02-drop-fk-found-requests-finder" author="developer">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="fk_found_requests_finder"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="found_requests" constraintName="fk_found_requests_finder"/>
+    </changeSet>
+
+    <!-- ==================== UPDATE LOST_REQUESTS: REMOVE STATUS ==================== -->
+
+    <changeSet id="0008-03-drop-lost-requests-status-index" author="developer">
+        <preConditions onFail="MARK_RAN">
+            <indexExists indexName="idx_lost_status"/>
+        </preConditions>
+        <dropIndex tableName="lost_requests" indexName="idx_lost_status"/>
+    </changeSet>
+
+    <changeSet id="0008-04-drop-lost-requests-status-column" author="developer">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="lost_requests" columnName="status"/>
+        </preConditions>
+        <dropColumn tableName="lost_requests" columnName="status"/>
+    </changeSet>
+
+    <!-- ==================== UPDATE MATCH_QUEUE: REMOVE VIEWED_BY ==================== -->
+
+    <changeSet id="0008-05-drop-match-queue-viewed-by-column" author="developer">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="match_queue" columnName="viewed_by"/>
+        </preConditions>
+        <dropColumn tableName="match_queue" columnName="viewed_by"/>
+    </changeSet>
+
+    <!-- ==================== UPDATE MATCH_QUEUE: CHANGE VIEWING_STATUS CHECK ==================== -->
+
+    <changeSet id="0008-06-drop-match-queue-viewing-status-constraint" author="developer">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM pg_constraint WHERE conname = 'chk_match_queue_viewing_status' AND conrelid = 'match_queue'::regclass
+            </sqlCheck>
+        </preConditions>
+        <sql>ALTER TABLE match_queue DROP CONSTRAINT chk_match_queue_viewing_status;</sql>
+    </changeSet>
+
+    <changeSet id="0008-07-add-match-queue-viewing-status-constraint" author="developer">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM pg_constraint WHERE conname = 'chk_match_queue_viewing_status' AND conrelid = 'match_queue'::regclass
+            </sqlCheck>
+        </preConditions>
+        <sql>ALTER TABLE match_queue
+            ADD CONSTRAINT chk_match_queue_viewing_status
+            CHECK (viewing_status IN ('NEW', 'VIEWED', 'CONFIRMED'));</sql>
+    </changeSet>
+
+</databaseChangeLog>

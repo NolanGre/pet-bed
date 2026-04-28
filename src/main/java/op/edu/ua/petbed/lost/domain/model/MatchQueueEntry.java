@@ -29,10 +29,12 @@ public class MatchQueueEntry extends AbstractAuditableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lost_request_id", nullable = false)
+    @ToString.Exclude
     private LostRequest lostRequest;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "found_request_id", nullable = false)
+    @ToString.Exclude
     private FoundRequest foundRequest;
 
     @Column(nullable = false, precision = 7, scale = 4)
@@ -42,20 +44,8 @@ public class MatchQueueEntry extends AbstractAuditableEntity {
     @Column(name = "viewing_status", nullable = false)
     private ViewingStatus viewingStatus;
 
-    @Column(name = "viewed_by")
-    private @Nullable String viewedBy;
-
     public static MatchQueueEntry create(LostRequest lost, FoundRequest found, BigDecimal score) {
-        if (lost == null) {
-            throw new PetBedException("LostRequest is required", PetBedException.ErrorCode.LOST_REQUEST_REQUIRED);
-        }
-        if (found == null) {
-            throw new PetBedException("FoundRequest is required", PetBedException.ErrorCode.FOUND_REQUEST_REQUIRED);
-        }
-        if (score == null) {
-            throw new PetBedException("Score is required", PetBedException.ErrorCode.MATCH_SCORE_REQUIRED);
-        }
-        return new MatchQueueEntry(null, lost, found, score, ViewingStatus.NEW, null);
+        return new MatchQueueEntry(null, lost, found, score, ViewingStatus.NEW);
     }
 
     public long getIdOrThrow() {
@@ -66,15 +56,10 @@ public class MatchQueueEntry extends AbstractAuditableEntity {
     }
 
     public void markAsViewed(String viewedBy) {
-        if (viewedBy == null || viewedBy.isBlank()) {
+        if (viewedBy.isBlank()) {
             throw new PetBedException("ViewedBy is required", PetBedException.ErrorCode.VIEWED_BY_REQUIRED);
         }
         this.viewingStatus = ViewingStatus.VIEWED;
-        this.viewedBy = viewedBy;
-    }
-
-    public void markAsRejected() {
-        this.viewingStatus = ViewingStatus.REJECTED;
     }
 
     @Override

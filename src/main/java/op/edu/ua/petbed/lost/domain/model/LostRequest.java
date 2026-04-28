@@ -2,10 +2,10 @@ package op.edu.ua.petbed.lost.domain.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import op.edu.ua.petbed.common.dto.PetDTO;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.AbstractAuditableEntity;
 import op.edu.ua.petbed.common.model.PetType;
-import op.edu.ua.petbed.pet.model.Pet;
 import org.hibernate.proxy.HibernateProxy;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -25,13 +25,11 @@ public class LostRequest extends AbstractAuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "lost_requests_seq")
     @SequenceGenerator(name = "lost_requests_seq", sequenceName = "lost_requests_seq", allocationSize = 50)
-    @Column(nullable = false)
     @Getter(AccessLevel.PRIVATE)
     private @Nullable Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pet_id", nullable = false, unique = true)
-    private Pet pet;
+    @Column(name = "pet_id", nullable = false)
+    private Long petId;
 
     @Column(name = "contact_info", nullable = false)
     private String contactInfo;
@@ -46,72 +44,30 @@ public class LostRequest extends AbstractAuditableEntity {
     @Column(name = "search_text", nullable = false)
     private String searchText;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private LostRequestStatus status = LostRequestStatus.ACTIVE;
-
-    public static LostRequest create(Pet pet, String contactInfo, Point location) {
-        validateNotNull(pet, "Pet");
-        validateNotBlank(contactInfo, "Contact info");
-        validateNotNull(location, "Location");
+    public static LostRequest create(PetDTO pet, String contactInfo, Point location) {
+        if (contactInfo.isBlank()) {
+            throw new PetBedException("Contact info is required to create a lost request", PetBedException.ErrorCode.LOST_REQUEST_INVALID_INPUT);
+        }
 
         String searchText = generateSearchText(pet);
 
-        return new LostRequest(
-                null,
-                pet,
-                contactInfo,
-                location,
-                pet.getType(),
-                searchText,
-                LostRequestStatus.ACTIVE
-        );
+        return new LostRequest(null, pet.id(), contactInfo, location, pet.type(), searchText);
     }
 
-    private static void validateNotNull(Object value, String fieldName) {
-        if (value == null) {
-            throw new PetBedException(
-                    fieldName + " is required to create a lost request",
-                    PetBedException.ErrorCode.LOST_REQUEST_INVALID_INPUT
-            );
-        }
-    }
-
-    private static void validateNotBlank(String value, String fieldName) {
-        if (value == null || value.isBlank()) {
-            throw new PetBedException(
-                    fieldName + " is required to create a lost request",
-                    PetBedException.ErrorCode.LOST_REQUEST_INVALID_INPUT
-            );
-        }
-    }
-
-    private static String generateSearchText(Pet pet) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(pet.getName()).append(" ");
-        sb.append(pet.getBreed()).append(" ");
-        sb.append(pet.getColor()).append(" ");
-        sb.append(pet.getColorPattern()).append(" ");
-        sb.append(pet.getSpecialMarks());
-        return sb.toString().trim();
+    private static String generateSearchText(PetDTO pet) {
+        String sb = pet.name() + "; " +
+                pet.breed() + "; " +
+                pet.color() + "; " +
+                pet.colorPattern() + "; " +
+                pet.specialMarks();
+        return sb.trim();
     }
 
     public long getIdOrThrow() {
         if (id == null) {
-            throw new PetBedException(
-                    "Lost request is not persisted yet",
-                    PetBedException.ErrorCode.LOST_REQUEST_NOT_PERSISTED
-            );
+            throw new PetBedException("Lost request is not persisted yet", PetBedException.ErrorCode.LOST_REQUEST_NOT_PERSISTED);
         }
         return id;
-    }
-
-    public void cancel() {
-        this.status = LostRequestStatus.CANCELLED;
-    }
-
-    public boolean isActive() {
-        return status == LostRequestStatus.ACTIVE;
     }
 
     @Override

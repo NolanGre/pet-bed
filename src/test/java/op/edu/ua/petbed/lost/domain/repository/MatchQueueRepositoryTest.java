@@ -1,18 +1,15 @@
 package op.edu.ua.petbed.lost.domain.repository;
 
-import op.edu.ua.petbed.common.dto.CreatePetDTO;
+import op.edu.ua.petbed.common.dto.PetDTO;
 import op.edu.ua.petbed.common.model.PetSex;
 import op.edu.ua.petbed.common.model.PetSize;
+import op.edu.ua.petbed.common.model.PetStatus;
 import op.edu.ua.petbed.common.model.PetType;
 import op.edu.ua.petbed.lost.domain.model.FoundRequest;
 import op.edu.ua.petbed.lost.domain.model.LostRequest;
 import op.edu.ua.petbed.lost.domain.model.MatchQueueEntry;
 import op.edu.ua.petbed.lost.domain.model.ViewingStatus;
-import op.edu.ua.petbed.pet.model.Pet;
-import op.edu.ua.petbed.pet.repository.PetRepository;
 import op.edu.ua.petbed.testcontainers.PostgresTestContainer;
-import op.edu.ua.petbed.user.model.User;
-import op.edu.ua.petbed.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -27,7 +24,6 @@ import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,12 +33,6 @@ class MatchQueueRepositoryTest extends PostgresTestContainer {
 
     @Autowired
     MatchQueueRepository underTest;
-
-    @Autowired
-    UserRepository userRepository;
-
-    @Autowired
-    PetRepository petRepository;
 
     @Autowired
     LostRequestRepository lostRequestRepository;
@@ -55,37 +45,24 @@ class MatchQueueRepositoryTest extends PostgresTestContainer {
 
     private Long ownerId;
     private Long finderId;
-    private Pet savedPet;
+    private Long petId;
     private LostRequest savedLostRequest;
     private FoundRequest savedFoundRequest;
     private MatchQueueEntry savedEntry;
 
     @BeforeEach
     void setUp() {
-        // Create owner User
-        User owner = userRepository.save(createUser(100L, "pet_owner"));
-        em.flush();
-        em.clear();
-        ownerId = owner.getIdOrThrow();
-
-        // Create finder User
-        User finder = userRepository.save(createUser(200L, "finder_user"));
-        em.flush();
-        em.clear();
-        finderId = finder.getIdOrThrow();
-
-        // Create Pet for owner
-        savedPet = petRepository.save(createPet(ownerId, "Барсик"));
-        em.flush();
-        em.clear();
+        ownerId = 100L;
+        finderId = 200L;
+        petId = 1L;
 
         // Create LostRequest
-        savedLostRequest = lostRequestRepository.save(createLostRequest(savedPet, "+380991234567"));
+        savedLostRequest = lostRequestRepository.save(createLostRequest(petId, "Барсик", "+380991234567"));
         em.flush();
         em.clear();
 
         // Create FoundRequest
-        savedFoundRequest = foundRequestRepository.save(createFoundRequest(finder));
+        savedFoundRequest = foundRequestRepository.save(createFoundRequest(finderId));
         em.flush();
         em.clear();
 
@@ -95,36 +72,31 @@ class MatchQueueRepositoryTest extends PostgresTestContainer {
         em.clear();
     }
 
-    private User createUser(Long telegramId, String username) {
-        return User.create(telegramId, username);
-    }
-
-    private Pet createPet(Long ownerId, String name) {
-        return Pet.create(CreatePetDTO.builder()
-                .ownerId(ownerId)
-                .name(name)
-                .type(PetType.DOG)
-                .photoId("photo123")
-                .breed("TestBreed")
-                .color("TestColor")
-                .colorPattern("solid")
-                .age(3)
-                .sex(PetSex.MALE)
-                .size(PetSize.MEDIUM)
-                .specialMarks("test marks")
-                .build());
-    }
-
-    private LostRequest createLostRequest(Pet pet, String contactInfo) {
+    private LostRequest createLostRequest(Long petId, String name, String contactInfo) {
         GeometryFactory gf = new GeometryFactory();
         Point location = gf.createPoint(new Coordinate(30.0, 50.0));
-        return LostRequest.create(pet, contactInfo, location);
+        PetDTO petDTO = new PetDTO(
+                petId,
+                ownerId,
+                name,
+                PetType.DOG,
+                "photo123",
+                "TestBreed",
+                "TestColor",
+                "solid",
+                3,
+                PetSex.MALE,
+                PetSize.MEDIUM,
+                "test marks",
+                PetStatus.DEFAULT
+        );
+        return LostRequest.create(petDTO, contactInfo, location);
     }
 
-    private FoundRequest createFoundRequest(User finder) {
+    private FoundRequest createFoundRequest(Long finderId) {
         GeometryFactory gf = new GeometryFactory();
         Point location = gf.createPoint(new Coordinate(30.0, 50.0));
-        return FoundRequest.create(finder, "photo_url", PetType.DOG, location, "Found description");
+        return FoundRequest.create(finderId, "photo_url", PetType.DOG, location, "Found description");
     }
 
     private MatchQueueEntry createMatchQueueEntry(LostRequest lost, FoundRequest found, BigDecimal score) {
@@ -150,21 +122,19 @@ class MatchQueueRepositoryTest extends PostgresTestContainer {
         @Test
         void multiple_statuses_returns_all_matching() {
             // given
-            User finder2 = userRepository.save(createUser(201L, "finder2"));
+            Long finder2Id = 201L;
+            FoundRequest found2 = foundRequestRepository.save(createFoundRequest(finder2Id));
             em.flush();
             em.clear();
-            FoundRequest found2 = foundRequestRepository.save(createFoundRequest(finder2));
-            em.flush();
-            em.clear();
-            MatchQueueEntry rejectedEntry = underTest.save(createMatchQueueEntry(savedLostRequest, found2, new BigDecimal("0.7500")));
-            rejectedEntry.markAsRejected();
-            underTest.save(rejectedEntry);
+            MatchQueueEntry confirmedEntry = underTest.save(createMatchQueueEntry(savedLostRequest, found2, new BigDecimal("0.7500")));
+            confirmedEntry.markAsViewed("test_user");
+            underTest.save(confirmedEntry);
             em.flush();
             em.clear();
 
             // when
             List<MatchQueueEntry> result = underTest.findByLostRequestIdAndViewingStatusIn(
-                    savedLostRequest.getIdOrThrow(), List.of(ViewingStatus.NEW, ViewingStatus.REJECTED));
+                    savedLostRequest.getIdOrThrow(), List.of(ViewingStatus.NEW, ViewingStatus.VIEWED));
 
             // then
             assertThat(result).hasSize(2);
@@ -183,13 +153,8 @@ class MatchQueueRepositoryTest extends PostgresTestContainer {
         @Test
         void different_lost_request_returns_empty() {
             // given
-            User otherOwner = userRepository.save(createUser(300L, "other_owner"));
-            em.flush();
-            em.clear();
-            Pet otherPet = petRepository.save(createPet(otherOwner.getIdOrThrow(), "OtherPet"));
-            em.flush();
-            em.clear();
-            LostRequest otherLost = lostRequestRepository.save(createLostRequest(otherPet, "+380997654321"));
+            Long otherPetId = 999L;
+            LostRequest otherLost = lostRequestRepository.save(createLostRequest(otherPetId, "OtherPet", "+380997654321"));
             em.flush();
             em.clear();
 
@@ -210,17 +175,13 @@ class MatchQueueRepositoryTest extends PostgresTestContainer {
         @Test
         void returns_entries_ordered_by_score_desc() {
             // given
-            User finder2 = userRepository.save(createUser(201L, "finder2"));
-            em.flush();
-            em.clear();
-            User finder3 = userRepository.save(createUser(202L, "finder3"));
-            em.flush();
-            em.clear();
+            Long finder2Id = 201L;
+            Long finder3Id = 202L;
 
-            FoundRequest found2 = foundRequestRepository.save(createFoundRequest(finder2));
+            FoundRequest found2 = foundRequestRepository.save(createFoundRequest(finder2Id));
             em.flush();
             em.clear();
-            FoundRequest found3 = foundRequestRepository.save(createFoundRequest(finder3));
+            FoundRequest found3 = foundRequestRepository.save(createFoundRequest(finder3Id));
             em.flush();
             em.clear();
 
@@ -246,13 +207,8 @@ class MatchQueueRepositoryTest extends PostgresTestContainer {
         @Test
         void empty_when_no_entries() {
             // given
-            User otherOwner = userRepository.save(createUser(300L, "other_owner"));
-            em.flush();
-            em.clear();
-            Pet otherPet = petRepository.save(createPet(otherOwner.getIdOrThrow(), "OtherPet"));
-            em.flush();
-            em.clear();
-            LostRequest otherLost = lostRequestRepository.save(createLostRequest(otherPet, "+380997654321"));
+            Long otherPetId = 999L;
+            LostRequest otherLost = lostRequestRepository.save(createLostRequest(otherPetId, "OtherPet", "+380997654321"));
             em.flush();
             em.clear();
 
@@ -267,13 +223,8 @@ class MatchQueueRepositoryTest extends PostgresTestContainer {
         @Test
         void different_lost_request_returns_empty() {
             // given
-            User otherOwner = userRepository.save(createUser(300L, "other_owner"));
-            em.flush();
-            em.clear();
-            Pet otherPet = petRepository.save(createPet(otherOwner.getIdOrThrow(), "OtherPet"));
-            em.flush();
-            em.clear();
-            LostRequest otherLost = lostRequestRepository.save(createLostRequest(otherPet, "+380997654321"));
+            Long otherPetId = 888L;
+            LostRequest otherLost = lostRequestRepository.save(createLostRequest(otherPetId, "OtherPet2", "+380997654321"));
             em.flush();
             em.clear();
 
@@ -313,13 +264,8 @@ class MatchQueueRepositoryTest extends PostgresTestContainer {
         @Test
         void different_lost_request_returns_false() {
             // given
-            User otherOwner = userRepository.save(createUser(300L, "other_owner"));
-            em.flush();
-            em.clear();
-            Pet otherPet = petRepository.save(createPet(otherOwner.getIdOrThrow(), "OtherPet"));
-            em.flush();
-            em.clear();
-            LostRequest otherLost = lostRequestRepository.save(createLostRequest(otherPet, "+380997654321"));
+            Long otherPetId = 777L;
+            LostRequest otherLost = lostRequestRepository.save(createLostRequest(otherPetId, "OtherPet3", "+380997654321"));
             em.flush();
             em.clear();
 
@@ -334,10 +280,8 @@ class MatchQueueRepositoryTest extends PostgresTestContainer {
         @Test
         void different_found_request_returns_false() {
             // given
-            User finder2 = userRepository.save(createUser(201L, "finder2"));
-            em.flush();
-            em.clear();
-            FoundRequest found2 = foundRequestRepository.save(createFoundRequest(finder2));
+            Long finder2Id = 201L;
+            FoundRequest found2 = foundRequestRepository.save(createFoundRequest(finder2Id));
             em.flush();
             em.clear();
 
@@ -358,10 +302,8 @@ class MatchQueueRepositoryTest extends PostgresTestContainer {
         @Test
         void deletes_all_entries_for_lost_request() {
             // given
-            User finder2 = userRepository.save(createUser(201L, "finder2"));
-            em.flush();
-            em.clear();
-            FoundRequest found2 = foundRequestRepository.save(createFoundRequest(finder2));
+            Long finder2Id = 201L;
+            FoundRequest found2 = foundRequestRepository.save(createFoundRequest(finder2Id));
             em.flush();
             em.clear();
             underTest.save(createMatchQueueEntry(savedLostRequest, found2, new BigDecimal("0.7500")));
@@ -383,20 +325,13 @@ class MatchQueueRepositoryTest extends PostgresTestContainer {
         @Test
         void keeps_entries_for_other_lost_requests() {
             // given
-            User otherOwner = userRepository.save(createUser(300L, "other_owner"));
-            em.flush();
-            em.clear();
-            Pet otherPet = petRepository.save(createPet(otherOwner.getIdOrThrow(), "OtherPet"));
-            em.flush();
-            em.clear();
-            LostRequest otherLost = lostRequestRepository.save(createLostRequest(otherPet, "+380997654321"));
+            Long otherPetId = 666L;
+            LostRequest otherLost = lostRequestRepository.save(createLostRequest(otherPetId, "OtherPet4", "+380997654321"));
             em.flush();
             em.clear();
 
-            User finder2 = userRepository.save(createUser(201L, "finder2"));
-            em.flush();
-            em.clear();
-            FoundRequest found2 = foundRequestRepository.save(createFoundRequest(finder2));
+            Long finder2Id = 201L;
+            FoundRequest found2 = foundRequestRepository.save(createFoundRequest(finder2Id));
             em.flush();
             em.clear();
 

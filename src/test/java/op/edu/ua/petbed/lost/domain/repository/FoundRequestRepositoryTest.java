@@ -3,8 +3,6 @@ package op.edu.ua.petbed.lost.domain.repository;
 import op.edu.ua.petbed.common.model.PetType;
 import op.edu.ua.petbed.lost.domain.model.FoundRequest;
 import op.edu.ua.petbed.testcontainers.PostgresTestContainer;
-import op.edu.ua.petbed.user.model.User;
-import op.edu.ua.petbed.user.repository.UserRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -28,9 +26,6 @@ class FoundRequestRepositoryTest extends PostgresTestContainer {
     FoundRequestRepository underTest;
 
     @Autowired
-    UserRepository userRepository;
-
-    @Autowired
     TestEntityManager em;
 
     private Long finderId;
@@ -41,24 +36,17 @@ class FoundRequestRepositoryTest extends PostgresTestContainer {
 
     @BeforeEach
     void setUp() {
-        User user = userRepository.save(createUser(100L, "finder_user"));
-        em.flush();
-        em.clear();
-        finderId = user.getIdOrThrow();
+        finderId = 100L;
 
-        savedFoundRequest = underTest.save(createFoundRequest(user, PetType.DOG, BASE_LAT, BASE_LON));
+        savedFoundRequest = underTest.save(createFoundRequest(finderId, PetType.DOG, BASE_LAT, BASE_LON));
         em.flush();
         em.clear();
     }
 
-    private User createUser(Long telegramId, String username) {
-        return User.create(telegramId, username);
-    }
-
-    private FoundRequest createFoundRequest(User finder, PetType type, double lat, double lon) {
+    private FoundRequest createFoundRequest(Long finderId, PetType type, double lat, double lon) {
         GeometryFactory gf = new GeometryFactory();
         Point location = gf.createPoint(new Coordinate(lon, lat));
-        return FoundRequest.create(finder, "photo_url", type, location, "Test description");
+        return FoundRequest.create(finderId, "photo_url", type, location, "Test description");
     }
 
     private Timestamp hoursAgo(int hours) {
@@ -80,22 +68,14 @@ class FoundRequestRepositoryTest extends PostgresTestContainer {
 
         @Test
         void finder_without_requests_returns_empty_list() {
-            User newUser = userRepository.save(createUser(200L, "new_user"));
-            em.flush();
-            em.clear();
-
-            List<FoundRequest> result = underTest.findByFinderId(newUser.getIdOrThrow());
+            List<FoundRequest> result = underTest.findByFinderId(999L);
 
             assertThat(result).isEmpty();
         }
 
         @Test
         void different_finder_returns_empty() {
-            User differentUser = userRepository.save(createUser(300L, "different_user"));
-            em.flush();
-            em.clear();
-
-            List<FoundRequest> result = underTest.findByFinderId(differentUser.getIdOrThrow());
+            List<FoundRequest> result = underTest.findByFinderId(200L);
 
             assertThat(result).isEmpty();
         }
@@ -108,8 +88,7 @@ class FoundRequestRepositoryTest extends PostgresTestContainer {
 
         @Test
         void same_type_within_radius_returns_posts() {
-            User user = userRepository.findById(finderId).orElseThrow();
-            FoundRequest close = underTest.save(createFoundRequest(user, PetType.DOG, 50.01, 30.01)); // ~1.4km
+            FoundRequest close = underTest.save(createFoundRequest(finderId, PetType.DOG, 50.01, 30.01)); // ~1.4km
             em.flush();
             em.clear();
 
@@ -126,8 +105,7 @@ class FoundRequestRepositoryTest extends PostgresTestContainer {
 
         @Test
         void different_type_excluded() {
-            User user = userRepository.findById(finderId).orElseThrow();
-            underTest.save(createFoundRequest(user, PetType.CAT, BASE_LAT, BASE_LON));
+            underTest.save(createFoundRequest(finderId, PetType.CAT, BASE_LAT, BASE_LON));
             em.flush();
             em.clear();
 
@@ -143,8 +121,7 @@ class FoundRequestRepositoryTest extends PostgresTestContainer {
 
         @Test
         void outside_radius_excluded() {
-            User user = userRepository.findById(finderId).orElseThrow();
-            FoundRequest far = underTest.save(createFoundRequest(user, PetType.DOG, 51.0, 31.0)); // >50km
+            FoundRequest far = underTest.save(createFoundRequest(finderId, PetType.DOG, 51.0, 31.0)); // >50km
             em.flush();
             em.clear();
 
@@ -172,8 +149,7 @@ class FoundRequestRepositoryTest extends PostgresTestContainer {
 
         @Test
         void ordered_by_created_at_desc() {
-            User user = userRepository.findById(finderId).orElseThrow();
-            FoundRequest newer = underTest.save(createFoundRequest(user, PetType.DOG, 50.01, 30.01));
+            FoundRequest newer = underTest.save(createFoundRequest(finderId, PetType.DOG, 50.01, 30.01));
             em.flush();
             em.clear();
 
@@ -196,8 +172,7 @@ class FoundRequestRepositoryTest extends PostgresTestContainer {
 
         @Test
         void deletes_old_requests() {
-            User user = userRepository.findById(finderId).orElseThrow();
-            FoundRequest additional = underTest.save(createFoundRequest(user, PetType.DOG, BASE_LAT, BASE_LON));
+            FoundRequest additional = underTest.save(createFoundRequest(finderId, PetType.DOG, BASE_LAT, BASE_LON));
             em.flush();
             em.clear();
 
