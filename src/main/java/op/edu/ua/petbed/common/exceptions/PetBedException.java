@@ -33,7 +33,19 @@ public class PetBedException extends RuntimeException {
         PET_CANNOT_UPDATE("Cannot update pet with non-default status"),
         PET_CANNOT_DELETE("Cannot delete pet in fostered status"),
         FEED_POST_NOT_FOUND("Post not found"),
-        FEED_ACCESS_DENIED("You cannot delete this post");
+        FEED_ACCESS_DENIED("You cannot delete this post"),
+        LOST_REQUEST_NOT_PERSISTED("Lost request is not persisted yet"),
+        LOST_REQUEST_INVALID_INPUT("Invalid input for lost request"),
+        LOST_REQUEST_FINDER_REQUIRED("Finder is required"),
+        LOST_REQUEST_PHOTO_URL_REQUIRED("Photo URL is required"),
+        LOST_REQUEST_PET_TYPE_REQUIRED("Pet type is required"),
+        LOST_REQUEST_LOCATION_REQUIRED("Location is required"),
+        LOST_REQUEST_DESCRIPTION_REQUIRED("Description is required"),
+        LOST_REQUEST_REQUIRED("Lost request is required"),
+        FOUND_REQUEST_REQUIRED("Found request is required"),
+        MATCH_SCORE_REQUIRED("Score is required"),
+        MATCH_QUEUE_ENTRY_NOT_PERSISTED("Match queue entry is not persisted yet"),
+        VIEWED_BY_REQUIRED("ViewedBy is required");
 
         private final String userMessage;
     }

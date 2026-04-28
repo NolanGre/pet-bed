@@ -1,107 +1,86 @@
-# Lost Module — Implementation Tasks
+# Lost Module - Implementation Plan
 
-## Phase 1: Database Schema (Liquibase) ✅ COMPLETED
+## Phase 1: Foundation
 
-### Task 1.1: Create Liquibase changelog 0003-lost-module-tables.xml ✅
+### Stage 2: Domain Entities (COMPLETED ✅)
+**Status:** Completed
+**Goal:** Create JPA entities for LostRequest, FoundRequest, MatchQueueEntry
 
-Create database schema for Lost module with three tables:
+#### Completed Tasks:
 
-#### lost_requests table
-- id (BIGINT, PK)
-- pet_id (BIGINT, FK → pets.id, UNIQUE, ON DELETE CASCADE)
-- contact_info (VARCHAR(255), NOT NULL)
-- last_seen_location (GEOGRAPHY(POINT, 4326), NOT NULL)
-- pet_type (VARCHAR(50), NOT NULL)
-- search_text (TEXT, NOT NULL) — for pg_trgm search
-- status (VARCHAR(50), NOT NULL) — ACTIVE, CANCELLED
-- created_at, updated_at (TIMESTAMP)
+1. **Create module structure** ✅
+   - [x] Create directories: `src/main/java/op/edu/ua/petbed/lost/domain/model/`
+   - [x] Create directories: `src/main/java/op/edu/ua/petbed/lost/domain/repository/`
+   - [x] Create directories: `src/main/java/op/edu/ua/petbed/lost/domain/service/`
 
-**Indexes:**
-- idx_lost_pet_id
-- idx_lost_type
-- idx_lost_status
-- idx_lost_location (GIST)
-- idx_lost_search_text (GIN with gin_trgm_ops)
+2. **Create Enums** ✅ (Agent: @developer)
+   - [x] `LostRequestStatus` - ACTIVE, CANCELLED
+   - [x] `ViewingStatus` - NEW, VIEWED, REJECTED
 
-#### found_requests table
-- id (BIGINT, PK)
-- finder_id (BIGINT, FK → users.id)
-- photo_url (VARCHAR(255), NOT NULL)
-- pet_type (VARCHAR(50), NOT NULL)
-- location (GEOGRAPHY(POINT, 4326), NOT NULL)
-- description (TEXT, NOT NULL) — aggregated text for search
-- created_at, updated_at (TIMESTAMP)
+3. **Create LostRequest Entity** ✅ (Agent: @developer)
+   - [x] Class with @Entity, @Table(name = "lost_requests")
+   - [x] Fields: id, pet (OneToOne), contactInfo, lastSeenLocation (Point), petType, searchText, status
+   - [x] Factory method `create(Pet pet, String contactInfo, Point location)`
+   - [x] Domain methods: `cancel()`, `isActive()`
+   - [x] Proper annotations: @NullMarked, Lombok, JPA
+   - [x] equals() and hashCode() following project pattern
 
-**Indexes:**
-- idx_found_finder_id
-- idx_found_pet_type
-- idx_found_location (GIST)
-- idx_found_description_trgm (GIN with gin_trgm_ops)
-- idx_found_created_at
+4. **Create FoundRequest Entity** ✅ (Agent: @developer)
+   - [x] Class with @Entity, @Table(name = "found_requests")
+   - [x] Fields: id, finder (ManyToOne), photoUrl, petType, location (Point), description
+   - [x] Factory method `create(User finder, String photoUrl, PetType petType, Point location, String description)`
+   - [x] Proper annotations: @NullMarked, Lombok, JPA
+   - [x] equals() and hashCode() following project pattern
 
-#### match_queue table
-- id (BIGINT, PK)
-- lost_request_id (BIGINT, FK → lost_requests.id, ON DELETE CASCADE)
-- found_request_id (BIGINT, FK → found_requests.id, ON DELETE CASCADE)
-- score (NUMERIC(7,4), NOT NULL) — 0.0000 to 1.0000
-- viewing_status (VARCHAR(50), NOT NULL) — NEW, VIEWED, REJECTED
-- viewed_by (VARCHAR(20)) — OWNER or FINDER
-- created_at, updated_at (TIMESTAMP)
-- UNIQUE(lost_request_id, found_request_id)
+5. **Create MatchQueueEntry Entity** ✅ (Agent: @developer)
+   - [x] Class with @Entity, @Table(name = "match_queue")
+   - [x] Fields: id, lostRequest (ManyToOne), foundRequest (ManyToOne), score (BigDecimal), viewingStatus, viewedBy
+   - [x] Factory method `create(LostRequest lost, FoundRequest found, BigDecimal score)`
+   - [x] Domain methods: `markAsViewed(String viewedBy)`, `markAsRejected()`
+   - [x] Proper annotations: @NullMarked, Lombok, JPA
+   - [x] equals() and hashCode() following project pattern
 
-**Indexes:**
-- idx_match_lost_id
-- idx_match_found_id
-- idx_match_status
-- idx_match_score
+6. **Review & Verify** ✅ (Agent: @reviewer)
+   - [x] All entities compile
+   - [x] JPA annotations are correct
+   - [x] Follows project code style
+   - [x] Proper null-safety with JSpecify
 
-### Acceptance Criteria:
-- [x] Changelog file created at `src/main/resources/db/changelog/0007-lost-module-tables.xml`
-- [x] All three tables defined with correct columns and constraints
-- [x] All indexes created (including PostGIS GIST and pg_trgm GIN indexes)
-- [x] Foreign keys with proper ON DELETE CASCADE
-- [x] Master changelog includes the new file
-- [x] Migration runs successfully on local PostgreSQL with PostGIS
+#### Created Files:
+- `/home/nolan/Code/pet-bed/src/main/java/op/edu/ua/petbed/lost/domain/model/LostRequestStatus.java`
+- `/home/nolan/Code/pet-bed/src/main/java/op/edu/ua/petbed/lost/domain/model/ViewingStatus.java`
+- `/home/nolan/Code/pet-bed/src/main/java/op/edu/ua/petbed/lost/domain/model/LostRequest.java`
+- `/home/nolan/Code/pet-bed/src/main/java/op/edu/ua/petbed/lost/domain/model/FoundRequest.java`
+- `/home/nolan/Code/pet-bed/src/main/java/op/edu/ua/petbed/lost/domain/model/MatchQueueEntry.java`
 
-### Files Created/Updated:
-1. `src/main/resources/db/changelog/0007-lost-module-tables.xml` - Liquibase changelog
-2. `src/main/resources/db/changelog/master-changelog.xml` - Updated to include new changelog
+#### Verification:
+- ✅ All entities compile successfully
+- ✅ Build: SUCCESSFUL
+- ✅ Code follows project patterns (Pet.java, User.java)
+- ✅ Proper JPA annotations
+- ✅ Factory methods with validation
+- ✅ Domain methods for business logic
+- ✅ @NullMarked for null safety
+- ✅ equals() and hashCode() with Hibernate proxy support
 
-### Tests Created:
-1. `src/test/java/op/edu/ua/petbed/lost/repository/LostModuleSchemaTest.java`
-   - 17 comprehensive integration tests
-   - Tests for table schema, indexes, constraints
-   - Tests for CRUD operations
-   - Tests for spatial queries (PostGIS)
-   - Tests for text similarity (pg_trgm)
-   - Tests for CHECK constraints validation
+#### Dependencies:
+- Requires: Existing Pet and User entities (available)
+- Required by: Stage 3 (Repositories)
 
-**Test Coverage:**
-- ✅ Table schema verification (lost_requests, found_requests, match_queue)
-- ✅ Index verification (all 15 indexes)
-- ✅ Foreign key constraints verification
-- ✅ CHECK constraints verification
-- ✅ UNIQUE constraints verification
-- ✅ Extension availability (pg_trgm, postgis)
-- ✅ Geography columns type verification
-- ✅ CRUD operations on all tables
-- ✅ Spatial distance queries
-- ✅ Text similarity queries
-- ✅ Constraint violation handling
-
-### Notes:
-- File named `0007-lost-module-tables.xml` (not 0003) because changelogs 0003-0006 already existed
-- Uses `autoIncrement="true"` instead of `GENERATED ALWAYS AS IDENTITY` for Liquibase compatibility
-- PostGIS geography columns added via raw SQL (`<sql>` tags)
-- pg_trgm GIN indexes created via raw SQL
-- CHECK constraints added via raw SQL
-- Includes preConditions to drop existing tables from 0002 if they exist
+#### Notes:
+- All entities extend AbstractAuditableEntity
+- Use PostGIS Point type for locations (org.locationtech.jts.geom.Point)
+- Follow existing patterns from Pet.java and User.java
+- Use @NullMarked on all classes
+- Use factory methods for creation, not setters (DDD pattern)
 
 ---
 
-## Next Phase: Domain Entities
+## Next Stage: Stage 3 - Repositories
+**Status:** Pending
+**Goal:** Create Spring Data JPA Repositories
 
-### Task 2.1: Create LostRequest entity
-### Task 2.2: Create FoundRequest entity
-### Task 2.3: Create MatchQueueEntry entity
-### Task 2.4: Create enums (LostRequestStatus, ViewingStatus)
+#### Planned Tasks:
+1. LostRequestRepository
+2. FoundRequestRepository
+3. MatchQueueRepository
