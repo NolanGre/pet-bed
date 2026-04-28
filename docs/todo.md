@@ -220,17 +220,50 @@ Created migration to align DB with new entity structure:
 
 ---
 
-## Next Stage: Stage 6 - FinderRecommendationCache
-**Status:** Pending
+### Stage 6: FinderRecommendationCache (COMPLETED ✅)
+**Status:** Completed
 **Goal:** Create in-memory cache for finder recommendations
 
+#### Completed Tasks:
+
+1. **FinderRecommendationCache** ✅
+   - File: `src/main/java/op/edu/ua/petbed/lost/domain/service/FinderRecommendationCache.java`
+   - Thread-safe implementation using `ConcurrentHashMap` and `ConcurrentLinkedQueue`
+   - TTL: 1 day with automatic eviction
+   - FIFO behavior for recommendations
+   - Methods:
+     - `put(Long finderId, List<Long> lostRequestIds)` - store recommendations
+     - `pollNext(Long finderId)` - get and remove next recommendation (FIFO)
+     - `hasRecommendations(Long finderId)` - check if cache has items
+     - `remove(Long finderId)` - clear cache for user
+     - `@Scheduled(fixedRate = 3600000)` evictExpired() - hourly cleanup
+
+2. **Unit Tests** ✅
+   - File: `src/test/java/op/edu/ua/petbed/lost/domain/service/FinderRecommendationCacheTest.java`
+   - 25 tests covering all methods and edge cases
+   - Tests for TTL expiration, FIFO order, thread isolation
+
+#### Verification:
+- ✅ All Lost module tests pass (60+ tests)
+- ✅ Thread-safe implementation
+- ✅ TTL and FIFO behavior as specified
+
+---
+
+## Next Stage: Stage 7 - Matching Algorithm
+**Status:** Pending
+**Goal:** Implement matching algorithm and event listeners
+
 #### Planned Tasks:
-- `FinderRecommendationCache` - ConcurrentHashMap with TTL
-  - `put(Long finderId, List<Long> lostRequestIds)`
-  - `pollNext(Long finderId)` - FIFO queue
-  - `hasRecommendations(Long finderId)`
-  - `remove(Long finderId)`
-  - `@Scheduled` eviction of expired entries
+- **MatchingAlgorithm** - calculate match score between lost and found
+  - Geographic component (40%): linear scale, 50km = 0%, 0km = 100%
+  - Text component (60%): pg_trgm.similarity()
+- **MatchingService** - async matching via events
+  - `processNewFoundRequest()` - find matches for new found request
+  - `processNewLostRequest()` - find matches for new lost request
+- **MatchingEventListener** - event listeners
+  - `handleLostRequestCreated()` - listen for LostRequestCreatedEvent
+  - `handleFoundRequestCreated()` - listen for FoundRequestCreatedEvent
 
 ---
 
@@ -238,11 +271,11 @@ Created migration to align DB with new entity structure:
 - ✅ Stage 2: Domain Entities (abfcf39)
 - ✅ Stage 3: Repositories (5276083, 65e0a82)
 - ✅ Stage 4: DTOs
-- ✅ Stage 5: Domain Services
+- ✅ Stage 5: Domain Services (2766366)
+- ✅ Stage 6: FinderRecommendationCache
 
 ## Pending Stages:
-- ⏳ Stage 6: FinderRecommendationCache (current)
-- ⏳ Stage 7: Matching Algorithm
+- ⏳ Stage 7: Matching Algorithm (current)
 - ⏳ Stage 8: Event System
 - ⏳ Stage 9: Cleanup Job
 - ⏳ Stage 10: Telegram Form Handlers
