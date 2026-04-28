@@ -7,5 +7,6 @@
     <include file="/db/changelog/0004-add-pet-status.xml"/>
     <include file="/db/changelog/0005-add-entity-id.xml"/>
     <include file="/db/changelog/0006-add-user-location.xml"/>
+    <include file="/db/changelog/0007-lost-module-tables.xml"/>
 
 </databaseChangeLog>

@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.11.xsd">
+
+    <!-- ==================== DROP EXISTING TABLES (if they exist from 0002) ==================== -->
+
+    <changeSet id="0007-01-drop-existing-lost-tables" author="developer">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="match_queue"/>
+        </preConditions>
+        <dropTable tableName="match_queue" cascadeConstraints="true"/>
+    </changeSet>
+
+    <changeSet id="0007-02-drop-existing-found-requests" author="developer">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="found_requests"/>
+        </preConditions>
+        <dropTable tableName="found_requests" cascadeConstraints="true"/>
+    </changeSet>
+
+    <changeSet id="0007-03-drop-existing-lost-requests" author="developer">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="lost_requests"/>
+        </preConditions>
+        <dropTable tableName="lost_requests" cascadeConstraints="true"/>
+    </changeSet>
+
+    <!-- ==================== CREATE LOST_REQUESTS TABLE ==================== -->
+
+    <changeSet id="0007-04-create-lost-requests" author="developer">
+        <createTable tableName="lost_requests">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="pet_id" type="BIGINT">
+                <constraints nullable="false" unique="true"
+                             foreignKeyName="fk_lost_requests_pet"
+                             references="pets(id)"
+                             deleteCascade="true"/>
+            </column>
+            <column name="contact_info" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="pet_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="search_text" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Add PostGIS geography column via raw SQL -->
+        <sql>ALTER TABLE lost_requests
+            ADD COLUMN last_seen_location GEOGRAPHY(POINT, 4326) NOT NULL;</sql>
+
+        <!-- Add CHECK constraint for status -->
+        <sql>ALTER TABLE lost_requests
+            ADD CONSTRAINT chk_lost_requests_status
+            CHECK (status IN ('ACTIVE', 'CANCELLED'));</sql>
+    </changeSet>
+
+    <!-- ==================== CREATE FOUND_REQUESTS TABLE ==================== -->
+
+    <changeSet id="0007-05-create-found-requests" author="developer">
+        <createTable tableName="found_requests">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="finder_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_found_requests_finder"
+                             references="users(id)"/>
+            </column>
+            <column name="photo_url" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="pet_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Add PostGIS geography column via raw SQL -->
+        <sql>ALTER TABLE found_requests
+            ADD COLUMN location GEOGRAPHY(POINT, 4326) NOT NULL;</sql>
+    </changeSet>
+
+    <!-- ==================== CREATE MATCH_QUEUE TABLE ==================== -->
+
+    <changeSet id="0007-06-create-match-queue" author="developer">
+        <createTable tableName="match_queue">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="lost_request_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_match_queue_lost"
+                             references="lost_requests(id)"
+                             deleteCascade="true"/>
+            </column>
+            <column name="found_request_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_match_queue_found"
+                             references="found_requests(id)"
+                             deleteCascade="true"/>
+            </column>
+            <column name="score" type="NUMERIC(7, 4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="viewing_status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="viewed_by" type="VARCHAR(20)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Add CHECK constraint for viewing_status -->
+        <sql>ALTER TABLE match_queue
+            ADD CONSTRAINT chk_match_queue_viewing_status
+            CHECK (viewing_status IN ('NEW', 'VIEWED', 'REJECTED'));</sql>
+
+        <!-- Add UNIQUE constraint on lost_request_id + found_request_id -->
+        <addUniqueConstraint tableName="match_queue"
+                             columnNames="lost_request_id, found_request_id"
+                             constraintName="uq_match_queue_lost_found"/>
+    </changeSet>
+
+    <!-- ==================== INDEXES FOR LOST_REQUESTS ==================== -->
+
+    <changeSet id="0007-07-create-lost-requests-indexes" author="developer">
+        <!-- B-tree indexes -->
+        <createIndex tableName="lost_requests" indexName="idx_lost_pet_id">
+            <column name="pet_id"/>
+        </createIndex>
+
+        <createIndex tableName="lost_requests" indexName="idx_lost_type">
+            <column name="pet_type"/>
+        </createIndex>
+
+        <createIndex tableName="lost_requests" indexName="idx_lost_status">
+            <column name="status"/>
+        </createIndex>
+
+        <!-- Spatial GIST index -->
+        <sql>CREATE INDEX idx_lost_location ON lost_requests USING GIST (last_seen_location);</sql>
+
+        <!-- GIN trigram index for text search -->
+        <sql>CREATE INDEX idx_lost_search_text ON lost_requests USING GIN (search_text gin_trgm_ops);</sql>
+    </changeSet>
+
+    <!-- ==================== INDEXES FOR FOUND_REQUESTS ==================== -->
+
+    <changeSet id="0007-08-create-found-requests-indexes" author="developer">
+        <!-- B-tree indexes -->
+        <createIndex tableName="found_requests" indexName="idx_found_finder_id">
+            <column name="finder_id"/>
+        </createIndex>
+
+        <createIndex tableName="found_requests" indexName="idx_found_pet_type">
+            <column name="pet_type"/>
+        </createIndex>
+
+        <createIndex tableName="found_requests" indexName="idx_found_created_at">
+            <column name="created_at"/>
+        </createIndex>
+
+        <!-- Spatial GIST index -->
+        <sql>CREATE INDEX idx_found_location ON found_requests USING GIST (location);</sql>
+
+        <!-- GIN trigram index for text search -->
+        <sql>CREATE INDEX idx_found_description_trgm ON found_requests USING GIN (description gin_trgm_ops);</sql>
+    </changeSet>
+
+    <!-- ==================== INDEXES FOR MATCH_QUEUE ==================== -->
+
+    <changeSet id="0007-09-create-match-queue-indexes" author="developer">
+        <!-- B-tree indexes -->
+        <createIndex tableName="match_queue" indexName="idx_match_lost_id">
+            <column name="lost_request_id"/>
+        </createIndex>
+
+        <createIndex tableName="match_queue" indexName="idx_match_found_id">
+            <column name="found_request_id"/>
+        </createIndex>
+
+        <createIndex tableName="match_queue" indexName="idx_match_status">
+            <column name="viewing_status"/>
+        </createIndex>
+
+        <!-- Index on score for sorting (DESC order) -->
+        <sql>CREATE INDEX idx_match_score ON match_queue (score DESC);</sql>
+    </changeSet>
+
+    <!-- ==================== SEQUENCES ==================== -->
+
+    <changeSet id="0007-10-create-sequences" author="developer">
+        <createSequence sequenceName="lost_requests_seq"
+                        startValue="1"
+                        incrementBy="50"/>
+        <createSequence sequenceName="found_requests_seq"
+                        startValue="1"
+                        incrementBy="50"/>
+        <createSequence sequenceName="match_queue_seq"
+                        startValue="1"
+                        incrementBy="50"/>
+    </changeSet>
+
+</databaseChangeLog>
