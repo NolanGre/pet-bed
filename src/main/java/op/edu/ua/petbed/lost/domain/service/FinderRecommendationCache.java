@@ -1,6 +1,7 @@
 package op.edu.ua.petbed.lost.domain.service;
 
 import lombok.extern.slf4j.Slf4j;
+import op.edu.ua.petbed.lost.FinderRecommendationService;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -30,7 +31,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 @Component
 @NullMarked
 @Slf4j
-public class FinderRecommendationCache {
+public class FinderRecommendationCache implements FinderRecommendationService {
 
     private final ConcurrentHashMap<Long, Queue<Long>> cache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Long, Instant> timestamps = new ConcurrentHashMap<>();

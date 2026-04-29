@@ -86,4 +86,22 @@ public class TelegramMessageService {
                 .callbackQueryId(context.callbackQuery().getId())
                 .build();
     }
+
+    /**
+     * Removes the inline keyboard from a message.
+     *
+     * @param chatId    the chat ID
+     * @param messageId the message ID
+     */
+    public void removeKeyboard(Long chatId, Integer messageId) {
+        try {
+            telegramClient.execute(EditMessageReplyMarkup.builder()
+                    .chatId(chatId)
+                    .messageId(messageId)
+                    .replyMarkup(InlineKeyboardMarkup.builder().build())
+                    .build());
+        } catch (TelegramApiException e) {
+            // Ignore - message might be too old or already edited
+        }
+    }
 }

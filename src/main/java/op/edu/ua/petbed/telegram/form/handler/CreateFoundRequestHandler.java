@@ -2,17 +2,17 @@ package op.edu.ua.petbed.telegram.form.handler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.PetSex;
 import op.edu.ua.petbed.common.model.PetSize;
 import op.edu.ua.petbed.common.model.PetType;
 import op.edu.ua.petbed.lost.FoundRequestService;
-import op.edu.ua.petbed.telegram.callback.CallbackData;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.form.FormData;
 import op.edu.ua.petbed.telegram.form.scheme.FormStep;
 import op.edu.ua.petbed.telegram.form.scheme.FormType;
+import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
 import op.edu.ua.petbed.telegram.response.ResponseBuilder;
-import op.edu.ua.petbed.user.UserService;
 import org.jspecify.annotations.NullMarked;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -20,8 +20,6 @@ import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
 import java.util.List;
 
@@ -31,8 +29,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CreateFoundRequestHandler implements FormSubmissionHandler {
 
+    private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory();
+
     private final FoundRequestService foundRequestService;
-    private final UserService userService;
 
     @Override
     public FormType getFormType() {
@@ -43,11 +42,16 @@ public class CreateFoundRequestHandler implements FormSubmissionHandler {
     public BotApiMethod<?> handle(FormData data) {
         log.debug("Create Found Request Handled: {}", data);
 
-        Long finderId = userService.findById(data.userId()).id();
+        Long finderId = data.userId();
         List<FormStep> steps = FormType.CREATE_FOUND_REQUEST.steps();
 
         // Step 0: Pet type (required)
-        PetType petType = PetType.valueOf(data.choice(steps.get(0)).toUpperCase());
+        PetType petType;
+        try {
+            petType = PetType.valueOf(data.choice(steps.get(0)).toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new PetBedException("Invalid pet type", PetBedException.ErrorCode.INVALID_FORM_INPUT);
+        }
 
         // Step 1: Photo (required)
         String photoUrl = data.photo(steps.get(1));
@@ -71,7 +75,8 @@ public class CreateFoundRequestHandler implements FormSubmissionHandler {
 
                         Ми знайшли потенційних власників для цієї тварини.
 
-                        ⚠️ Якщо ви натиснете 'Повернутись', переглянути анкети буде неможливо.""")
+                        ⚠️ Якщо ви натиснете 'Повернутись', переглянути анкети буде неможливо.
+                        """)
                 .keyboard(keyboard)
                 .build();
     }
@@ -109,29 +114,13 @@ public class CreateFoundRequestHandler implements FormSubmissionHandler {
     }
 
     private Point createPoint(double latitude, double longitude) {
-        GeometryFactory geometryFactory = new GeometryFactory();
-        return geometryFactory.createPoint(new Coordinate(longitude, latitude));
+        return GEOMETRY_FACTORY.createPoint(new Coordinate(longitude, latitude));
     }
 
     private InlineKeyboardMarkup buildSuccessKeyboard() {
-        // Button 1: View recommendations
-        String recommendationsCallback = CallbackData.of(CallbackId.LOST_FOUND_MATCHES, null, null).toString();
-        InlineKeyboardButton recommendationsButton = InlineKeyboardButton.builder()
-                .text("🔍 Переглянути рекомендації")
-                .build();
-        recommendationsButton.setCallbackData(recommendationsCallback);
-
-        // Button 2: Back to menu
-        String backCallback = CallbackData.of(CallbackId.MENU, null, null).toString();
-        InlineKeyboardButton backButton = InlineKeyboardButton.builder()
-                .text("⬅️ Повернутись")
-                .build();
-        backButton.setCallbackData(backCallback);
-
-        // Build keyboard with two buttons in one row
-        InlineKeyboardRow row = new InlineKeyboardRow(List.of(recommendationsButton, backButton));
-        return InlineKeyboardMarkup.builder()
-                .keyboard(List.of(row))
+        return InlineKeyboardBuilder.builder()
+                .addButton("🔍 Переглянути рекомендації", CallbackId.LOST_FOUND_MATCHES)
+                .addButton("⬅️ Повернутись", CallbackId.MENU)
                 .build();
     }
 }

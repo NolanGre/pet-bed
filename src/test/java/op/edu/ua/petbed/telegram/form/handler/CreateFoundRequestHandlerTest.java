@@ -1,7 +1,6 @@
 package op.edu.ua.petbed.telegram.form.handler;
 
 import op.edu.ua.petbed.common.dto.FoundRequestDTO;
-import op.edu.ua.petbed.common.dto.UserDTO;
 import op.edu.ua.petbed.common.model.PetSex;
 import op.edu.ua.petbed.common.model.PetSize;
 import op.edu.ua.petbed.common.model.PetType;
@@ -12,7 +11,6 @@ import op.edu.ua.petbed.telegram.form.FormData;
 import op.edu.ua.petbed.telegram.form.scheme.FormInput;
 import op.edu.ua.petbed.telegram.form.scheme.FormStep;
 import op.edu.ua.petbed.telegram.form.scheme.FormType;
-import op.edu.ua.petbed.user.UserService;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -45,16 +43,12 @@ class CreateFoundRequestHandlerTest {
     @Mock
     FoundRequestService foundRequestService;
 
-    @Mock
-    UserService userService;
-
     @InjectMocks
     CreateFoundRequestHandler underTest;
 
     private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory();
     private static final Long USER_ID = 1L;
     private static final Long CHAT_ID = 123L;
-    private static final Long FINDER_ID = 10L;
 
     @Nested
     class Handle {
@@ -63,11 +57,10 @@ class CreateFoundRequestHandlerTest {
         void handle_withValidData_createsFoundRequest() {
             // given
             FormData data = getFormDataWithAllFields();
-            given(userService.findById(USER_ID)).willReturn(new UserDTO(FINDER_ID, USER_ID, "testuser", UserType.REGULAR, null));
 
             FoundRequestDTO createdDto = new FoundRequestDTO(
                     1L,
-                    FINDER_ID,
+                    USER_ID,
                     "photo123",
                     PetType.DOG,
                     GEOMETRY_FACTORY.createPoint(new Coordinate(30.52, 50.45)),
@@ -75,7 +68,7 @@ class CreateFoundRequestHandlerTest {
                     Instant.now()
             );
             given(foundRequestService.create(
-                    org.mockito.ArgumentMatchers.eq(FINDER_ID),
+                    org.mockito.ArgumentMatchers.eq(USER_ID),
                     org.mockito.ArgumentMatchers.eq("photo123"),
                     org.mockito.ArgumentMatchers.eq(PetType.DOG),
                     org.mockito.ArgumentMatchers.any(Point.class),
@@ -95,7 +88,7 @@ class CreateFoundRequestHandlerTest {
             ArgumentCaptor<String> descriptionCaptor = ArgumentCaptor.forClass(String.class);
 
             verify(foundRequestService).create(
-                    org.mockito.ArgumentMatchers.eq(FINDER_ID),
+                    org.mockito.ArgumentMatchers.eq(USER_ID),
                     org.mockito.ArgumentMatchers.eq("photo123"),
                     org.mockito.ArgumentMatchers.eq(PetType.DOG),
                     locationCaptor.capture(),
@@ -111,7 +104,6 @@ class CreateFoundRequestHandlerTest {
         void handle_buildsDescriptionFromTextFields() {
             // given
             FormData data = getFormDataWithTextFieldsOnly();
-            given(userService.findById(USER_ID)).willReturn(new UserDTO(FINDER_ID, USER_ID, "testuser", UserType.REGULAR, null));
 
             // when
             underTest.handle(data);
@@ -136,7 +128,6 @@ class CreateFoundRequestHandlerTest {
         void handle_skipsEmptyFieldsInDescription() {
             // given
             FormData data = getFormDataWithSomeEmptyFields();
-            given(userService.findById(USER_ID)).willReturn(new UserDTO(FINDER_ID, USER_ID, "testuser", UserType.REGULAR, null));
 
             // when
             underTest.handle(data);
@@ -162,7 +153,6 @@ class CreateFoundRequestHandlerTest {
         void handle_withAllOptionalFields_buildsCompleteDescription() {
             // given
             FormData data = getFormDataWithAllFields();
-            given(userService.findById(USER_ID)).willReturn(new UserDTO(FINDER_ID, USER_ID, "testuser", UserType.REGULAR, null));
 
             // when
             underTest.handle(data);
@@ -190,7 +180,6 @@ class CreateFoundRequestHandlerTest {
         void handle_withNoOptionalFields_buildsEmptyDescription() {
             // given
             FormData data = getFormDataWithNoOptionalFields();
-            given(userService.findById(USER_ID)).willReturn(new UserDTO(FINDER_ID, USER_ID, "testuser", UserType.REGULAR, null));
 
             // when
             underTest.handle(data);
@@ -213,7 +202,6 @@ class CreateFoundRequestHandlerTest {
         void handle_returnsSuccessMessageWithRecommendationsButton() {
             // given
             FormData data = getFormDataWithAllFields();
-            given(userService.findById(USER_ID)).willReturn(new UserDTO(FINDER_ID, USER_ID, "testuser", UserType.REGULAR, null));
 
             // when
             BotApiMethod<?> result = underTest.handle(data);
@@ -242,7 +230,6 @@ class CreateFoundRequestHandlerTest {
         void handle_parsesPetTypeCorrectly() {
             // given
             FormData data = getFormDataWithPetType("CAT");
-            given(userService.findById(USER_ID)).willReturn(new UserDTO(FINDER_ID, USER_ID, "testuser", UserType.REGULAR, null));
 
             // when
             underTest.handle(data);

@@ -5,13 +5,18 @@ import lombok.extern.slf4j.Slf4j;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.lost.application.matching.MatchingService;
 import org.jspecify.annotations.NullMarked;
-import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
  * Event listener for matching-related events.
  * Handles asynchronous matching when lost or found requests are created.
+ *
+ * <p>Uses @TransactionalEventListener with AFTER_COMMIT phase to ensure
+ * matching runs only after the database transaction commits. This prevents
+ * race conditions where matching tries to read data that doesn't exist yet.
  *
  * <p>Events are processed asynchronously via the MatchingService to avoid
  * blocking the request/response cycle. Users don't wait for matching results;
@@ -38,7 +43,7 @@ public class MatchingEventListener {
      *
      * @param event the event containing the lost request ID
      */
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleLostRequestCreated(LostRequestCreatedEvent event) {
         log.info("Received LostRequestCreatedEvent for lostRequestId={}", event.lostRequestId());
 
@@ -67,7 +72,7 @@ public class MatchingEventListener {
      *
      * @param event the event containing the found request ID
      */
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleFoundRequestCreated(FoundRequestCreatedEvent event) {
         log.info("Received FoundRequestCreatedEvent for foundRequestId={}", event.foundRequestId());
 
