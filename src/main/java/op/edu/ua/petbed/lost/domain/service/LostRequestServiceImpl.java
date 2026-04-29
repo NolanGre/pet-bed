@@ -2,8 +2,8 @@ package op.edu.ua.petbed.lost.domain.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import op.edu.ua.petbed.common.dto.LostRequestDTO;
 import op.edu.ua.petbed.common.dto.PetDTO;
-import op.edu.ua.petbed.lost.application.dto.LostRequestDTO;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.PetStatus;
 import op.edu.ua.petbed.lost.LostRequestService;
@@ -17,6 +17,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 
 @NullMarked
@@ -48,7 +49,18 @@ public class LostRequestServiceImpl implements LostRequestService {
 
         eventPublisher.publishEvent(new LostRequestCreatedEvent(saved.getIdOrThrow()));
 
-        return LostRequestDTO.fromEntity(saved);
+        Instant createdAt = saved.getCreatedAt();
+        if (createdAt == null) {
+            throw new PetBedException("Lost request createdAt is null", PetBedException.ErrorCode.INTERNAL_ERROR);
+        }
+        return new LostRequestDTO(
+                saved.getIdOrThrow(),
+                saved.getPetId(),
+                saved.getContactInfo(),
+                saved.getLastSeenLocation(),
+                saved.getPetType(),
+                createdAt
+        );
     }
 
     @Override
@@ -57,7 +69,18 @@ public class LostRequestServiceImpl implements LostRequestService {
         LostRequest lostRequest = lostRequestRepository.findById(id)
                 .orElseThrow(() -> new PetBedException("Lost request not found with id: " + id,
                         PetBedException.ErrorCode.LOST_REQUEST_REQUIRED));
-        return LostRequestDTO.fromEntity(lostRequest);
+        Instant createdAt = lostRequest.getCreatedAt();
+        if (createdAt == null) {
+            throw new PetBedException("Lost request createdAt is null", PetBedException.ErrorCode.INTERNAL_ERROR);
+        }
+        return new LostRequestDTO(
+                lostRequest.getIdOrThrow(),
+                lostRequest.getPetId(),
+                lostRequest.getContactInfo(),
+                lostRequest.getLastSeenLocation(),
+                lostRequest.getPetType(),
+                createdAt
+        );
     }
 
     @Override
@@ -69,7 +92,20 @@ public class LostRequestServiceImpl implements LostRequestService {
                 .map(PetDTO::id)
                 .map(lostRequestRepository::findByPetId)
                 .filter(java.util.Objects::nonNull)
-                .map(LostRequestDTO::fromEntity)
+                .map(lr -> {
+                    Instant ca = lr.getCreatedAt();
+                    if (ca == null) {
+                        throw new PetBedException("Lost request createdAt is null", PetBedException.ErrorCode.INTERNAL_ERROR);
+                    }
+                    return new LostRequestDTO(
+                            lr.getIdOrThrow(),
+                            lr.getPetId(),
+                            lr.getContactInfo(),
+                            lr.getLastSeenLocation(),
+                            lr.getPetType(),
+                            ca
+                    );
+                })
                 .toList();
     }
 

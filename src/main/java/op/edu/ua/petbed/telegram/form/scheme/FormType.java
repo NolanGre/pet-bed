@@ -40,6 +40,22 @@ public enum FormType {
             FormStep.text("✏️ Введіть текст публікації"),
             FormStep.photo("📷 Надішліть фото"),
             FormStep.location("📍 Надішліть геолокацію")
+    )),
+    CREATE_LOST_REQUEST(List.of(
+            FormStep.text("📞 Введіть контактну інформацію для зв'язку з вами"),
+            FormStep.location("📍 Надішліть геолокацію останнього місця, де бачили тварину"),
+            FormStep.text("📝 Введіть особливі прикмети тварини (допоможе у пошуку)").optional()
+    )),
+    CREATE_FOUND_REQUEST(List.of(
+            FormStep.choice("🐾 Оберіть тип тварини", List.of(PetType.values())),
+            FormStep.photo("📷 Надішліть фото знайденої тварини"),
+            FormStep.location("📍 Надішліть геолокацію знахідки"),
+            FormStep.text("✏️ Вкажіть породу (якщо відомо)").optional(),
+            FormStep.text("🎨 Вкажіть колір").optional(),
+            FormStep.text("🧥 Вкажіть тип окрасу").optional(),
+            FormStep.choice("⚥ Оберіть стать", List.of(PetSex.values())).optional(),
+            FormStep.choice("📏 Оберіть розмір", List.of(PetSize.values())).optional(),
+            FormStep.text("📝 Опишіть особливі ознаки").optional()
     ));
 
     private final List<FormStep> steps;

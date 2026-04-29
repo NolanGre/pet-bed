@@ -32,5 +32,5 @@ public interface FoundRequestRepository extends JpaRepository<FoundRequest, Long
 
     @Modifying
     @Query("DELETE FROM FoundRequest fr WHERE fr.createdAt < :date")
-    void deleteOlderThan(@Param("date") Instant date);
+    int deleteOlderThan(@Param("date") Instant date);
 }

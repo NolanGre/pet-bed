@@ -2,8 +2,8 @@ package op.edu.ua.petbed.lost.domain.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import op.edu.ua.petbed.common.dto.FoundRequestDTO;
 import op.edu.ua.petbed.common.dto.UserDTO;
-import op.edu.ua.petbed.lost.application.dto.FoundRequestDTO;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.PetType;
 import op.edu.ua.petbed.lost.FoundRequestService;
@@ -17,6 +17,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 
 @NullMarked
@@ -41,7 +42,19 @@ public class FoundRequestServiceImpl implements FoundRequestService {
 
         eventPublisher.publishEvent(new FoundRequestCreatedEvent(saved.getIdOrThrow()));
 
-        return FoundRequestDTO.fromEntity(saved);
+        Instant createdAt = saved.getCreatedAt();
+        if (createdAt == null) {
+            throw new PetBedException("Found request createdAt is null", PetBedException.ErrorCode.INTERNAL_ERROR);
+        }
+        return new FoundRequestDTO(
+                saved.getIdOrThrow(),
+                saved.getFinderId(),
+                saved.getPhotoUrl(),
+                saved.getPetType(),
+                saved.getLocation(),
+                saved.getDescription(),
+                createdAt
+        );
     }
 
     @Override
@@ -50,7 +63,19 @@ public class FoundRequestServiceImpl implements FoundRequestService {
         FoundRequest foundRequest = foundRequestRepository.findById(id)
                 .orElseThrow(() -> new PetBedException("Found request not found with id: " + id, PetBedException.ErrorCode.FOUND_REQUEST_REQUIRED));
 
-        return FoundRequestDTO.fromEntity(foundRequest);
+        Instant createdAt = foundRequest.getCreatedAt();
+        if (createdAt == null) {
+            throw new PetBedException("Found request createdAt is null", PetBedException.ErrorCode.INTERNAL_ERROR);
+        }
+        return new FoundRequestDTO(
+                foundRequest.getIdOrThrow(),
+                foundRequest.getFinderId(),
+                foundRequest.getPhotoUrl(),
+                foundRequest.getPetType(),
+                foundRequest.getLocation(),
+                foundRequest.getDescription(),
+                createdAt
+        );
     }
 
     @Override
@@ -59,7 +84,21 @@ public class FoundRequestServiceImpl implements FoundRequestService {
         List<FoundRequest> foundRequests = foundRequestRepository.findByFinderId(finderId);
 
         return foundRequests.stream()
-                .map(FoundRequestDTO::fromEntity)
+                .map(fr -> {
+                    Instant ca = fr.getCreatedAt();
+                    if (ca == null) {
+                        throw new PetBedException("Found request createdAt is null", PetBedException.ErrorCode.INTERNAL_ERROR);
+                    }
+                    return new FoundRequestDTO(
+                            fr.getIdOrThrow(),
+                            fr.getFinderId(),
+                            fr.getPhotoUrl(),
+                            fr.getPetType(),
+                            fr.getLocation(),
+                            fr.getDescription(),
+                            ca
+                    );
+                })
                 .toList();
     }
 }

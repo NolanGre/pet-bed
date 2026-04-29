@@ -100,6 +100,13 @@ public class Pet extends AbstractAuditableEntity {
         if (dto.specialMarks() != null) this.specialMarks = dto.specialMarks();
     }
 
+    public void updateSpecialMarks(String specialMarks) {
+        if (!canUpdate()) {
+            throw new PetBedException("Cannot update pet with status: " + status, PetBedException.ErrorCode.PET_CANNOT_UPDATE);
+        }
+        this.specialMarks = specialMarks;
+    }
+
     public boolean canUpdate() {
         return status.canUpdate();
     }

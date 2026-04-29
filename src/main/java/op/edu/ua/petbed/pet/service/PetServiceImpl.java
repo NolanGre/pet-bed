@@ -85,6 +85,18 @@ public class PetServiceImpl implements PetService {
         log.info("Updated pet status: id={}, status={}", petId, status);
     }
 
+    @Override
+    @Transactional
+    public void updateSpecialFeatures(Long petId, String specialFeatures) {
+        Pet pet = petRepository.findById(petId)
+                .orElseThrow(() -> new PetBedException("Pet not found with id: " + petId, PetBedException.ErrorCode.PET_NOT_FOUND));
+
+        pet.updateSpecialMarks(specialFeatures);
+        petRepository.save(pet);
+
+        log.info("Updated pet special features: id={}", petId);
+    }
+
     private PetDTO toDto(Pet pet) {
         return new PetDTO(
                 pet.getIdOrThrow(),
