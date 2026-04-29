@@ -55,6 +55,13 @@ public class FoundRequest extends AbstractAuditableEntity {
         return new FoundRequest(null, finderId, photoUrl, petType, location, description);
     }
 
+    /**
+     * Factory method for testing purposes. Allows setting the ID directly.
+     */
+    public static FoundRequest createForTest(Long id, Long finderId, String photoUrl, PetType petType, Point location, String description) {
+        return new FoundRequest(id, finderId, photoUrl, petType, location, description);
+    }
+
     public long getIdOrThrow() {
         if (id == null) {
             throw new PetBedException("Found request is not persisted yet", PetBedException.ErrorCode.LOST_REQUEST_NOT_PERSISTED);

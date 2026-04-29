@@ -54,6 +54,13 @@ public class LostRequest extends AbstractAuditableEntity {
         return new LostRequest(null, pet.id(), contactInfo, location, pet.type(), searchText);
     }
 
+    /**
+     * Factory method for testing purposes. Allows setting all fields directly.
+     */
+    public static LostRequest createForTest(Long id, Long petId, String contactInfo, Point location, PetType petType, String searchText) {
+        return new LostRequest(id, petId, contactInfo, location, petType, searchText);
+    }
+
     private static String generateSearchText(PetDTO pet) {
         String sb = pet.name() + "; " +
                 pet.breed() + "; " +
