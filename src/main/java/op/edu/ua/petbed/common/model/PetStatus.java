@@ -14,4 +14,8 @@ public enum PetStatus {
     public boolean canDelete() {
         return this != FOSTERED;
     }
+
+    public boolean canBeDeclaredLost() {
+        return this == DEFAULT;
+    }
 }

@@ -1,5 +1,6 @@
 package op.edu.ua.petbed.pet.repository;
 
+import op.edu.ua.petbed.common.model.PetStatus;
 import op.edu.ua.petbed.pet.model.Pet;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.data.domain.Page;
@@ -10,4 +11,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface PetRepository extends JpaRepository<Pet, Long> {
 
     Page<Pet> findByOwnerId(Long ownerId, Pageable pageable);
+
+    Page<Pet> findByOwnerIdAndStatus(Long ownerId, PetStatus status, Pageable pageable);
 }

@@ -22,6 +22,10 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 import java.util.List;
 import java.util.Map;
@@ -38,11 +42,13 @@ public class FormService {
 
     private final FormRepository formRepository;
     private final Map<FormType, FormSubmissionHandler> handlersMap;
+    private final TelegramClient telegramClient;
 
-    public FormService(FormRepository formRepository, List<FormSubmissionHandler> handlers) {
+    public FormService(FormRepository formRepository, List<FormSubmissionHandler> handlers, TelegramClient telegramClient) {
         this.formRepository = formRepository;
         this.handlersMap = Map.copyOf(handlers.stream()
                 .collect(Collectors.toMap(FormSubmissionHandler::getFormType, Function.identity())));
+        this.telegramClient = telegramClient;
 
         log.debug("Registered form submission handlers: {}", handlersMap.keySet());
     }
@@ -50,7 +56,7 @@ public class FormService {
     /**
      * Starts a new form session for the user.
      * Deletes any existing form before creating a new one.
-     * Returns the first step prompt.
+     * Sends info message separately and returns the first step prompt.
      */
     @Transactional
     public BotApiMethod<?> startCreateForm(FormType type, CallbackId returnCallback, Long internalUserId, Long chatId) {
@@ -59,13 +65,16 @@ public class FormService {
         FormEntity entity = FormEntity.initiateCreate(internalUserId, chatId, type, returnCallback);
         formRepository.save(entity);
 
+        sendInfoMessage(chatId, false);
+
         return ResponseBuilder.sendMessage(chatId)
-                .text(entity.nextStep().prompt() + "\n\nℹ️ Для скасування форми /cancel")
+                .text(entity.nextStep().prompt())
                 .build();
     }
 
     /**
      * Starts a new form session with an entity to update.
+     * Sends info message separately and returns the first step prompt.
      */
     @Transactional
     public BotApiMethod<?> startUpdateForm(FormType type, CallbackId returnCallback, Long internalUserId, Long chatId, Long entityId) {
@@ -74,8 +83,10 @@ public class FormService {
         FormEntity entity = FormEntity.initiateUpdate(internalUserId, chatId, type, returnCallback, entityId);
         formRepository.save(entity);
 
+        sendInfoMessage(chatId, true);
+
         return ResponseBuilder.sendMessage(chatId)
-                .text(entity.nextStep().prompt() + "\n\nℹ️ Для скасування форми /cancel\nℹ️ Для пропуску кроку /skip")
+                .text(entity.nextStep().prompt())
                 .build();
     }
 
@@ -325,5 +336,29 @@ public class FormService {
     private BotApiMethod<?> cantSkipMessage(FormStep step, Long chatId) {
         return ResponseBuilder.sendMessage(chatId)
                 .text("⚠️ Цей крок неможливо пропустити.\n\n" + step.prompt()).build();
+    }
+
+    /**
+     * Sends an info message about form controls (cancel/skip) directly via TelegramClient.
+     * This message is sent separately from the step prompt.
+     */
+    private void sendInfoMessage(Long chatId, boolean includeSkipInfo) {
+        StringBuilder infoText = new StringBuilder();
+        infoText.append("ℹ️ Під час заповнення форми ви можете:\n");
+        infoText.append("• /cancel — скасувати форму");
+        if (includeSkipInfo) {
+            infoText.append("\n• /skip — пропустити поточний крок (деякі кроки обов'язкові)");
+        }
+
+        SendMessage infoMessage = SendMessage.builder()
+                .chatId(chatId.toString())
+                .text(infoText.toString())
+                .build();
+
+        try {
+            telegramClient.execute(infoMessage);
+        } catch (TelegramApiException e) {
+            log.error("Failed to send form info message to chat {}", chatId, e);
+        }
     }
 }

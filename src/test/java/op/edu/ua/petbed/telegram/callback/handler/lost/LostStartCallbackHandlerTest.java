@@ -78,7 +78,7 @@ class LostStartCallbackHandlerTest {
                     new PetDTO(2L, USER_ID, "Рекс", PetType.DOG, "photo2", "Вівчарка", "Чорний", "", 5, PetSex.MALE, PetSize.LARGE, "", PetStatus.DEFAULT)
             );
             Page<PetDTO> petsPage = new PageImpl<>(pets, PageRequest.of(0, PAGE_SIZE), pets.size());
-            given(petService.findAllByOwnerId(USER_ID, PageRequest.of(0, PAGE_SIZE))).willReturn(petsPage);
+            given(petService.findPetsAvailableForLostSearch(USER_ID, PageRequest.of(0, PAGE_SIZE))).willReturn(petsPage);
 
             // when
             underTest.handle(context);
@@ -106,7 +106,7 @@ class LostStartCallbackHandlerTest {
         void handle_userWithoutPets_showsAddPetOptionOnly() {
             // given
             Page<PetDTO> emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, PAGE_SIZE), 0);
-            given(petService.findAllByOwnerId(USER_ID, PageRequest.of(0, PAGE_SIZE))).willReturn(emptyPage);
+            given(petService.findPetsAvailableForLostSearch(USER_ID, PageRequest.of(0, PAGE_SIZE))).willReturn(emptyPage);
 
             // when
             underTest.handle(context);
@@ -141,7 +141,7 @@ class LostStartCallbackHandlerTest {
                     new PetDTO(1L, USER_ID, "Барсик", PetType.CAT, "photo1", "Дворовий", "Сірий", "", 3, PetSex.MALE, PetSize.MEDIUM, "", PetStatus.DEFAULT)
             );
             Page<PetDTO> petsPage = new PageImpl<>(pets, PageRequest.of(0, PAGE_SIZE), 1);
-            given(petService.findAllByOwnerId(USER_ID, PageRequest.of(0, PAGE_SIZE))).willReturn(petsPage);
+            given(petService.findPetsAvailableForLostSearch(USER_ID, PageRequest.of(0, PAGE_SIZE))).willReturn(petsPage);
 
             // when
             underTest.handle(context);

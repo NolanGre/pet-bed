@@ -41,7 +41,7 @@ public class LostStartCallbackHandler implements CallbackHandler {
         var callbackData = context.callbackData();
         int offset = callbackData.offset() != null ? callbackData.offset() : 0;
 
-        Page<PetDTO> pets = petService.findAllByOwnerId(
+        Page<PetDTO> pets = petService.findPetsAvailableForLostSearch(
                 context.auth().userInternalId(),
                 PageRequest.of(offset, KeyboardLayout.DEFAULT.pageSize())
         );

@@ -216,6 +216,46 @@ class PetServiceImplTest {
         }
     }
 
+    // .findPetsAvailableForLostSearch() ------------------------------------------
+
+    @Nested
+    class FindPetsAvailableForLostSearch {
+
+        @Test
+        void findPetsAvailableForLostSearch_returnsOnlyDefaultStatusPets() {
+            // given
+            Pet pet1 = existingPet(1L, "Barsik");
+            Pet pet2 = existingPet(2L, "Murzik");
+            Page<Pet> page = new PageImpl<>(List.of(pet1, pet2), PageRequest.of(0, 10), 2);
+            given(petRepository.findByOwnerIdAndStatus(1L, PetStatus.DEFAULT, PageRequest.of(0, 10)))
+                    .willReturn(page);
+
+            // when
+            Page<PetDTO> result = underTest.findPetsAvailableForLostSearch(1L, PageRequest.of(0, 10));
+
+            // then
+            assertThat(result.getTotalElements()).isEqualTo(2);
+            assertThat(result.getContent()).hasSize(2);
+            verify(petRepository).findByOwnerIdAndStatus(1L, PetStatus.DEFAULT, PageRequest.of(0, 10));
+        }
+
+        @Test
+        void findPetsAvailableForLostSearch_noDefaultPets_returnsEmptyPage() {
+            // given
+            Page<Pet> page = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
+            given(petRepository.findByOwnerIdAndStatus(1L, PetStatus.DEFAULT, PageRequest.of(0, 10)))
+                    .willReturn(page);
+
+            // when
+            Page<PetDTO> result = underTest.findPetsAvailableForLostSearch(1L, PageRequest.of(0, 10));
+
+            // then
+            assertThat(result.getTotalElements()).isEqualTo(0);
+            assertThat(result.getContent()).isEmpty();
+            verify(petRepository).findByOwnerIdAndStatus(1L, PetStatus.DEFAULT, PageRequest.of(0, 10));
+        }
+    }
+
     // .delete() ------------------------------------------------------------------
 
     @Nested

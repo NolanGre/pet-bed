@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +36,9 @@ class FormServiceTest {
     @Mock
     FormSubmissionHandler formSubmissionHandler;
 
+    @Mock
+    TelegramClient telegramClient;
+
     @Nested
     class StartForm {
 
@@ -43,7 +47,7 @@ class FormServiceTest {
             // given
             Long userId = 123L;
             Long chatId = 456L;
-            FormService underTest = new FormService(formRepository, List.of());
+            FormService underTest = new FormService(formRepository, List.of(), telegramClient);
 
             // when
             BotApiMethod<?> result = underTest.startCreateForm(FormType.ADD_PET, CallbackId.MY_PETS, userId, chatId);
@@ -54,7 +58,7 @@ class FormServiceTest {
 
             String text = extractText(result);
             assertThat(text).contains("Введіть ім'я тварини");
-            assertThat(text).contains("/cancel");
+            // /cancel is now sent in a separate info message via telegramClient
         }
 
         @Test
@@ -64,7 +68,7 @@ class FormServiceTest {
             Long chatId = 456L;
             FormEntity existingEntity = mock(FormEntity.class);
             lenient().when(formRepository.findById(userId)).thenReturn(Optional.of(existingEntity));
-            FormService underTest = new FormService(formRepository, List.of());
+            FormService underTest = new FormService(formRepository, List.of(), telegramClient);
 
             // when
             underTest.startCreateForm(FormType.ADD_PET, CallbackId.MY_PETS, userId, chatId);
@@ -85,7 +89,7 @@ class FormServiceTest {
             Long chatId = 456L;
             FormEntity entity = FormEntity.initiateCreate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
             given(formRepository.findById(userId)).willReturn(Optional.of(entity));
-            FormService underTest = new FormService(formRepository, List.of());
+            FormService underTest = new FormService(formRepository, List.of(), telegramClient);
 
             FormInput input = new FormInput.Text("Барсик");
 
@@ -117,7 +121,7 @@ class FormServiceTest {
             entity.applyStep(new FormInput.Text("small"));             // 8: size
 
             given(formRepository.findById(userId)).willReturn(Optional.of(entity));
-            FormService underTest = new FormService(formRepository, List.of());
+            FormService underTest = new FormService(formRepository, List.of(), telegramClient);
 
             FormInput input = new FormInput.Text("friendly");          // 9: notes - last step
 
@@ -140,7 +144,7 @@ class FormServiceTest {
             Long chatId = 456L;
             FormEntity entity = FormEntity.initiateCreate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
             given(formRepository.findById(userId)).willReturn(Optional.of(entity));
-            FormService underTest = new FormService(formRepository, List.of());
+            FormService underTest = new FormService(formRepository, List.of(), telegramClient);
 
             FormInput input = new FormInput.Text(""); // Empty text - invalid
 
@@ -158,7 +162,7 @@ class FormServiceTest {
             Long userId = 123L;
             Long chatId = 456L;
             given(formRepository.findById(userId)).willReturn(Optional.empty());
-            FormService underTest = new FormService(formRepository, List.of());
+            FormService underTest = new FormService(formRepository, List.of(), telegramClient);
 
             FormInput input = new FormInput.Text("test");
 
@@ -182,7 +186,7 @@ class FormServiceTest {
             FormEntity entity = FormEntity.initiateCreate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
             entity.applyStep(new FormInput.Text("Барсик"));
             given(formRepository.findById(userId)).willReturn(Optional.of(entity));
-            FormService underTest = new FormService(formRepository, List.of());
+            FormService underTest = new FormService(formRepository, List.of(), telegramClient);
 
             // when
             BotApiMethod<?> result = underTest.confirmForm(userId, chatId);
@@ -198,7 +202,7 @@ class FormServiceTest {
             Long userId = 123L;
             Long chatId = 456L;
             given(formRepository.findById(userId)).willReturn(Optional.empty());
-            FormService underTest = new FormService(formRepository, List.of());
+            FormService underTest = new FormService(formRepository, List.of(), telegramClient);
 
             // when
             BotApiMethod<?> result = underTest.confirmForm(userId, chatId);
@@ -226,7 +230,7 @@ class FormServiceTest {
             entity.applyStep(new FormInput.Text("friendly"));          // 9: notes
             given(formRepository.findById(userId)).willReturn(Optional.of(entity));
 
-            FormService serviceWithHandler = new FormService(formRepository, List.of()); // No handlers
+            FormService serviceWithHandler = new FormService(formRepository, List.of(), telegramClient); // No handlers
 
             // when & then
             assertThatThrownBy(() -> serviceWithHandler.confirmForm(userId, chatId))
@@ -245,7 +249,7 @@ class FormServiceTest {
             Long chatId = 456L;
             FormEntity entity = FormEntity.initiateCreate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
             given(formRepository.findById(userId)).willReturn(Optional.of(entity));
-            FormService underTest = new FormService(formRepository, List.of());
+            FormService underTest = new FormService(formRepository, List.of(), telegramClient);
 
             // when
             BotApiMethod<?> result = underTest.cancelForm(userId, chatId);
@@ -263,7 +267,7 @@ class FormServiceTest {
             Long userId = 123L;
             Long chatId = 456L;
             given(formRepository.findById(userId)).willReturn(Optional.empty());
-            FormService underTest = new FormService(formRepository, List.of());
+            FormService underTest = new FormService(formRepository, List.of(), telegramClient);
 
             // when
             BotApiMethod<?> result = underTest.cancelForm(userId, chatId);
@@ -282,7 +286,7 @@ class FormServiceTest {
             // given
             Long userId = 123L;
             given(formRepository.existsById(userId)).willReturn(true);
-            FormService underTest = new FormService(formRepository, List.of());
+            FormService underTest = new FormService(formRepository, List.of(), telegramClient);
 
             // when
             boolean result = underTest.hasActiveForm(userId);
@@ -296,7 +300,7 @@ class FormServiceTest {
             // given
             Long userId = 123L;
             given(formRepository.existsById(userId)).willReturn(false);
-            FormService underTest = new FormService(formRepository, List.of());
+            FormService underTest = new FormService(formRepository, List.of(), telegramClient);
 
             // when
             boolean result = underTest.hasActiveForm(userId);
@@ -316,7 +320,7 @@ class FormServiceTest {
             Long chatId = 456L;
             FormEntity entity = FormEntity.initiateCreate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
             given(formRepository.findById(userId)).willReturn(Optional.of(entity));
-            FormService underTest = new FormService(formRepository, List.of());
+            FormService underTest = new FormService(formRepository, List.of(), telegramClient);
 
             // when
             BotApiMethod<?> result = underTest.skipStep(userId, chatId);
@@ -336,7 +340,7 @@ class FormServiceTest {
             FormEntity entity = FormEntity.initiateCreate(userId, chatId, FormType.ADD_PET, CallbackId.MY_PETS);
             entity.applyStep(new FormInput.Text("Барсик"));  // skip name
             given(formRepository.findById(userId)).willReturn(Optional.of(entity));
-            FormService underTest = new FormService(formRepository, List.of());
+            FormService underTest = new FormService(formRepository, List.of(), telegramClient);
 
             // when
             BotApiMethod<?> result = underTest.skipStep(userId, chatId);
@@ -355,7 +359,7 @@ class FormServiceTest {
             Long userId = 123L;
             Long chatId = 456L;
             given(formRepository.findById(userId)).willReturn(Optional.empty());
-            FormService underTest = new FormService(formRepository, List.of());
+            FormService underTest = new FormService(formRepository, List.of(), telegramClient);
 
             // when
             BotApiMethod<?> result = underTest.skipStep(userId, chatId);
