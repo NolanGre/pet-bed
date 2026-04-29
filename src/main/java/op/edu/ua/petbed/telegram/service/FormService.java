@@ -345,9 +345,9 @@ public class FormService {
     private void sendInfoMessage(Long chatId, boolean includeSkipInfo) {
         StringBuilder infoText = new StringBuilder();
         infoText.append("ℹ️ Під час заповнення форми ви можете:\n");
-        infoText.append("• /cancel — скасувати форму");
+        infoText.append("• /cancel - скасувати форму");
         if (includeSkipInfo) {
-            infoText.append("\n• /skip — пропустити поточний крок (деякі кроки обов'язкові)");
+            infoText.append("\n• /skip - пропустити поточний крок (деякі кроки обов'язкові)");
         }
 
         SendMessage infoMessage = SendMessage.builder()

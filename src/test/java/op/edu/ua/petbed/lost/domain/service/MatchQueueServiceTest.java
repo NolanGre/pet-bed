@@ -6,7 +6,7 @@ import op.edu.ua.petbed.common.model.PetSex;
 import op.edu.ua.petbed.common.model.PetSize;
 import op.edu.ua.petbed.common.model.PetStatus;
 import op.edu.ua.petbed.common.model.PetType;
-import op.edu.ua.petbed.lost.application.dto.MatchRecommendationDTO;
+import op.edu.ua.petbed.lost.MatchRecommendationDTO;
 import op.edu.ua.petbed.lost.domain.model.FoundRequest;
 import op.edu.ua.petbed.lost.domain.model.LostRequest;
 import op.edu.ua.petbed.lost.domain.model.MatchQueueEntry;

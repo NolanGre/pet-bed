@@ -17,6 +17,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.time.Instant;
 import java.util.List;
 
@@ -107,6 +110,26 @@ public class LostRequestServiceImpl implements LostRequestService {
                     );
                 })
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<LostRequestDTO> findByOwnerId(Long ownerId, Pageable pageable) {
+        return lostRequestRepository.findByOwnerId(ownerId, pageable)
+                .map(lr -> {
+                    Instant ca = lr.getCreatedAt();
+                    if (ca == null) {
+                        throw new PetBedException("Lost request createdAt is null", PetBedException.ErrorCode.INTERNAL_ERROR);
+                    }
+                    return new LostRequestDTO(
+                            lr.getIdOrThrow(),
+                            lr.getPetId(),
+                            lr.getContactInfo(),
+                            lr.getLastSeenLocation(),
+                            lr.getPetType(),
+                            ca
+                    );
+                });
     }
 
     @Override

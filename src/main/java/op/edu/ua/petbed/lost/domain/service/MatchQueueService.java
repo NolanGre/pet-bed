@@ -2,7 +2,7 @@ package op.edu.ua.petbed.lost.domain.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import op.edu.ua.petbed.lost.application.dto.MatchRecommendationDTO;
+import op.edu.ua.petbed.lost.MatchRecommendationDTO;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.lost.domain.model.FoundRequest;
 import op.edu.ua.petbed.lost.domain.model.LostRequest;
@@ -28,7 +28,7 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class MatchQueueService {
+public class MatchQueueService implements op.edu.ua.petbed.lost.MatchQueueQueryService {
 
     private final MatchQueueRepository matchQueueRepository;
     private final JdbcTemplate jdbcTemplate;
@@ -110,6 +110,44 @@ public class MatchQueueService {
         matchQueueRepository.save(entry);
 
         log.info("Marked match queue entry as confirmed: id={}", matchQueueId);
+    }
+
+    /**
+     * Gets the next recommendation for the owner and marks it as viewed.
+     * Returns the first NEW or VIEWED entry sorted by score descending.
+     *
+     * @param lostRequestId the ID of the lost request
+     * @return the next recommendation, or empty if none available
+     */
+    @Transactional
+    public java.util.Optional<MatchRecommendationDTO> getNextRecommendation(Long lostRequestId) {
+        List<ViewingStatus> statuses = List.of(ViewingStatus.NEW, ViewingStatus.VIEWED);
+        List<MatchQueueEntry> entries = matchQueueRepository.findByLostRequestIdAndViewingStatusIn(lostRequestId, statuses);
+
+        return entries.stream()
+                .sorted((e1, e2) -> e2.getScore().compareTo(e1.getScore()))
+                .findFirst()
+                .map(entry -> {
+                    if (entry.getViewingStatus() == ViewingStatus.NEW) {
+                        entry.markAsViewed();
+                        matchQueueRepository.save(entry);
+                        log.info("Marked match queue entry as viewed: id={}", entry.getIdOrThrow());
+                    }
+                    return mapToDTO(entry);
+                });
+    }
+
+    /**
+     * Finds a match queue entry by ID.
+     *
+     * @param matchQueueId the ID of the match queue entry
+     * @return the match recommendation DTO, or empty if not found
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.Optional<MatchRecommendationDTO> findById(Long matchQueueId) {
+        return matchQueueRepository.findById(matchQueueId)
+                .map(this::mapToDTO);
     }
 
     /**
