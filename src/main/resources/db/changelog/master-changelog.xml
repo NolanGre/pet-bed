@@ -9,5 +9,6 @@
     <include file="/db/changelog/0006-add-user-location.xml"/>
     <include file="/db/changelog/0007-lost-module-tables.xml"/>
     <include file="/db/changelog/0008-update-lost-module-entities.xml"/>
+    <include file="/db/changelog/0009-add-form-message-id.xml"/>
 
 </databaseChangeLog>

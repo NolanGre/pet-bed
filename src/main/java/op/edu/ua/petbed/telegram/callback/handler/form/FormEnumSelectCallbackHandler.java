@@ -33,7 +33,8 @@ public class FormEnumSelectCallbackHandler implements CallbackHandler {
 
     @Override
     public PartialBotApiMethod<?> handle(CallbackQueryContext context) {
-        var entity = formService.getActiveFormOrThrow(context.auth().userInternalId());
+        Long userId = context.auth().userInternalId();
+        var entity = formService.getActiveFormOrThrow(userId);
         var step = entity.nextStep();
 
         if (!step.isChoice()) {
@@ -46,6 +47,10 @@ public class FormEnumSelectCallbackHandler implements CallbackHandler {
             throw new PetBedException("Invalid enum index: " + index, INTERNAL_ERROR);
         }
         String selectedValue = enumValues.get(index.intValue()).name();
+        
+        // Store the message ID for potential keyboard removal on /cancel or /skip
+        formService.updateLastMessageId(userId, context.messageId());
+        
         try {
             telegramClient.execute(ResponseBuilder.editMessage(entity.getChatId(), context.messageId())
                     .text(step.prompt() + "\n\n✅ " + selectedValue)
@@ -55,6 +60,6 @@ public class FormEnumSelectCallbackHandler implements CallbackHandler {
         }
 
         // Process input and return the response
-        return formService.processInput(new FormInput.Choice(selectedValue), context.auth().userInternalId(), entity.getChatId());
+        return formService.processInput(new FormInput.Choice(selectedValue), userId, entity.getChatId());
     }
 }

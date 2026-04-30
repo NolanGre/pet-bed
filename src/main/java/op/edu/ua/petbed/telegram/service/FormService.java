@@ -21,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
@@ -43,12 +44,15 @@ public class FormService {
     private final FormRepository formRepository;
     private final Map<FormType, FormSubmissionHandler> handlersMap;
     private final TelegramClient telegramClient;
+    private final TelegramMessageService telegramMessageService;
 
-    public FormService(FormRepository formRepository, List<FormSubmissionHandler> handlers, TelegramClient telegramClient) {
+    public FormService(FormRepository formRepository, List<FormSubmissionHandler> handlers, 
+                       TelegramClient telegramClient, TelegramMessageService telegramMessageService) {
         this.formRepository = formRepository;
         this.handlersMap = Map.copyOf(handlers.stream()
                 .collect(Collectors.toMap(FormSubmissionHandler::getFormType, Function.identity())));
         this.telegramClient = telegramClient;
+        this.telegramMessageService = telegramMessageService;
 
         log.debug("Registered form submission handlers: {}", handlersMap.keySet());
     }
@@ -68,16 +72,23 @@ public class FormService {
         sendInfoMessage(chatId, false);
 
         FormStep firstStep = entity.nextStep();
-        var builder = ResponseBuilder.sendMessage(chatId)
-                .text(firstStep.prompt());
 
+        // If first step has keyboard, send via execute to get messageId for later cleanup
         if (firstStep.isChoice()) {
-            builder.keyboard(InlineKeyboardBuilder.builder()
-                    .paginatedList(toPageDto(firstStep), new CallbackData(CallbackId.FORM_ENUM_LIST.id(), null, 0))
-                    .build());
+            SendMessage message = ResponseBuilder.sendMessage(chatId)
+                    .text(firstStep.prompt())
+                    .keyboard(InlineKeyboardBuilder.builder()
+                            .paginatedList(toPageDto(firstStep), new CallbackData(CallbackId.FORM_ENUM_LIST.id(), null, 0))
+                            .build())
+                    .build();
+            sendAndStoreMessageId(entity, message);
+            // Message already sent via execute, return empty response for webhook
+            return AnswerCallbackQuery.builder().callbackQueryId("").build();
         }
 
-        return builder.build();
+        return ResponseBuilder.sendMessage(chatId)
+                .text(firstStep.prompt())
+                .build();
     }
 
     /**
@@ -94,16 +105,22 @@ public class FormService {
         sendInfoMessage(chatId, true);
 
         FormStep firstStep = entity.nextStep();
-        var builder = ResponseBuilder.sendMessage(chatId)
-                .text(firstStep.prompt());
 
+        // If first step has keyboard, send via execute to get messageId for later cleanup
         if (firstStep.isChoice()) {
-            builder.keyboard(InlineKeyboardBuilder.builder()
-                    .paginatedList(toPageDto(firstStep), new CallbackData(CallbackId.FORM_ENUM_LIST.id(), null, 0))
-                    .build());
+            SendMessage message = ResponseBuilder.sendMessage(chatId)
+                    .text(firstStep.prompt())
+                    .keyboard(InlineKeyboardBuilder.builder()
+                            .paginatedList(toPageDto(firstStep), new CallbackData(CallbackId.FORM_ENUM_LIST.id(), null, 0))
+                            .build())
+                    .build();
+            sendAndStoreMessageId(entity, message);
+            return AnswerCallbackQuery.builder().callbackQueryId("").build();
         }
 
-        return builder.build();
+        return ResponseBuilder.sendMessage(chatId)
+                .text(firstStep.prompt())
+                .build();
     }
 
     /**
@@ -128,7 +145,7 @@ public class FormService {
         entity.applyStep(input);
         formRepository.save(entity);
 
-        return nextStepOrCompleteMessage(entity);
+        return nextStepOrCompleteMessage(entity, telegramMessageService);
     }
 
     @Transactional
@@ -143,9 +160,17 @@ public class FormService {
             return cantSkipMessage(currentStep, entity.getChatId());
         }
 
+        // Clear keyboard from last message if this step had one
+        if (currentStep.isChoice()) {
+            Integer lastMessageId = entity.getLastMessageId();
+            if (lastMessageId != null) {
+                telegramMessageService.removeKeyboard(entity.getChatId(), lastMessageId);
+            }
+        }
+
         entity.skipStep();
         formRepository.save(entity);
-        return nextStepOrCompleteMessage(entity);
+        return nextStepOrCompleteMessage(entity, telegramMessageService);
     }
 
     public boolean canSkipCurrentStep(Long internalUserId) {
@@ -200,6 +225,27 @@ public class FormService {
         formRepository.delete(entity);
 
         return formCancelledMessage(chatId, returnCallbackId, entityId);
+    }  
+    
+    /**
+     * Returns the last message ID for the user's active form.
+     */
+    @Nullable
+    public Integer getLastMessageId(Long internalUserId) {
+        return formRepository.findById(internalUserId)
+                .map(FormEntity::getLastMessageId)
+                .orElse(null);
+    }
+    
+    /**
+     * Updates the last message ID for the user's active form.
+     */
+    @Transactional
+    public void updateLastMessageId(Long internalUserId, Integer messageId) {
+        formRepository.findById(internalUserId).ifPresent(entity -> {
+            entity.updateLastMessageId(messageId);
+            formRepository.save(entity);
+        });
     }
 
     /**
@@ -261,19 +307,39 @@ public class FormService {
     }
 
     private BotApiMethod<?> nextStepOrCompleteMessage(FormEntity entity) {
+        return nextStepOrCompleteMessage(entity, null);
+    }
+
+    private BotApiMethod<?> nextStepOrCompleteMessage(FormEntity entity, @Nullable TelegramMessageService telegramMessageService) {
         if (entity.isComplete()) return formCompleteMessage(entity.getChatId());
 
         FormStep next = entity.nextStep();
-        var builder = ResponseBuilder.sendMessage(entity.getChatId())
-                .text(next.prompt());
 
-        if (next.isChoice()) {
-            builder.keyboard(InlineKeyboardBuilder.builder()
-                    .paginatedList(toPageDto(next), new CallbackData(CallbackId.FORM_ENUM_LIST.id(), null, 0))
-                    .build());
+        // If next step has keyboard, send via execute to get messageId for later cleanup
+        if (next.isChoice() && telegramMessageService != null) {
+            SendMessage message = ResponseBuilder.sendMessage(entity.getChatId())
+                    .text(next.prompt())
+                    .keyboard(InlineKeyboardBuilder.builder()
+                            .paginatedList(toPageDto(next), new CallbackData(CallbackId.FORM_ENUM_LIST.id(), null, 0))
+                            .build())
+                    .build();
+            sendAndStoreMessageId(entity, message);
+            return AnswerCallbackQuery.builder().callbackQueryId("").build();
         }
 
-        return builder.build();
+        return ResponseBuilder.sendMessage(entity.getChatId())
+                .text(next.prompt())
+                .build();
+    }
+
+    private void sendAndStoreMessageId(FormEntity entity, SendMessage message) {
+        try {
+            var sentMessage = telegramClient.execute(message);
+            entity.updateLastMessageId(sentMessage.getMessageId());
+            formRepository.save(entity);
+        } catch (TelegramApiException e) {
+            log.error("Failed to send form message and store messageId", e);
+        }
     }
 
     private Page<CallbackListItem> toPageDto(FormStep step) {

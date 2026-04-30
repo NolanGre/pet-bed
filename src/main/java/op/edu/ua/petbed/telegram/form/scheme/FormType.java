@@ -55,7 +55,7 @@ public enum FormType {
             FormStep.text("🧥 Вкажіть тип окрасу").optional(),
             FormStep.choice("⚥ Оберіть стать", List.of(PetSex.values())).optional(),
             FormStep.choice("📏 Оберіть розмір", List.of(PetSize.values())).optional(),
-            FormStep.text("📝 Опишіть особливі ознаки").optional()
+            FormStep.text("📝 Опишіть особливі ознаки")
     ));
 
     private final List<FormStep> steps;

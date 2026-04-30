@@ -56,6 +56,9 @@ public class FormEntity extends AbstractAuditableEntity {
     @Column(name = "entity_id")
     private @Nullable Long entityId;
 
+    @Column(name = "last_message_id")
+    private @Nullable Integer lastMessageId;
+
     /**
      * Creates a new empty form session for the given user.
      */
@@ -107,6 +110,13 @@ public class FormEntity extends AbstractAuditableEntity {
      */
     public void applyStep(FormInput input) {
         rawSteps.put(rawSteps.size(), serialize(input));
+    }
+
+    /**
+     * Updates the last message ID for the form.
+     */
+    public void updateLastMessageId(Integer messageId) {
+        this.lastMessageId = messageId;
     }
 
     /**
