@@ -154,7 +154,7 @@ class PetServiceImplTest {
             Pet pet1 = existingPet(1L, "Barsik");
             Pet pet2 = existingPet(2L, "Murzik");
             Page<Pet> page = new PageImpl<>(List.of(pet1, pet2), PageRequest.of(0, 10), 2);
-            given(petRepository.findByOwnerId(1L, PageRequest.of(0, 10))).willReturn(page);
+            given(petRepository.findByOwnerIdOrderByUpdatedAtDesc(1L, PageRequest.of(0, 10))).willReturn(page);
 
             // when
             Page<PetDTO> result = underTest.findAllByOwnerId(1L, PageRequest.of(0, 10));
@@ -162,14 +162,14 @@ class PetServiceImplTest {
             // then
             assertThat(result.getTotalElements()).isEqualTo(2);
             assertThat(result.getContent()).hasSize(2);
-            verify(petRepository).findByOwnerId(1L, PageRequest.of(0, 10));
+            verify(petRepository).findByOwnerIdOrderByUpdatedAtDesc(1L, PageRequest.of(0, 10));
         }
 
         @Test
         void findAllByOwnerId_emptyPage_returnsEmptyPage() {
             // given
             Page<Pet> page = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
-            given(petRepository.findByOwnerId(1L, PageRequest.of(0, 10))).willReturn(page);
+            given(petRepository.findByOwnerIdOrderByUpdatedAtDesc(1L, PageRequest.of(0, 10))).willReturn(page);
 
             // when
             Page<PetDTO> result = underTest.findAllByOwnerId(1L, PageRequest.of(0, 10));
@@ -177,7 +177,7 @@ class PetServiceImplTest {
             // then
             assertThat(result.getTotalElements()).isEqualTo(0);
             assertThat(result.getContent()).isEmpty();
-            verify(petRepository).findByOwnerId(1L, PageRequest.of(0, 10));
+            verify(petRepository).findByOwnerIdOrderByUpdatedAtDesc(1L, PageRequest.of(0, 10));
         }
     }
 
@@ -227,7 +227,7 @@ class PetServiceImplTest {
             Pet pet1 = existingPet(1L, "Barsik");
             Pet pet2 = existingPet(2L, "Murzik");
             Page<Pet> page = new PageImpl<>(List.of(pet1, pet2), PageRequest.of(0, 10), 2);
-            given(petRepository.findByOwnerIdAndStatus(1L, PetStatus.DEFAULT, PageRequest.of(0, 10)))
+            given(petRepository.findByOwnerIdAndStatusOrderByUpdatedAtDesc(1L, PetStatus.DEFAULT, PageRequest.of(0, 10)))
                     .willReturn(page);
 
             // when
@@ -236,14 +236,14 @@ class PetServiceImplTest {
             // then
             assertThat(result.getTotalElements()).isEqualTo(2);
             assertThat(result.getContent()).hasSize(2);
-            verify(petRepository).findByOwnerIdAndStatus(1L, PetStatus.DEFAULT, PageRequest.of(0, 10));
+            verify(petRepository).findByOwnerIdAndStatusOrderByUpdatedAtDesc(1L, PetStatus.DEFAULT, PageRequest.of(0, 10));
         }
 
         @Test
         void findPetsAvailableForLostSearch_noDefaultPets_returnsEmptyPage() {
             // given
             Page<Pet> page = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
-            given(petRepository.findByOwnerIdAndStatus(1L, PetStatus.DEFAULT, PageRequest.of(0, 10)))
+            given(petRepository.findByOwnerIdAndStatusOrderByUpdatedAtDesc(1L, PetStatus.DEFAULT, PageRequest.of(0, 10)))
                     .willReturn(page);
 
             // when
@@ -252,7 +252,7 @@ class PetServiceImplTest {
             // then
             assertThat(result.getTotalElements()).isEqualTo(0);
             assertThat(result.getContent()).isEmpty();
-            verify(petRepository).findByOwnerIdAndStatus(1L, PetStatus.DEFAULT, PageRequest.of(0, 10));
+            verify(petRepository).findByOwnerIdAndStatusOrderByUpdatedAtDesc(1L, PetStatus.DEFAULT, PageRequest.of(0, 10));
         }
     }
 

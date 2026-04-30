@@ -69,14 +69,14 @@ public class PetServiceImpl implements PetService {
     @Override
     @Transactional(readOnly = true)
     public Page<PetDTO> findAllByOwnerId(Long ownerId, Pageable pageable) {
-        Page<Pet> pets = petRepository.findByOwnerId(ownerId, pageable);
+        Page<Pet> pets = petRepository.findByOwnerIdOrderByUpdatedAtDesc(ownerId, pageable);
         return pets.map(this::toDto);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<PetDTO> findPetsAvailableForLostSearch(Long ownerId, Pageable pageable) {
-        Page<Pet> pets = petRepository.findByOwnerIdAndStatus(ownerId, PetStatus.DEFAULT, pageable);
+        Page<Pet> pets = petRepository.findByOwnerIdAndStatusOrderByUpdatedAtDesc(ownerId, PetStatus.DEFAULT, pageable);
         return pets.map(this::toDto);
     }
 

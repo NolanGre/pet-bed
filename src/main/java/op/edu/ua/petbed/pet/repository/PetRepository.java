@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 @NullMarked
 public interface PetRepository extends JpaRepository<Pet, Long> {
 
-    Page<Pet> findByOwnerId(Long ownerId, Pageable pageable);
+    Page<Pet> findByOwnerIdOrderByUpdatedAtDesc(Long ownerId, Pageable pageable);
 
-    Page<Pet> findByOwnerIdAndStatus(Long ownerId, PetStatus status, Pageable pageable);
+    Page<Pet> findByOwnerIdAndStatusOrderByUpdatedAtDesc(Long ownerId, PetStatus status, Pageable pageable);
 }

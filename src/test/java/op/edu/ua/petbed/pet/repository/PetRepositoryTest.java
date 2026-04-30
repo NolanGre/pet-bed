@@ -108,7 +108,7 @@ class PetRepositoryTest extends PostgresTestContainer {
             em.clear();
 
             // when
-            Page<Pet> result = underTest.findByOwnerId(ownerUserId, PageRequest.of(0, 10));
+            Page<Pet> result = underTest.findByOwnerIdOrderByUpdatedAtDesc(ownerUserId, PageRequest.of(0, 10));
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(3);
@@ -117,7 +117,7 @@ class PetRepositoryTest extends PostgresTestContainer {
         @Test
         void owner_without_pets_returns_empty_page() {
             // when
-            Page<Pet> result = underTest.findByOwnerId(999L, PageRequest.of(0, 10));
+            Page<Pet> result = underTest.findByOwnerIdOrderByUpdatedAtDesc(999L, PageRequest.of(0, 10));
 
             // then
             assertThat(result).isEmpty();
@@ -133,8 +133,8 @@ class PetRepositoryTest extends PostgresTestContainer {
             em.clear();
 
             // when
-            Page<Pet> page1 = underTest.findByOwnerId(ownerUserId, PageRequest.of(0, 2));
-            Page<Pet> page2 = underTest.findByOwnerId(ownerUserId, PageRequest.of(1, 2));
+            Page<Pet> page1 = underTest.findByOwnerIdOrderByUpdatedAtDesc(ownerUserId, PageRequest.of(0, 2));
+            Page<Pet> page2 = underTest.findByOwnerIdOrderByUpdatedAtDesc(ownerUserId, PageRequest.of(1, 2));
 
             // then
             assertThat(page1.getTotalElements()).isEqualTo(6);
@@ -143,7 +143,7 @@ class PetRepositoryTest extends PostgresTestContainer {
         }
 
         @Test
-        void sorted_by_created_at_desc() {
+        void sorted_by_updated_at_desc() {
             // given
             Pet first = underTest.save(createPet("First", ownerUserId));
             em.flush();
@@ -152,7 +152,7 @@ class PetRepositoryTest extends PostgresTestContainer {
             em.clear();
 
             // when
-            Page<Pet> result = underTest.findByOwnerId(ownerUserId, PageRequest.of(0, 10, Sort.by("createdAt").descending()));
+            Page<Pet> result = underTest.findByOwnerIdOrderByUpdatedAtDesc(ownerUserId, PageRequest.of(0, 10));
 
             // then
             assertThat(result.getContent()).hasSizeGreaterThanOrEqualTo(2);
