@@ -67,7 +67,7 @@ public class LostFoundMatchesCallbackHandler implements CallbackHandler {
         // Send new message with recommendation
         return ResponseBuilder.sendPhoto(chatId, pet.photoId())
                 .caption(buildCaption(lostRequest, pet))
-                .keyboard(buildKeyboard(finderId))
+                .keyboard(buildKeyboard())
                 .build();
     }
 
@@ -89,7 +89,7 @@ public class LostFoundMatchesCallbackHandler implements CallbackHandler {
             LostRequestDTO lostRequest = lostRequestService.findById(nextLostRequestId.get());
 
             // Only return if contact_info is present
-            if (lostRequest.contactInfo() != null && !lostRequest.contactInfo().isBlank()) {
+            if (!lostRequest.contactInfo().isBlank()) {
                 return lostRequest;
             }
 
@@ -106,31 +106,27 @@ public class LostFoundMatchesCallbackHandler implements CallbackHandler {
         sb.append("🐾 ").append(pet.name()).append("\n\n");
 
         // Pet details
-        if (pet.breed() != null && !pet.breed().isBlank()) {
+        if (!pet.breed().isBlank()) {
             sb.append("Порода: ").append(pet.breed()).append("\n");
         }
-        if (pet.color() != null && !pet.color().isBlank()) {
+        if (!pet.color().isBlank()) {
             sb.append("Колір: ").append(pet.color()).append("\n");
         }
-        if (pet.colorPattern() != null && !pet.colorPattern().isBlank()) {
+        if (!pet.colorPattern().isBlank()) {
             sb.append("Окрас: ").append(pet.colorPattern()).append("\n");
         }
-        if (pet.sex() != null) {
-            String sexText = switch (pet.sex()) {
-                case MALE -> "Хлопчик";
-                case FEMALE -> "Дівчинка";
-            };
-            sb.append("Стать: ").append(sexText).append("\n");
-        }
-        if (pet.size() != null) {
-            String sizeText = switch (pet.size()) {
-                case SMALL -> "Малий";
-                case MEDIUM -> "Середній";
-                case LARGE -> "Великий";
-            };
-            sb.append("Розмір: ").append(sizeText).append("\n");
-        }
-        if (pet.specialMarks() != null && !pet.specialMarks().isBlank()) {
+        String sexText = switch (pet.sex()) {
+            case MALE -> "Хлопчик";
+            case FEMALE -> "Дівчинка";
+        };
+        sb.append("Стать: ").append(sexText).append("\n");
+        String sizeText = switch (pet.size()) {
+            case SMALL -> "Малий";
+            case MEDIUM -> "Середній";
+            case LARGE -> "Великий";
+        };
+        sb.append("Розмір: ").append(sizeText).append("\n");
+        if (!pet.specialMarks().isBlank()) {
             sb.append("Особливі прикмети: ").append(pet.specialMarks()).append("\n");
         }
 
@@ -139,10 +135,10 @@ public class LostFoundMatchesCallbackHandler implements CallbackHandler {
         return sb.toString();
     }
 
-    private InlineKeyboardMarkup buildKeyboard(Long finderId) {
+    private InlineKeyboardMarkup buildKeyboard() {
         return InlineKeyboardBuilder.builder()
                 .addButton("➡️ Наступна", CallbackId.LOST_FOUND_MATCHES)
-                .addButton("⬅️ Повернутись", CallbackId.LOST_FOUND)
+                .backButtonTo(CallbackId.LOST)
                 .build();
     }
 

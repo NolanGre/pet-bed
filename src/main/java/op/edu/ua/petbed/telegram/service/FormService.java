@@ -67,9 +67,17 @@ public class FormService {
 
         sendInfoMessage(chatId, false);
 
-        return ResponseBuilder.sendMessage(chatId)
-                .text(entity.nextStep().prompt())
-                .build();
+        FormStep firstStep = entity.nextStep();
+        var builder = ResponseBuilder.sendMessage(chatId)
+                .text(firstStep.prompt());
+
+        if (firstStep.isChoice()) {
+            builder.keyboard(InlineKeyboardBuilder.builder()
+                    .paginatedList(toPageDto(firstStep), new CallbackData(CallbackId.FORM_ENUM_LIST.id(), null, 0))
+                    .build());
+        }
+
+        return builder.build();
     }
 
     /**
@@ -85,9 +93,17 @@ public class FormService {
 
         sendInfoMessage(chatId, true);
 
-        return ResponseBuilder.sendMessage(chatId)
-                .text(entity.nextStep().prompt())
-                .build();
+        FormStep firstStep = entity.nextStep();
+        var builder = ResponseBuilder.sendMessage(chatId)
+                .text(firstStep.prompt());
+
+        if (firstStep.isChoice()) {
+            builder.keyboard(InlineKeyboardBuilder.builder()
+                    .paginatedList(toPageDto(firstStep), new CallbackData(CallbackId.FORM_ENUM_LIST.id(), null, 0))
+                    .build());
+        }
+
+        return builder.build();
     }
 
     /**

@@ -73,20 +73,14 @@ public class LostClaimPetCallbackHandler implements CallbackHandler {
         sb.append("🐾 Підтвердження знахідки\n\n");
 
         sb.append("Ви впевнені, що це ваша тварина?\n\n");
-
         sb.append("📅 Анкета від: ").append(DATE_FORMATTER.format(dto.foundRequestCreatedAt())).append("\n");
-
-        if (dto.distanceKm() != null) {
-            sb.append(String.format("📍 Відстань: %.1f км\n", dto.distanceKm()));
-        }
-
+        sb.append(String.format("📍 Відстань: %.1f км\n", dto.distanceKm()));
         sb.append(String.format("🎯 Схожість: %.1f%%\n\n", dto.score().doubleValue() * 100));
 
+        sb.append("⚠️ Ящо ви зараз повернетесь, тварину більше не можна буде підтвердити.\n");
         sb.append("📝 Опис:\n").append(dto.description()).append("\n\n");
-
         sb.append("⚠️ При підтвердженні:\n");
         sb.append("• Геолокація тварини буде оновлена\n");
-        sb.append("• Ви можете зв'язатися з людиною, що знайшла тварину\n");
         sb.append("• Пошук залишиться активним");
 
         return sb.toString();

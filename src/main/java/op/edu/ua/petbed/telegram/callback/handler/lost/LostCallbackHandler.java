@@ -1,6 +1,7 @@
 package op.edu.ua.petbed.telegram.callback.handler.lost;
 
 import lombok.RequiredArgsConstructor;
+import op.edu.ua.petbed.lost.FinderRecommendationService;
 import op.edu.ua.petbed.lost.LostRequestService;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
@@ -28,6 +29,7 @@ public class LostCallbackHandler implements CallbackHandler {
 
     private final LostRequestService lostRequestService;
     private final TelegramMessageService telegramMessageService;
+    private final FinderRecommendationService finderRecommendationService;
 
     @Override
     public CallbackId getCallbackId() {
@@ -36,6 +38,10 @@ public class LostCallbackHandler implements CallbackHandler {
 
     @Override
     public BotApiMethod<?> handle(CallbackQueryContext context) {
+        // Clear any existing finder recommendation cache when entering Lost menu
+        // This handles the case when user clicks "back" from recommendations
+        finderRecommendationService.remove(context.auth().userInternalId());
+
         return mapToResponse(context);
     }
 

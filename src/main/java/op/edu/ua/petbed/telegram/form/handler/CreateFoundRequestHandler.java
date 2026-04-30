@@ -3,8 +3,6 @@ package op.edu.ua.petbed.telegram.form.handler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
-import op.edu.ua.petbed.common.model.PetSex;
-import op.edu.ua.petbed.common.model.PetSize;
 import op.edu.ua.petbed.common.model.PetType;
 import op.edu.ua.petbed.lost.FoundRequestService;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
@@ -72,9 +70,9 @@ public class CreateFoundRequestHandler implements FormSubmissionHandler {
         return ResponseBuilder.sendMessage(data.chatId())
                 .text("""
                         ✅ Анкету збережено!
-
+                        
                         Ми знайшли потенційних власників для цієї тварини.
-
+                        
                         ⚠️ Якщо ви натиснете 'Повернутись', переглянути анкети буде неможливо.
                         """)
                 .keyboard(keyboard)
@@ -120,7 +118,7 @@ public class CreateFoundRequestHandler implements FormSubmissionHandler {
     private InlineKeyboardMarkup buildSuccessKeyboard() {
         return InlineKeyboardBuilder.builder()
                 .addButton("🔍 Переглянути рекомендації", CallbackId.LOST_FOUND_MATCHES)
-                .addButton("⬅️ Повернутись", CallbackId.MENU)
+                .backButtonTo(CallbackId.MENU)
                 .build();
     }
 }

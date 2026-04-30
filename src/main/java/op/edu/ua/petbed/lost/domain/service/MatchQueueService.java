@@ -114,25 +114,23 @@ public class MatchQueueService implements op.edu.ua.petbed.lost.MatchQueueQueryS
 
     /**
      * Gets the next recommendation for the owner and marks it as viewed.
-     * Returns the first NEW or VIEWED entry sorted by score descending.
+     * Returns the first NEW entry sorted by score descending.
      *
      * @param lostRequestId the ID of the lost request
      * @return the next recommendation, or empty if none available
      */
     @Transactional
     public java.util.Optional<MatchRecommendationDTO> getNextRecommendation(Long lostRequestId) {
-        List<ViewingStatus> statuses = List.of(ViewingStatus.NEW, ViewingStatus.VIEWED);
+        List<ViewingStatus> statuses = List.of(ViewingStatus.NEW);
         List<MatchQueueEntry> entries = matchQueueRepository.findByLostRequestIdAndViewingStatusIn(lostRequestId, statuses);
 
         return entries.stream()
                 .sorted((e1, e2) -> e2.getScore().compareTo(e1.getScore()))
                 .findFirst()
                 .map(entry -> {
-                    if (entry.getViewingStatus() == ViewingStatus.NEW) {
-                        entry.markAsViewed();
-                        matchQueueRepository.save(entry);
-                        log.info("Marked match queue entry as viewed: id={}", entry.getIdOrThrow());
-                    }
+                    entry.markAsViewed();
+                    matchQueueRepository.save(entry);
+                    log.info("Marked match queue entry as viewed: id={}", entry.getIdOrThrow());
                     return mapToDTO(entry);
                 });
     }

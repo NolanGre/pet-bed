@@ -45,6 +45,7 @@ public class LostRequestServiceImpl implements LostRequestService {
 
         LostRequest lostRequest = LostRequest.create(pet, contactInfo, location);
         LostRequest saved = lostRequestRepository.save(lostRequest);
+        lostRequestRepository.flush();
 
         petService.updateStatus(petId, PetStatus.IN_LOST);
 

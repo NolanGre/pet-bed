@@ -37,6 +37,7 @@ public class FoundRequestServiceImpl implements FoundRequestService {
 
         FoundRequest foundRequest = FoundRequest.create(finder.id(), photoUrl, petType, location, description);
         FoundRequest saved = foundRequestRepository.save(foundRequest);
+        foundRequestRepository.flush();
 
         log.info("Created found request: id={}, finderId={}, petType={}", saved.getIdOrThrow(), finderId, petType);
 

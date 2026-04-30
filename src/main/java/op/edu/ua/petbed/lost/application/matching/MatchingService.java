@@ -202,7 +202,6 @@ public class MatchingService {
         String sql = """
                 SELECT lr.id FROM lost_requests lr
                 WHERE lr.pet_type = ?
-                AND lr.status = 'ACTIVE'
                 AND ST_DWithin(lr.last_seen_location, ?::geography, ?)
                 """;
 
