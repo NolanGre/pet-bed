@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.PetType;
 import op.edu.ua.petbed.lost.FoundRequestService;
+import op.edu.ua.petbed.lost.application.dto.CreateFoundRequestDTO;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.form.FormData;
 import op.edu.ua.petbed.telegram.form.scheme.FormStep;
@@ -58,11 +59,22 @@ public class CreateFoundRequestHandler implements FormSubmissionHandler {
         var location = data.location(steps.get(2));
         Point point = createPoint(location.latitude(), location.longitude());
 
-        // Steps 3-8: Build description from optional text fields
-        String description = buildDescription(data, steps);
+        // Build DTO using builder pattern
+        CreateFoundRequestDTO dto = CreateFoundRequestDTO.builder()
+                .finderId(finderId)
+                .photoUrl(photoUrl)
+                .petType(petType)
+                .location(point)
+                .breed(data.textOrNull(steps.get(3)))
+                .color(data.textOrNull(steps.get(4)))
+                .coat(data.textOrNull(steps.get(5)))
+                .sex(data.choiceOrNull(steps.get(6)))
+                .size(data.choiceOrNull(steps.get(7)))
+                .features(data.textOrNull(steps.get(8)))
+                .build();
 
         // Create found request
-        foundRequestService.create(finderId, photoUrl, petType, point, description);
+        foundRequestService.create(dto);
 
         // Build keyboard with two buttons
         InlineKeyboardMarkup keyboard = buildSuccessKeyboard();
@@ -77,38 +89,6 @@ public class CreateFoundRequestHandler implements FormSubmissionHandler {
                         """)
                 .keyboard(keyboard)
                 .build();
-    }
-
-    private String buildDescription(FormData data, List<FormStep> steps) {
-        StringBuilder sb = new StringBuilder();
-
-        // Steps 3-5: Text fields (breed, color, coat type)
-        for (int i = 3; i <= 5; i++) {
-            String value = data.textOrNull(steps.get(i));
-            if (value != null && !value.isBlank()) {
-                sb.append(value).append(" ");
-            }
-        }
-
-        // Step 6: Choice - sex
-        String sex = data.choiceOrNull(steps.get(6));
-        if (sex != null && !sex.isBlank()) {
-            sb.append(sex).append(" ");
-        }
-
-        // Step 7: Choice - size
-        String size = data.choiceOrNull(steps.get(7));
-        if (size != null && !size.isBlank()) {
-            sb.append(size).append(" ");
-        }
-
-        // Step 8: Text - special features
-        String specialFeatures = data.textOrNull(steps.get(8));
-        if (specialFeatures != null && !specialFeatures.isBlank()) {
-            sb.append(specialFeatures).append(" ");
-        }
-
-        return sb.toString().trim();
     }
 
     private Point createPoint(double latitude, double longitude) {

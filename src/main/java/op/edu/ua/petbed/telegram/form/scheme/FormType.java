@@ -44,7 +44,7 @@ public enum FormType {
     CREATE_LOST_REQUEST(List.of(
             FormStep.text("📞 Введіть контактну інформацію для зв'язку з вами"),
             FormStep.location("📍 Надішліть геолокацію останнього місця, де бачили тварину"),
-            FormStep.text("📝 Введіть особливі прикмети тварини (допоможе у пошуку)").optional()
+            FormStep.text("📝 Введіть особливі прикмети тварини (допоможе у пошуку та оновить тварину)").optional()
     )),
     CREATE_FOUND_REQUEST(List.of(
             FormStep.choice("🐾 Оберіть тип тварини", List.of(PetType.values())),

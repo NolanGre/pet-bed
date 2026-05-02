@@ -78,11 +78,37 @@ public class LostClaimPetCallbackHandler implements CallbackHandler {
         sb.append(String.format("🎯 Схожість: %.1f%%\n\n", dto.score().doubleValue() * 100));
 
         sb.append("⚠️ Ящо ви зараз повернетесь, тварину більше не можна буде підтвердити.\n");
-        sb.append("📝 Опис:\n").append(dto.description()).append("\n\n");
+        sb.append(formatDescription(dto)).append("\n\n");
         sb.append("⚠️ При підтвердженні:\n");
         sb.append("• Геолокація тварини буде оновлена\n");
         sb.append("• Пошук залишиться активним");
 
         return sb.toString();
+    }
+
+    private String formatDescription(MatchRecommendationDTO dto) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("📝 Опис:\n");
+
+        if (dto.breedText() != null && !dto.breedText().isBlank()) {
+            sb.append("🐩 Порода: ").append(dto.breedText()).append("\n");
+        }
+        if (dto.colorText() != null && !dto.colorText().isBlank()) {
+            sb.append("🎨 Колір: ").append(dto.colorText()).append("\n");
+        }
+        if (dto.coatText() != null && !dto.coatText().isBlank()) {
+            sb.append("🖼️ Окрас: ").append(dto.coatText()).append("\n");
+        }
+        if (dto.sizeText() != null && !dto.sizeText().isBlank()) {
+            sb.append("📏 Розмір: ").append(dto.sizeText()).append("\n");
+        }
+        if (dto.sexText() != null && !dto.sexText().isBlank()) {
+            sb.append("⚧ Стать: ").append(dto.sexText()).append("\n");
+        }
+        if (dto.featuresText() != null && !dto.featuresText().isBlank()) {
+            sb.append("✨ Особливі прикмети: ").append(dto.featuresText()).append("\n");
+        }
+
+        return sb.toString().trim();
     }
 }

@@ -5,15 +5,15 @@ import lombok.extern.slf4j.Slf4j;
 import op.edu.ua.petbed.common.dto.FoundRequestDTO;
 import op.edu.ua.petbed.common.dto.UserDTO;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
-import op.edu.ua.petbed.common.model.PetType;
 import op.edu.ua.petbed.lost.FoundRequestService;
+import op.edu.ua.petbed.lost.application.dto.CreateFoundRequestDTO;
 import op.edu.ua.petbed.lost.application.event.FoundRequestCreatedEvent;
 import op.edu.ua.petbed.lost.application.matching.TextNormalizer;
 import op.edu.ua.petbed.lost.domain.model.FoundRequest;
 import op.edu.ua.petbed.lost.domain.repository.FoundRequestRepository;
 import op.edu.ua.petbed.user.UserService;
 import org.jspecify.annotations.NullMarked;
-import org.locationtech.jts.geom.Point;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,16 +34,28 @@ public class FoundRequestServiceImpl implements FoundRequestService {
 
     @Override
     @Transactional
-    public FoundRequestDTO create(Long finderId, String photoUrl, PetType petType, Point location, String description) {
-        UserDTO finder = userService.findById(finderId);
+    public FoundRequestDTO create(CreateFoundRequestDTO dto) {
+        UserDTO finder = userService.findById(dto.finderId());
 
-        String normalizedDescription = textNormalizer.normalize(description);
+        CreateFoundRequestDTO normalizedDto = CreateFoundRequestDTO.builder()
+                .finderId(dto.finderId())
+                .photoUrl(dto.photoUrl())
+                .petType(dto.petType())
+                .location(dto.location())
+                .breed(normalize(dto.breed()))
+                .color(normalize(dto.color()))
+                .coat(normalize(dto.coat()))
+                .size(normalizeSize(dto.size()))
+                .sex(normalizeSex(dto.sex()))
+                .features(normalize(dto.features()))
+                .build();
 
-        FoundRequest foundRequest = FoundRequest.create(finder.id(), photoUrl, petType, location, normalizedDescription);
+        FoundRequest foundRequest = FoundRequest.create(normalizedDto);
         FoundRequest saved = foundRequestRepository.save(foundRequest);
         foundRequestRepository.flush();
 
-        log.info("Created found request: id={}, finderId={}, petType={}", saved.getIdOrThrow(), finderId, petType);
+        log.info("Created found request: id={}, finderId={}, petType={}",
+                saved.getIdOrThrow(), dto.finderId(), dto.petType());
 
         eventPublisher.publishEvent(new FoundRequestCreatedEvent(saved.getIdOrThrow()));
 
@@ -57,7 +69,12 @@ public class FoundRequestServiceImpl implements FoundRequestService {
                 saved.getPhotoUrl(),
                 saved.getPetType(),
                 saved.getLocation(),
-                saved.getDescription(),
+                saved.getBreedText(),
+                saved.getColorText(),
+                saved.getCoatText(),
+                saved.getSizeText(),
+                saved.getSexText(),
+                saved.getFeaturesText(),
                 createdAt
         );
     }
@@ -78,7 +95,12 @@ public class FoundRequestServiceImpl implements FoundRequestService {
                 foundRequest.getPhotoUrl(),
                 foundRequest.getPetType(),
                 foundRequest.getLocation(),
-                foundRequest.getDescription(),
+                foundRequest.getBreedText(),
+                foundRequest.getColorText(),
+                foundRequest.getCoatText(),
+                foundRequest.getSizeText(),
+                foundRequest.getSexText(),
+                foundRequest.getFeaturesText(),
                 createdAt
         );
     }
@@ -100,10 +122,45 @@ public class FoundRequestServiceImpl implements FoundRequestService {
                             fr.getPhotoUrl(),
                             fr.getPetType(),
                             fr.getLocation(),
-                            fr.getDescription(),
+                            fr.getBreedText(),
+                            fr.getColorText(),
+                            fr.getCoatText(),
+                            fr.getSizeText(),
+                            fr.getSexText(),
+                            fr.getFeaturesText(),
                             ca
                     );
                 })
                 .toList();
+    }
+
+    private @Nullable String normalize(@Nullable String text) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+        return textNormalizer.normalize(text);
+    }
+
+    private @Nullable String normalizeSize(@Nullable String size) {
+        if (size == null || size.isBlank()) {
+            return null;
+        }
+        return switch (size.toUpperCase()) {
+            case "SMALL" -> "малий";
+            case "MEDIUM" -> "середній";
+            case "LARGE" -> "великий";
+            default -> size.trim().toLowerCase();
+        };
+    }
+
+    private @Nullable String normalizeSex(@Nullable String sex) {
+        if (sex == null || sex.isBlank()) {
+            return null;
+        }
+        return switch (sex.toUpperCase()) {
+            case "MALE" -> "він";
+            case "FEMALE" -> "вона";
+            default -> sex.trim().toLowerCase();
+        };
     }
 }

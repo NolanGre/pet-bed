@@ -6,6 +6,7 @@ import op.edu.ua.petbed.common.dto.PetDTO;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.AbstractAuditableEntity;
 import op.edu.ua.petbed.common.model.PetType;
+import op.edu.ua.petbed.lost.application.dto.CreateLostRequestDTO;
 import org.hibernate.proxy.HibernateProxy;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -41,48 +42,59 @@ public class LostRequest extends AbstractAuditableEntity {
     @Column(name = "pet_type", nullable = false)
     private PetType petType;
 
-    @Column(name = "search_text", nullable = false)
-    private String searchText;
+    @Column(name = "breed_text")
+    private @Nullable String breedText;
+
+    @Column(name = "color_text")
+    private @Nullable String colorText;
+
+    @Column(name = "coat_text")
+    private @Nullable String coatText;
+
+    @Column(name = "size_text")
+    private @Nullable String sizeText;
+
+    @Column(name = "sex_text")
+    private @Nullable String sexText;
+
+    @Column(name = "features_text")
+    private @Nullable String featuresText;
 
     public static LostRequest create(PetDTO pet, String contactInfo, Point location) {
         if (contactInfo.isBlank()) {
             throw new PetBedException("Contact info is required to create a lost request", PetBedException.ErrorCode.LOST_REQUEST_INVALID_INPUT);
         }
 
-        String searchText = generateSearchText(pet);
+        CreateLostRequestDTO dto = CreateLostRequestDTO.builder()
+                .petId(pet.id())
+                .contactInfo(contactInfo)
+                .location(location)
+                .petType(pet.type())
+                .breedText(pet.breed())
+                .colorText(pet.color())
+                .coatText(pet.colorPattern())
+                .sizeText(pet.size() != null ? pet.size().name() : null)
+                .sexText(pet.sex() != null ? pet.sex().name() : null)
+                .featuresText(pet.specialMarks())
+                .build();
 
-        return new LostRequest(null, pet.id(), contactInfo, location, pet.type(), searchText);
+        return create(dto);
     }
 
-    /**
-     * Factory method that accepts pre-normalized search text.
-     * Used when text normalization is performed by the service layer.
-     */
-    public static LostRequest createWithSearchText(PetDTO pet, String contactInfo, Point location, String searchText) {
-        if (contactInfo.isBlank()) {
-            throw new PetBedException("Contact info is required to create a lost request", PetBedException.ErrorCode.LOST_REQUEST_INVALID_INPUT);
-        }
-        if (searchText.isBlank()) {
-            throw new PetBedException("Search text is required", PetBedException.ErrorCode.LOST_REQUEST_INVALID_INPUT);
-        }
-
-        return new LostRequest(null, pet.id(), contactInfo, location, pet.type(), searchText);
-    }
-
-    /**
-     * Factory method for testing purposes. Allows setting all fields directly.
-     */
-    public static LostRequest createForTest(Long id, Long petId, String contactInfo, Point location, PetType petType, String searchText) {
-        return new LostRequest(id, petId, contactInfo, location, petType, searchText);
-    }
-
-    public static String generateSearchText(PetDTO pet) {
-        String sb = pet.name() + "; " +
-                pet.breed() + "; " +
-                pet.color() + "; " +
-                pet.colorPattern() + "; " +
-                pet.specialMarks();
-        return sb.trim();
+    public static LostRequest create(CreateLostRequestDTO dto) {
+        return new LostRequest(
+                null,
+                dto.petId(),
+                dto.contactInfo(),
+                dto.location(),
+                dto.petType(),
+                dto.breedText(),
+                dto.colorText(),
+                dto.coatText(),
+                dto.sizeText(),
+                dto.sexText(),
+                dto.featuresText()
+        );
     }
 
     public long getIdOrThrow() {

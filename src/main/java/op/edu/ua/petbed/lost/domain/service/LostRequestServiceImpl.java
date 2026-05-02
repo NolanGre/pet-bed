@@ -8,11 +8,13 @@ import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.PetStatus;
 import op.edu.ua.petbed.lost.LostRequestService;
 import op.edu.ua.petbed.lost.application.event.LostRequestCreatedEvent;
+import op.edu.ua.petbed.lost.application.dto.CreateLostRequestDTO;
 import op.edu.ua.petbed.lost.application.matching.TextNormalizer;
 import op.edu.ua.petbed.lost.domain.model.LostRequest;
 import op.edu.ua.petbed.lost.domain.repository.LostRequestRepository;
 import op.edu.ua.petbed.pet.PetService;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.locationtech.jts.geom.Point;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -45,10 +47,20 @@ public class LostRequestServiceImpl implements LostRequestService {
 
         PetDTO pet = petService.findById(petId);
 
-        String searchText = LostRequest.generateSearchText(pet);
-        String normalizedSearchText = textNormalizer.normalize(searchText);
+        CreateLostRequestDTO dto = CreateLostRequestDTO.builder()
+                .petId(pet.id())
+                .contactInfo(contactInfo)
+                .location(location)
+                .petType(pet.type())
+                .breedText(normalize(pet.breed()))
+                .colorText(normalize(pet.color()))
+                .coatText(normalize(pet.colorPattern()))
+                .sizeText(normalizeSize(pet.size() != null ? pet.size().name() : null))
+                .sexText(normalizeSex(pet.sex() != null ? pet.sex().name() : null))
+                .featuresText(normalize(pet.specialMarks()))
+                .build();
 
-        LostRequest lostRequest = LostRequest.createWithSearchText(pet, contactInfo, location, normalizedSearchText);
+        LostRequest lostRequest = LostRequest.create(dto);
         LostRequest saved = lostRequestRepository.save(lostRequest);
         lostRequestRepository.flush();
 
@@ -153,5 +165,35 @@ public class LostRequestServiceImpl implements LostRequestService {
     @Override
     public boolean existsByPetId(Long petId) {
         return lostRequestRepository.existsByPetId(petId);
+    }
+
+    private @Nullable String normalize(@Nullable String text) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+        return textNormalizer.normalize(text);
+    }
+
+    private @Nullable String normalizeSize(@Nullable String size) {
+        if (size == null || size.isBlank()) {
+            return null;
+        }
+        return switch (size.toUpperCase()) {
+            case "SMALL" -> "малий";
+            case "MEDIUM" -> "середній";
+            case "LARGE" -> "великий";
+            default -> size.trim().toLowerCase();
+        };
+    }
+
+    private @Nullable String normalizeSex(@Nullable String sex) {
+        if (sex == null || sex.isBlank()) {
+            return null;
+        }
+        return switch (sex.toUpperCase()) {
+            case "MALE" -> "він";
+            case "FEMALE" -> "вона";
+            default -> sex.trim().toLowerCase();
+        };
     }
 }

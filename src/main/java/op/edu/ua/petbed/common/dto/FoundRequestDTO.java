@@ -10,6 +10,8 @@ import java.time.Instant;
  * DTO for FoundRequest entity.
  * Located in common/dto for Spring Modulith compliance.
  */
+import org.jspecify.annotations.Nullable;
+
 @NullMarked
 public record FoundRequestDTO(
         Long id,
@@ -17,7 +19,12 @@ public record FoundRequestDTO(
         String photoUrl,
         PetType petType,
         Point location,
-        String description,
+        @Nullable String breedText,
+        @Nullable String colorText,
+        @Nullable String coatText,
+        @Nullable String sizeText,
+        @Nullable String sexText,
+        @Nullable String featuresText,
         Instant createdAt
 ) {
 }

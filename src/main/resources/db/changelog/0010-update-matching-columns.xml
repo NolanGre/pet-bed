@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.11.xsd">
+
+    <!-- ==================== DROP OLD INDEXES ==================== -->
+
+    <changeSet id="0010-01-drop-lost-search-text-index" author="developer">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM pg_indexes WHERE indexname = 'idx_lost_search_text'
+            </sqlCheck>
+        </preConditions>
+        <sql>DROP INDEX idx_lost_search_text;</sql>
+    </changeSet>
+
+    <changeSet id="0010-02-drop-found-description-index" author="developer">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM pg_indexes WHERE indexname = 'idx_found_description_trgm'
+            </sqlCheck>
+        </preConditions>
+        <sql>DROP INDEX idx_found_description_trgm;</sql>
+    </changeSet>
+
+    <!-- ==================== DROP OLD COLUMNS ==================== -->
+
+    <changeSet id="0010-03-drop-lost-search-text-column" author="developer">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="lost_requests" columnName="search_text"/>
+        </preConditions>
+        <dropColumn tableName="lost_requests" columnName="search_text"/>
+    </changeSet>
+
+    <changeSet id="0010-04-drop-found-description-column" author="developer">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="found_requests" columnName="description"/>
+        </preConditions>
+        <dropColumn tableName="found_requests" columnName="description"/>
+    </changeSet>
+
+    <!-- ==================== ADD NEW COLUMNS TO LOST_REQUESTS ==================== -->
+
+    <changeSet id="0010-05-add-lost-matching-columns" author="developer">
+        <addColumn tableName="lost_requests">
+            <column name="breed_text" type="VARCHAR(100)"/>
+            <column name="color_text" type="VARCHAR(100)"/>
+            <column name="coat_text" type="VARCHAR(100)"/>
+            <column name="size_text" type="VARCHAR(20)"/>
+            <column name="sex_text" type="VARCHAR(20)"/>
+            <column name="features_text" type="VARCHAR(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- ==================== ADD NEW COLUMNS TO FOUND_REQUESTS ==================== -->
+
+    <changeSet id="0010-06-add-found-matching-columns" author="developer">
+        <addColumn tableName="found_requests">
+            <column name="breed_text" type="VARCHAR(100)"/>
+            <column name="color_text" type="VARCHAR(100)"/>
+            <column name="coat_text" type="VARCHAR(100)"/>
+            <column name="size_text" type="VARCHAR(20)"/>
+            <column name="sex_text" type="VARCHAR(20)"/>
+            <column name="features_text" type="VARCHAR(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- ==================== CREATE INDEXES FOR LOST_REQUESTS ==================== -->
+
+    <changeSet id="0010-07-create-lost-matching-indexes" author="developer">
+        <createIndex tableName="lost_requests" indexName="idx_lost_breed">
+            <column name="breed_text"/>
+        </createIndex>
+
+        <createIndex tableName="lost_requests" indexName="idx_lost_color">
+            <column name="color_text"/>
+        </createIndex>
+
+        <createIndex tableName="lost_requests" indexName="idx_lost_coat">
+            <column name="coat_text"/>
+        </createIndex>
+
+        <createIndex tableName="lost_requests" indexName="idx_lost_size">
+            <column name="size_text"/>
+        </createIndex>
+
+        <createIndex tableName="lost_requests" indexName="idx_lost_sex">
+            <column name="sex_text"/>
+        </createIndex>
+
+        <createIndex tableName="lost_requests" indexName="idx_lost_features">
+            <column name="features_text"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ==================== CREATE INDEXES FOR FOUND_REQUESTS ==================== -->
+
+    <changeSet id="0010-08-create-found-matching-indexes" author="developer">
+        <createIndex tableName="found_requests" indexName="idx_found_breed">
+            <column name="breed_text"/>
+        </createIndex>
+
+        <createIndex tableName="found_requests" indexName="idx_found_color">
+            <column name="color_text"/>
+        </createIndex>
+
+        <createIndex tableName="found_requests" indexName="idx_found_coat">
+            <column name="coat_text"/>
+        </createIndex>
+
+        <createIndex tableName="found_requests" indexName="idx_found_size">
+            <column name="size_text"/>
+        </createIndex>
+
+        <createIndex tableName="found_requests" indexName="idx_found_sex">
+            <column name="sex_text"/>
+        </createIndex>
+
+        <createIndex tableName="found_requests" indexName="idx_found_features">
+            <column name="features_text"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

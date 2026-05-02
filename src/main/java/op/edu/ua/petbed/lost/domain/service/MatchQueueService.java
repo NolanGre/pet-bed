@@ -166,7 +166,12 @@ public class MatchQueueService implements op.edu.ua.petbed.lost.MatchQueueQueryS
                 foundRequest.getIdOrThrow(),
                 entry.getScore(),
                 foundRequest.getPhotoUrl(),
-                foundRequest.getDescription(),
+                foundRequest.getBreedText(),
+                foundRequest.getColorText(),
+                foundRequest.getCoatText(),
+                foundRequest.getSizeText(),
+                foundRequest.getSexText(),
+                foundRequest.getFeaturesText(),
                 foundRequest.getLocation(),
                 Objects.requireNonNull(foundRequest.getCreatedAt()),
                 distanceKm

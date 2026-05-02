@@ -1,6 +1,7 @@
 package op.edu.ua.petbed.lost;
 
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.locationtech.jts.geom.Point;
 
 import java.math.BigDecimal;
@@ -17,7 +18,12 @@ public record MatchRecommendationDTO(
         Long foundRequestId,
         BigDecimal score,
         String photoUrl,
-        String description,
+        @Nullable String breedText,
+        @Nullable String colorText,
+        @Nullable String coatText,
+        @Nullable String sizeText,
+        @Nullable String sexText,
+        @Nullable String featuresText,
         Point location,
         Instant foundRequestCreatedAt,
         Double distanceKm

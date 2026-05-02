@@ -27,6 +27,13 @@ public class MatchingAlgorithm {
     private static final double TEXT_WEIGHT = 0.4;
     private static final double MAX_DISTANCE_KM = 50.0;
 
+    // Text matching field weights
+    private static final double BREED_WEIGHT = 0.35;
+    private static final double COLOR_WEIGHT = 0.30;
+    private static final double COAT_WEIGHT = 0.15;
+    private static final double SIZE_WEIGHT = 0.10;
+    private static final double SEX_WEIGHT = 0.10;
+
     private final JdbcTemplate jdbcTemplate;
 
     /**
@@ -40,11 +47,62 @@ public class MatchingAlgorithm {
      */
     public BigDecimal calculateScore(LostRequest lost, FoundRequest found) {
         double geoScore = calculateGeoScore(lost.getLastSeenLocation(), found.getLocation());
-        double textScore = calculateTextScore(lost.getSearchText(), found.getDescription());
+        double textScore = calculateGroupedTextScore(lost, found);
 
         double totalScore = (geoScore * GEO_WEIGHT) + (textScore * TEXT_WEIGHT);
 
         return BigDecimal.valueOf(totalScore).setScale(4, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Calculates grouped text similarity score using individual attribute fields.
+     * Uses field-specific weights defined as constants (BREED_WEIGHT, COLOR_WEIGHT, etc.).
+     */
+    private double calculateGroupedTextScore(LostRequest lost, FoundRequest found) {
+        double totalWeight = 0;
+        double weightedScore = 0;
+
+        if (lost.getBreedText() != null && found.getBreedText() != null) {
+            double score = calculateSimilarity(lost.getBreedText(), found.getBreedText());
+            weightedScore += score * BREED_WEIGHT;
+            totalWeight += BREED_WEIGHT;
+        }
+
+        if (lost.getColorText() != null && found.getColorText() != null) {
+            double score = calculateSimilarity(lost.getColorText(), found.getColorText());
+            weightedScore += score * COLOR_WEIGHT;
+            totalWeight += COLOR_WEIGHT;
+        }
+
+        if (lost.getCoatText() != null && found.getCoatText() != null) {
+            double score = calculateSimilarity(lost.getCoatText(), found.getCoatText());
+            weightedScore += score * COAT_WEIGHT;
+            totalWeight += COAT_WEIGHT;
+        }
+
+        if (lost.getSizeText() != null && found.getSizeText() != null) {
+            double score = lost.getSizeText().equalsIgnoreCase(found.getSizeText()) ? 1.0 : 0.0;
+            weightedScore += score * SIZE_WEIGHT;
+            totalWeight += SIZE_WEIGHT;
+        }
+
+        if (lost.getSexText() != null && found.getSexText() != null) {
+            double score = lost.getSexText().equalsIgnoreCase(found.getSexText()) ? 1.0 : 0.0;
+            weightedScore += score * SEX_WEIGHT;
+            totalWeight += SEX_WEIGHT;
+        }
+
+        if (totalWeight == 0) {
+            return 0.0;
+        }
+
+        return weightedScore / totalWeight;
+    }
+
+    private double calculateSimilarity(String text1, String text2) {
+        String sql = "SELECT similarity(?, ?)";
+        Double similarity = jdbcTemplate.queryForObject(sql, Double.class, text1, text2);
+        return similarity != null ? similarity : 0.0;
     }
 
     /**
@@ -85,23 +143,4 @@ public class MatchingAlgorithm {
         return String.format("SRID=4326;POINT(%f %f)", point.getX(), point.getY());
     }
 
-    /**
-     * Calculates the text similarity score using PostgreSQL pg_trgm.
-     * Uses the similarity() function which returns 0.0 to 1.0.
-     *
-     * @param searchText  the search text from the lost request
-     * @param description the description from the found request
-     * @return similarity score between 0.0 and 1.0
-     */
-    private double calculateTextScore(String searchText, String description) {
-        String sql = "SELECT similarity(?, ?)";
-        Double similarity = jdbcTemplate.queryForObject(
-                sql,
-                Double.class,
-                searchText,
-                description
-        );
-
-        return similarity != null ? similarity : 0.0;
-    }
 }

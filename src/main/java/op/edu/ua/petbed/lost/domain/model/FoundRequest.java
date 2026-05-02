@@ -5,6 +5,7 @@ import lombok.*;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.AbstractAuditableEntity;
 import op.edu.ua.petbed.common.model.PetType;
+import op.edu.ua.petbed.lost.application.dto.CreateFoundRequestDTO;
 import org.hibernate.proxy.HibernateProxy;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -41,18 +42,42 @@ public class FoundRequest extends AbstractAuditableEntity {
     @Column(nullable = false, columnDefinition = "GEOGRAPHY(POINT, 4326)")
     private Point location;
 
-    @Column(nullable = false)
-    private String description;
+    @Column(name = "breed_text")
+    private @Nullable String breedText;
 
-    public static FoundRequest create(Long finderId, String photoUrl, PetType petType, Point location, String description) {
-        if (photoUrl.isBlank()) {
+    @Column(name = "color_text")
+    private @Nullable String colorText;
+
+    @Column(name = "coat_text")
+    private @Nullable String coatText;
+
+    @Column(name = "size_text")
+    private @Nullable String sizeText;
+
+    @Column(name = "sex_text")
+    private @Nullable String sexText;
+
+    @Column(name = "features_text")
+    private @Nullable String featuresText;
+
+    public static FoundRequest create(CreateFoundRequestDTO dto) {
+        if (dto.photoUrl().isBlank()) {
             throw new PetBedException("Photo URL is required", PetBedException.ErrorCode.LOST_REQUEST_PHOTO_URL_REQUIRED);
         }
-        if (description.isBlank()) {
-            throw new PetBedException("Description is required", PetBedException.ErrorCode.LOST_REQUEST_DESCRIPTION_REQUIRED);
-        }
 
-        return new FoundRequest(null, finderId, photoUrl, petType, location, description);
+        return new FoundRequest(
+                null,
+                dto.finderId(),
+                dto.photoUrl(),
+                dto.petType(),
+                dto.location(),
+                dto.breed(),
+                dto.color(),
+                dto.coat(),
+                dto.size(),
+                dto.sex(),
+                dto.features()
+        );
     }
 
     public long getIdOrThrow() {

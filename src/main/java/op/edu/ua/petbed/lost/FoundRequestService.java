@@ -1,16 +1,15 @@
 package op.edu.ua.petbed.lost;
 
 import op.edu.ua.petbed.common.dto.FoundRequestDTO;
-import op.edu.ua.petbed.common.model.PetType;
+import op.edu.ua.petbed.lost.application.dto.CreateFoundRequestDTO;
 import org.jspecify.annotations.NullMarked;
-import org.locationtech.jts.geom.Point;
 
 import java.util.List;
 
 @NullMarked
 public interface FoundRequestService {
 
-    FoundRequestDTO create(Long finderId, String photoUrl, PetType petType, Point location, String description);
+    FoundRequestDTO create(CreateFoundRequestDTO dto);
 
     FoundRequestDTO findById(Long id);
 
