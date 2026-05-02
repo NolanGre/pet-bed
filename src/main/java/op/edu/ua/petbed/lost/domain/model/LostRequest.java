@@ -104,6 +104,14 @@ public class LostRequest extends AbstractAuditableEntity {
         return id;
     }
 
+    /**
+     * Updates the last seen location of the lost request.
+     * Called when the pet is found to update the location to where it was found.
+     */
+    public void updateLocation(Point newLocation) {
+        this.lastSeenLocation = newLocation;
+    }
+
     @Override
     public final boolean equals(@Nullable Object o) {
         if (this == o) return true;

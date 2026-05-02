@@ -167,6 +167,20 @@ public class LostRequestServiceImpl implements LostRequestService {
         return lostRequestRepository.existsByPetId(petId);
     }
 
+    @Override
+    @Transactional
+    public void updateLocation(Long lostRequestId, Point newLocation) {
+        LostRequest lostRequest = lostRequestRepository.findById(lostRequestId)
+                .orElseThrow(() -> new PetBedException("Lost request not found with id: " + lostRequestId,
+                        PetBedException.ErrorCode.LOST_REQUEST_REQUIRED));
+
+        lostRequest.updateLocation(newLocation);
+        lostRequestRepository.save(lostRequest);
+
+        log.info("Updated lost request location: id={}, location={}, {}",
+                lostRequestId, newLocation.getX(), newLocation.getY());
+    }
+
     private @Nullable String normalize(@Nullable String text) {
         if (text == null || text.isBlank()) {
             return null;

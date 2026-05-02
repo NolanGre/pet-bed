@@ -56,10 +56,9 @@ public class LostClaimPetConfirmCallbackHandler implements CallbackHandler {
         // Mark match as confirmed
         matchQueueService.markAsConfirmed(matchQueueId);
 
-        // Update pet location to the found location
-        // Note: This updates the pet's last_seen_location to help track where it was found
+        // Update lost request location to where the pet was found
         var foundLocation = recommendation.location();
-        updatePetLocation(petId, foundLocation);
+        lostRequestService.updateLocation(lostRequestId, foundLocation);
 
         log.info("User {} confirmed pet claim for matchQueueId={}, lostRequestId={}, petId={}",
                 context.auth().userInternalId(), matchQueueId, lostRequestId, petId);
@@ -73,13 +72,6 @@ public class LostClaimPetConfirmCallbackHandler implements CallbackHandler {
                 .build();
 
         return telegramMessageService.editOrSend(context, message);
-    }
-
-    private void updatePetLocation(Long petId, org.locationtech.jts.geom.Point location) {
-        // TODO: Implement updatePetLocation in PetService
-        // For now, we skip this step as the field might not exist yet
-        // The pet location should be updated to the found location
-        log.info("Would update pet {} location to: {}, {}", petId, location.getX(), location.getY());
     }
 
     private String buildSuccessMessage() {

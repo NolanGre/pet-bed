@@ -22,4 +22,13 @@ public interface LostRequestService {
     void cancel(Long lostRequestId);
 
     boolean existsByPetId(Long petId);
+
+    /**
+     * Updates the location of a lost request.
+     * Used when a pet is found to update the last seen location.
+     *
+     * @param lostRequestId the ID of the lost request
+     * @param newLocation   the new location where the pet was found
+     */
+    void updateLocation(Long lostRequestId, Point newLocation);
 }
