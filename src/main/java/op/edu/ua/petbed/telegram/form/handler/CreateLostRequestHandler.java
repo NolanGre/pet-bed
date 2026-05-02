@@ -69,7 +69,7 @@ public class CreateLostRequestHandler implements FormSubmissionHandler {
 
         // Return success message with back button
         return ResponseBuilder.sendMessage(data.chatId())
-                .text("✅ Пошук запущено! Ми повідомимо вас про можливі збіги.")
+                .text("✅ Пошук запущено! Ви можете переглянути потенційні збіги в меню пошуків.")
                 .keyboard(InlineKeyboardBuilder.builder()
                         .backButtonTo(data.returnCallback())
                         .build())

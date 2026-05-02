@@ -8,6 +8,7 @@ import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.PetType;
 import op.edu.ua.petbed.lost.FoundRequestService;
 import op.edu.ua.petbed.lost.application.event.FoundRequestCreatedEvent;
+import op.edu.ua.petbed.lost.application.matching.TextNormalizer;
 import op.edu.ua.petbed.lost.domain.model.FoundRequest;
 import op.edu.ua.petbed.lost.domain.repository.FoundRequestRepository;
 import op.edu.ua.petbed.user.UserService;
@@ -29,13 +30,16 @@ public class FoundRequestServiceImpl implements FoundRequestService {
     private final FoundRequestRepository foundRequestRepository;
     private final UserService userService;
     private final ApplicationEventPublisher eventPublisher;
+    private final TextNormalizer textNormalizer;
 
     @Override
     @Transactional
     public FoundRequestDTO create(Long finderId, String photoUrl, PetType petType, Point location, String description) {
         UserDTO finder = userService.findById(finderId);
 
-        FoundRequest foundRequest = FoundRequest.create(finder.id(), photoUrl, petType, location, description);
+        String normalizedDescription = textNormalizer.normalize(description);
+
+        FoundRequest foundRequest = FoundRequest.create(finder.id(), photoUrl, petType, location, normalizedDescription);
         FoundRequest saved = foundRequestRepository.save(foundRequest);
         foundRequestRepository.flush();
 

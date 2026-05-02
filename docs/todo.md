@@ -1,228 +1,252 @@
-# Implementation Plan: "Я знайшов тварину" (I Found a Pet)
+# План покращення алгоритму matching (Групове порівняння)
 
-## Goal
-Implement complete flow for finders (people who found a pet) to:
-- Create a found request with photo, location, and pet characteristics
-- View potential matches (lost pet requests from owners)
-- Navigate through recommendations
+## Мета
+Підвищити точність matching через групове порівняння характеристик окремими запитами
 
-## Analysis Summary
+## Архітектура
 
-### What Already Exists
-- `FoundRequestService` interface and implementation
-- `FoundRequest` entity and repository
-- `MatchingService` with `processNewFoundRequest()` method
-- `FinderRecommendationCache` (in-memory cache for finders)
-- `FoundRequestCreatedEvent` for triggering matching
-- `MatchingEventListener` with `@TransactionalEventListener`
+Замість одного `search_text` → окремі колонки для кожної групи:
+- `breed_text` — порода
+- `color_text` — колір + окрас
+- `size_text` — розмір (малий/середній/великий)
+- `sex_text` — стать (він/вона)
 
-### What's Missing
-- `LOST_FOUND` callback handler (entry point)
-- `CREATE_FOUND_REQUEST` form submission handler
-- `LOST_FOUND_MATCHES` callback handler (view recommendations)
-- Navigation handlers for recommendation viewing
+**Важливо:** Старий функціонал з `search_text` повністю замінюється новим груповим порівнянням.
+
+> **Примітка:** В ці колонки додаємо **тільки те, що використовується в алгоритмі matching**. Поля, які не беруть участь у порівнянні (наприклад, кличка тварини), **не додаємо** — вони безкорисні для алгоритму. Повну інформацію про тварину завжди можна отримати з таблиці `pets` за `pet_id`.
 
 ---
 
-## Implementation Steps
+## Фаза 1: Міграції БД + Сутності
 
-### Step 1: Create LOST_FOUND Callback Handler ✅ COMPLETE
-**File:** `telegram/callback/handler/lost/LostFoundCallbackHandler.java`
+### 1.1 Liquibase міграції
 
-**Behavior:**
-- Entry point when user clicks "Я знайшов тварину"
-- Starts `CREATE_FOUND_REQUEST` form
-- Form return callback: `MENU` (after completion)
+**Таблиця `lost_requests`:**
+```sql
+ALTER TABLE lost_requests 
+  ADD COLUMN breed_text VARCHAR(100),
+  ADD COLUMN color_text VARCHAR(100),
+  ADD COLUMN size_text VARCHAR(20),
+  ADD COLUMN sex_text VARCHAR(20);
 
-**Form Steps (CREATE_FOUND_REQUEST):**
-1. Pet type (choice: DOG, CAT, OTHER)
-2. Photo (required)
-3. Location (required)
-4. Breed (text, skippable)
-5. Color (text, skippable)
-6. Coat type (text, skippable)
-7. Sex (choice: MALE, FEMALE, UNKNOWN - skippable)
-8. Size (choice: SMALL, MEDIUM, LARGE - skippable)
-9. Special features (text, skippable)
-
-**Dependencies:** `FormService`
-
-**Status:** Implemented and tested with 5 unit tests.
-
----
-
-### Step 2: Create CREATE_FOUND_REQUEST Form Handler ✅ COMPLETE
-**File:** `telegram/form/handler/CreateFoundRequestHandler.java`
-
-**Behavior:**
-- Aggregates all text fields (breed, color, coat, sex, size, features) into `description`
-- Calls `foundRequestService.create()` with:
-  - `finderId`: current user
-  - `photoUrl`: from step 2
-  - `petType`: from step 1
-  - `location`: from step 3
-  - `description`: aggregated text
-- Returns success message with two buttons:
-  - "🔍 Переглянути рекомендації" → `LOST_FOUND_MATCHES`
-  - "⬅️ Повернутись" → `MENU` (clears cache, recommendations become unavailable)
-
-**Important:** Message must warn user that clicking "Повернутись" will make recommendations unavailable forever
-
-**Dependencies:** `FoundRequestService`, `FinderRecommendationCache`
-
-**Status:** Implemented and tested with 8 unit tests.
-
----
-
-### Step 3: Create LOST_FOUND_MATCHES Callback Handler ✅ COMPLETE
-**File:** `telegram/callback/handler/lost/LostFoundMatchesCallbackHandler.java`
-
-**Behavior:**
-- Gets next recommendation from `FinderRecommendationCache.pollNext(finderId)`
-- If no recommendations left or cache expired:
-  - Show "Ви переглянули всі доступні анкети" message
-  - Clear cache
-  - Back button to `MENU`
-- If recommendation exists:
-  - Get `LostRequestDTO` by ID
-  - **Only show if contact_info is present** (skip if no contact)
-  - Display:
-    - Pet photo
-    - Pet info (name, breed, color, etc.)
-    - Owner contact info
-    - Distance
-  - Keyboard:
-    - "Наступна" → `LOST_FOUND_MATCHES_NEXT` (same handler, new message)
-    - "Повернутись" → `MENU` (removes keyboard, sends new message, clears cache)
-
-**Pattern:** Follow `FeedViewNextCallbackHandler` - remove keyboard from previous message, send new message
-
-**Dependencies:** `FinderRecommendationCache`, `LostRequestService`, `TelegramMessageService`
-
-**Status:** Implemented and tested with 11 unit tests.
-
----
-
-### Step 4: Add Required Method to FinderRecommendationCache ✅ COMPLETE
-**Check if exists:** `hasRecommendations(finderId)` or `getNext(finderId)`
-
-Methods added via `FinderRecommendationService` interface:
-```java
-public Optional<Long> pollNext(Long finderId) // already exists
-public boolean hasRecommendations(Long finderId) // check if queue not empty
-public void remove(Long finderId) // clear cache for user
+-- Індекси для швидкого порівняння
+CREATE INDEX idx_lost_breed ON lost_requests(breed_text);
+CREATE INDEX idx_lost_color ON lost_requests(color_text);
+CREATE INDEX idx_lost_size ON lost_requests(size_text);
+CREATE INDEX idx_lost_sex ON lost_requests(sex_text);
 ```
 
-**Status:** Methods implemented and tested with 26 unit tests.
+**Таблиця `found_requests`:**
+```sql
+ALTER TABLE found_requests 
+  ADD COLUMN breed_text VARCHAR(100),
+  ADD COLUMN color_text VARCHAR(100),
+  ADD COLUMN size_text VARCHAR(20),
+  ADD COLUMN sex_text VARCHAR(20);
 
----
-
-### Step 5: Verify MatchingService.populateFinderCache ✅ COMPLETE
-**Check:** In `processNewFoundRequest()`, after computing matches, does it call:
-```java
-finderRecommendationCache.put(finderId, lostRequestIds);
+CREATE INDEX idx_found_breed ON found_requests(breed_text);
+CREATE INDEX idx_found_color ON found_requests(color_text);
+CREATE INDEX idx_found_size ON found_requests(size_text);
+CREATE INDEX idx_found_sex ON found_requests(sex_text);
 ```
 
-**Status:** Verified - cache is populated correctly in `MatchingService.processNewFoundRequest()`.
+**Примітка:** Видалення старої колонки `search_text` — в кінці, після перевірки роботи.
+
+### 1.2 Оновлення Entity
+
+**LostRequest.java:**
+- Додати поля: `breedText`, `colorText`, `sizeText`, `sexText` (всі `@Nullable`)
+- Оновити `generateSearchText()` → `generateGroupTexts()` який повертає Map<String, String>
+- Прибрати ім'я з будь-якого тексту
+
+**FoundRequest.java:**
+- Додати поля: `breedText`, `colorText`, `sizeText`, `sexText` (всі `@Nullable`)
+- Оновити формування текстів при створенні
 
 ---
 
-## Test Cases
+## Фаза 2: Оновлення MatchingAlgorithm
 
-### TC-1: Create Found Request
-1. Click "Я знайшов тварину"
-2. Fill all form steps
-3. Submit
-4. Verify success message with two buttons
-5. Verify `FoundRequest` created in DB
-6. Verify `FoundRequestCreatedEvent` published
+### 2.1 Новий алгоритм порівняння
 
-### TC-2: View Recommendations
-1. After creating found request, click "Переглянути рекомендації"
-2. Verify first recommendation shown (if matches exist)
-3. Verify keyboard has "Наступна" and "Повернутись"
-4. Verify cache entry exists
+**Ваги груп:**
+```java
+private static final double BREED_WEIGHT = 0.35;   // Порода — найважливіше
+private static final double COLOR_WEIGHT = 0.30;   // Колір
+private static final double SIZE_WEIGHT = 0.20;    // Розмір
+private static final double SEX_WEIGHT = 0.15;     // Стать
+```
 
-### TC-3: Navigate Recommendations
-1. View first recommendation
-2. Click "Наступна"
-3. Verify previous message keyboard removed
-4. Verify new message with next recommendation
-5. Verify queue size decreased
+**Логіка порівняння:**
+```java
+public BigDecimal calculateScore(LostRequest lost, FoundRequest found) {
+    double totalWeight = 0;
+    double weightedScore = 0;
+    
+    // Порода
+    if (lost.getBreedText() != null && found.getBreedText() != null) {
+        double breedScore = calculateTextSimilarity(lost.getBreedText(), found.getBreedText());
+        weightedScore += breedScore * BREED_WEIGHT;
+        totalWeight += BREED_WEIGHT;
+    }
+    
+    // Колір
+    if (lost.getColorText() != null && found.getColorText() != null) {
+        double colorScore = calculateTextSimilarity(lost.getColorText(), found.getColorText());
+        weightedScore += colorScore * COLOR_WEIGHT;
+        totalWeight += COLOR_WEIGHT;
+    }
+    
+    // Розмір (точне співпадіння або similarity)
+    if (lost.getSizeText() != null && found.getSizeText() != null) {
+        double sizeScore = lost.getSizeText().equalsIgnoreCase(found.getSizeText()) ? 1.0 : 0.0;
+        weightedScore += sizeScore * SIZE_WEIGHT;
+        totalWeight += SIZE_WEIGHT;
+    }
+    
+    // Стать (точне співпадіння)
+    if (lost.getSexText() != null && found.getSexText() != null) {
+        double sexScore = lost.getSexText().equalsIgnoreCase(found.getSexText()) ? 1.0 : 0.0;
+        weightedScore += sexScore * SEX_WEIGHT;
+        totalWeight += SEX_WEIGHT;
+    }
+    
+    // Нормалізація: якщо не всі групи заповнені — пропорційно збільшуємо вагу
+    if (totalWeight == 0) {
+        return BigDecimal.ZERO;
+    }
+    
+    double normalizedScore = weightedScore / totalWeight;
+    return BigDecimal.valueOf(normalizedScore).setScale(4, RoundingMode.HALF_UP);
+}
+```
 
-### TC-4: No Contact = Skip
-1. Create lost request without contact info
-2. Create found request that matches
-3. Verify this lost request is NOT shown to finder
+**Правила обробки null:**
+- Якщо `lost.X_text = null` → група не порівнюється, вага цієї групи не додається
+- Якщо `found.X_text = null` → група не порівнюється, вага цієї групи не додається
+- Якщо обидва null → група пропускається
+- Якщо всі групи null → score = 0
 
-### TC-5: Return Clears Cache
-1. View recommendations
-2. Click "Повернутись"
-3. Verify cache cleared
-4. Verify cannot view recommendations again
+### 2.2 SQL для порівняння (опціонально, для оптимізації)
+
+```sql
+SELECT 
+  l.id as lost_id,
+  f.id as found_id,
+  -- Порода (35%)
+  CASE 
+    WHEN l.breed_text IS NOT NULL AND f.breed_text IS NOT NULL 
+    THEN similarity(l.breed_text, f.breed_text) * 0.35 
+    ELSE 0 
+  END +
+  -- Колір (30%)
+  CASE 
+    WHEN l.color_text IS NOT NULL AND f.color_text IS NOT NULL 
+    THEN similarity(l.color_text, f.color_text) * 0.30 
+    ELSE 0 
+  END +
+  -- Розмір (20%): 1 якщо співпадає, 0 якщо ні
+  CASE 
+    WHEN l.size_text IS NOT NULL AND f.size_text IS NOT NULL 
+         AND l.size_text = f.size_text
+    THEN 0.20 
+    WHEN l.size_text IS NOT NULL AND f.size_text IS NOT NULL 
+    THEN 0 
+    ELSE 0 
+  END +
+  -- Стать (15%)
+  CASE 
+    WHEN l.sex_text IS NOT NULL AND f.sex_text IS NOT NULL 
+         AND l.sex_text = f.sex_text
+    THEN 0.15 
+    WHEN l.sex_text IS NOT NULL AND f.sex_text IS NOT NULL 
+    THEN 0 
+    ELSE 0 
+  END as weighted_score,
+  -- Нормалізація (сума ваг тільки для не-null пар)
+  CASE WHEN l.breed_text IS NOT NULL AND f.breed_text IS NOT NULL THEN 0.35 ELSE 0 END +
+  CASE WHEN l.color_text IS NOT NULL AND f.color_text IS NOT NULL THEN 0.30 ELSE 0 END +
+  CASE WHEN l.size_text IS NOT NULL AND f.size_text IS NOT NULL THEN 0.20 ELSE 0 END +
+  CASE WHEN l.sex_text IS NOT NULL AND f.sex_text IS NOT NULL THEN 0.15 ELSE 0 END as total_weight
+FROM lost_requests l
+CROSS JOIN found_requests f
+WHERE l.status = 'ACTIVE'
+  AND l.pet_type = f.pet_type
+  AND ST_DWithin(l.last_seen_location, f.location, 50000)
+HAVING total_weight > 0
+```
 
 ---
 
-## Files to Create/Modify
+## Фаза 3: Інші зміни
 
-### New Files
-- `telegram/callback/handler/lost/LostFoundCallbackHandler.java`
-- `telegram/form/handler/CreateFoundRequestHandler.java`
-- `telegram/callback/handler/lost/LostFoundMatchesCallbackHandler.java`
+### 3.1 Оновлення LostRequestService
 
-### Modify If Needed
-- `lost/domain/service/FinderRecommendationCache.java` - add `hasRecommendations()`, `remove()`
-- `lost/application/matching/MatchingService.java` - ensure cache is populated
+- `generateGroupTexts(PetDTO pet)` — повертає Map з текстами для кожної групи
+- Прибрати ім'я з breed_text
+- Переклад size: SMALL→"малий", MEDIUM→"середній", LARGE→"великий"
+- Переклад sex: MALE→"він", FEMALE→"вона"
 
----
+### 3.2 Оновлення FoundRequestService
 
-## Notes
+- При створенні: парсити description та розбивати на групи
+- Або: окремі поля у формі для кожної групи (краще!)
 
-- **In-memory cache:** Uses `ConcurrentHashMap` with TTL 1 day
-- **FIFO queue:** Each view removes one entry from queue
-- **No persistence:** If app restarts, cache is lost (acceptable for this use case)
-- **Contact filtering:** Only show lost requests with contact_info to finders
-- **One-time viewing:** Once finder clicks "Повернутись", they cannot view recommendations again
+### 3.3 Cleanup
 
----
-
-## Completion Summary
-
-### ✅ All Implementation Steps Complete
-
-| Step | Task | Status | Tests |
-|------|------|--------|-------|
-| 1 | LOST_FOUND Callback Handler | ✅ Complete | 5 |
-| 2 | CREATE_FOUND_REQUEST Form Handler | ✅ Complete | 8 |
-| 3 | LOST_FOUND_MATCHES Callback Handler | ✅ Complete | 11 |
-| 4 | FinderRecommendationCache Methods | ✅ Complete | 26 |
-| 5 | MatchingService Cache Population | ✅ Complete | Verified |
-| **Total** | | | **50** |
-
-### Files Created
-
-**Handler Files:**
-- `src/main/java/op/edu/ua/petbed/telegram/callback/handler/lost/LostFoundCallbackHandler.java`
-- `src/main/java/op/edu/ua/petbed/telegram/form/handler/CreateFoundRequestHandler.java`
-- `src/main/java/op/edu/ua/petbed/telegram/callback/handler/lost/LostFoundMatchesCallbackHandler.java`
-- `src/main/java/op/edu/ua/petbed/lost/FinderRecommendationService.java`
-
-**Test Files:**
-- `src/test/java/op/edu/ua/petbed/telegram/callback/handler/lost/LostFoundCallbackHandlerTest.java`
-- `src/test/java/op/edu/ua/petbed/telegram/form/handler/CreateFoundRequestHandlerTest.java`
-- `src/test/java/op/edu/ua/petbed/telegram/callback/handler/lost/LostFoundMatchesCallbackHandlerTest.java`
-- `src/test/java/op/edu/ua/petbed/lost/domain/service/FinderRecommendationCacheTest.java`
-
-### Key Features Implemented
-- Complete form flow with 9 steps for creating found requests
-- Automated matching algorithm triggering on form submission
-- FIFO queue-based recommendation viewing for finders
-- Contact filtering (only show lost requests with contact info)
-- Cache clearing on "Return" button press
-- Comprehensive test coverage (50 tests total)
+- Видалити стару колонку `search_text` з обох таблиць
+- Видалити старі індекси `idx_lost_search_text`, `idx_found_description_trgm`
+- Оновити документацію
 
 ---
 
-*Created: 2025-04-29*
-*Completed: 2025-04-29*
-*Feature: "Я знайшов тварину" (I Found a Pet)*
+## Приклад роботи
+
+**Lost (заповнені всі поля):**
+```
+breed_text: "овчар"
+color_text: "чорний світлий живіт"
+size_text: "середній"
+sex_text: "вона"
+```
+
+**Found (заповнені всі поля):**
+```
+breed_text: "овчар"
+color_text: "чорний однокольоровий"
+size_text: "середній"
+sex_text: "вона"
+```
+
+**Розрахунок:**
+- Порода: similarity("овчар", "овчар") = 1.0 × 0.35 = 0.35
+- Колір: similarity("чорний світлий живіт", "чорний однокольоровий") ≈ 0.4 × 0.30 = 0.12
+- Розмір: "середній" = "середній" → 1.0 × 0.20 = 0.20
+- Стать: "вона" = "вона" → 1.0 × 0.15 = 0.15
+- **Total:** (0.35 + 0.12 + 0.20 + 0.15) / 1.0 = **0.82**
+
+**Found (без розміру):**
+```
+breed_text: "овчар"
+color_text: "чорний однокольоровий"
+size_text: NULL
+sex_text: "вона"
+```
+
+**Розрахунок:**
+- Порода: 1.0 × 0.35 = 0.35
+- Колір: 0.4 × 0.30 = 0.12
+- Розмір: пропускається (null)
+- Стать: 1.0 × 0.15 = 0.15
+- **Total:** (0.35 + 0.12 + 0.15) / 0.80 = **0.775**
+(Нормалізація: сума ваг заповнених груп = 0.35+0.30+0.15 = 0.80)
+
+---
+
+## Порядок виконання
+
+1. **Фаза 1:** Міграції БД + Entity
+2. **Фаза 2:** MatchingAlgorithm + Сервіси
+3. **Фаза 3:** Cleanup
+
+**Важливо:** Не видаляти старі колонки до повної перевірки роботи нового алгоритму!

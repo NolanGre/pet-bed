@@ -8,6 +8,7 @@ import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.PetStatus;
 import op.edu.ua.petbed.lost.LostRequestService;
 import op.edu.ua.petbed.lost.application.event.LostRequestCreatedEvent;
+import op.edu.ua.petbed.lost.application.matching.TextNormalizer;
 import op.edu.ua.petbed.lost.domain.model.LostRequest;
 import op.edu.ua.petbed.lost.domain.repository.LostRequestRepository;
 import op.edu.ua.petbed.pet.PetService;
@@ -32,6 +33,7 @@ public class LostRequestServiceImpl implements LostRequestService {
     private final LostRequestRepository lostRequestRepository;
     private final PetService petService;
     private final ApplicationEventPublisher eventPublisher;
+    private final TextNormalizer textNormalizer;
 
     @Override
     @Transactional
@@ -43,7 +45,10 @@ public class LostRequestServiceImpl implements LostRequestService {
 
         PetDTO pet = petService.findById(petId);
 
-        LostRequest lostRequest = LostRequest.create(pet, contactInfo, location);
+        String searchText = LostRequest.generateSearchText(pet);
+        String normalizedSearchText = textNormalizer.normalize(searchText);
+
+        LostRequest lostRequest = LostRequest.createWithSearchText(pet, contactInfo, location, normalizedSearchText);
         LostRequest saved = lostRequestRepository.save(lostRequest);
         lostRequestRepository.flush();
 

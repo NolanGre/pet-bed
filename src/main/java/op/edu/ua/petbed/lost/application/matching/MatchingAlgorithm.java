@@ -23,8 +23,8 @@ import java.math.RoundingMode;
 @RequiredArgsConstructor
 public class MatchingAlgorithm {
 
-    private static final double GEO_WEIGHT = 0.4;
-    private static final double TEXT_WEIGHT = 0.6;
+    private static final double GEO_WEIGHT = 0.6;
+    private static final double TEXT_WEIGHT = 0.4;
     private static final double MAX_DISTANCE_KM = 50.0;
 
     private final JdbcTemplate jdbcTemplate;

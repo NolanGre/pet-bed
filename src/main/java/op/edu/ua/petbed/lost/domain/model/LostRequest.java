@@ -55,13 +55,28 @@ public class LostRequest extends AbstractAuditableEntity {
     }
 
     /**
+     * Factory method that accepts pre-normalized search text.
+     * Used when text normalization is performed by the service layer.
+     */
+    public static LostRequest createWithSearchText(PetDTO pet, String contactInfo, Point location, String searchText) {
+        if (contactInfo.isBlank()) {
+            throw new PetBedException("Contact info is required to create a lost request", PetBedException.ErrorCode.LOST_REQUEST_INVALID_INPUT);
+        }
+        if (searchText.isBlank()) {
+            throw new PetBedException("Search text is required", PetBedException.ErrorCode.LOST_REQUEST_INVALID_INPUT);
+        }
+
+        return new LostRequest(null, pet.id(), contactInfo, location, pet.type(), searchText);
+    }
+
+    /**
      * Factory method for testing purposes. Allows setting all fields directly.
      */
     public static LostRequest createForTest(Long id, Long petId, String contactInfo, Point location, PetType petType, String searchText) {
         return new LostRequest(id, petId, contactInfo, location, petType, searchText);
     }
 
-    private static String generateSearchText(PetDTO pet) {
+    public static String generateSearchText(PetDTO pet) {
         String sb = pet.name() + "; " +
                 pet.breed() + "; " +
                 pet.color() + "; " +

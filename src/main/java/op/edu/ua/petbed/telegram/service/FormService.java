@@ -72,11 +72,12 @@ public class FormService {
         sendInfoMessage(chatId, false);
 
         FormStep firstStep = entity.nextStep();
+        String formattedPrompt = formatStepPrompt(firstStep);
 
         // If first step has keyboard, send via execute to get messageId for later cleanup
         if (firstStep.isChoice()) {
             SendMessage message = ResponseBuilder.sendMessage(chatId)
-                    .text(firstStep.prompt())
+                    .text(formattedPrompt)
                     .keyboard(InlineKeyboardBuilder.builder()
                             .paginatedList(toPageDto(firstStep), new CallbackData(CallbackId.FORM_ENUM_LIST.id(), null, 0))
                             .build())
@@ -87,7 +88,7 @@ public class FormService {
         }
 
         return ResponseBuilder.sendMessage(chatId)
-                .text(firstStep.prompt())
+                .text(formattedPrompt)
                 .build();
     }
 
@@ -105,11 +106,12 @@ public class FormService {
         sendInfoMessage(chatId, true);
 
         FormStep firstStep = entity.nextStep();
+        String formattedPrompt = formatStepPrompt(firstStep);
 
         // If first step has keyboard, send via execute to get messageId for later cleanup
         if (firstStep.isChoice()) {
             SendMessage message = ResponseBuilder.sendMessage(chatId)
-                    .text(firstStep.prompt())
+                    .text(formattedPrompt)
                     .keyboard(InlineKeyboardBuilder.builder()
                             .paginatedList(toPageDto(firstStep), new CallbackData(CallbackId.FORM_ENUM_LIST.id(), null, 0))
                             .build())
@@ -119,7 +121,7 @@ public class FormService {
         }
 
         return ResponseBuilder.sendMessage(chatId)
-                .text(firstStep.prompt())
+                .text(formattedPrompt)
                 .build();
     }
 
@@ -299,7 +301,7 @@ public class FormService {
         );
 
         return ResponseBuilder.editMessage(entity.getChatId(), messageId)
-                .text(step.prompt())
+                .text(formatStepPrompt(step))
                 .keyboard(InlineKeyboardBuilder.builder()
                         .paginatedList(pageDto, new CallbackData(CallbackId.FORM_ENUM_LIST.id(), null, page))
                         .build())
@@ -314,11 +316,12 @@ public class FormService {
         if (entity.isComplete()) return formCompleteMessage(entity.getChatId());
 
         FormStep next = entity.nextStep();
+        String formattedPrompt = formatStepPrompt(next);
 
         // If next step has keyboard, send via execute to get messageId for later cleanup
         if (next.isChoice() && telegramMessageService != null) {
             SendMessage message = ResponseBuilder.sendMessage(entity.getChatId())
-                    .text(next.prompt())
+                    .text(formattedPrompt)
                     .keyboard(InlineKeyboardBuilder.builder()
                             .paginatedList(toPageDto(next), new CallbackData(CallbackId.FORM_ENUM_LIST.id(), null, 0))
                             .build())
@@ -328,8 +331,18 @@ public class FormService {
         }
 
         return ResponseBuilder.sendMessage(entity.getChatId())
-                .text(next.prompt())
+                .text(formattedPrompt)
                 .build();
+    }
+
+    /**
+     * Formats the step prompt, adding skip hint for optional steps.
+     */
+    private String formatStepPrompt(FormStep step) {
+        if (step.canSkip()) {
+            return step.prompt() + "\n\nℹ️ Опціонально, пропустити /skip";
+        }
+        return step.prompt();
     }
 
     private void sendAndStoreMessageId(FormEntity entity, SendMessage message) {
