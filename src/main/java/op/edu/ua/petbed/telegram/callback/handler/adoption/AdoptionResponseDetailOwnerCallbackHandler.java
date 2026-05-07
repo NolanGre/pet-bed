@@ -2,8 +2,8 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionResponseService;
-import op.edu.ua.petbed.adoption.application.dto.AdoptionResponseDTO;
-import op.edu.ua.petbed.telegram.callback.CallbackData;
+import op.edu.ua.petbed.adoption.dto.AdoptionResponseDTO;
+
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -56,16 +56,16 @@ public class AdoptionResponseDetailOwnerCallbackHandler implements CallbackHandl
         switch (response.status()) {
             case NEW -> {
                 builder.addButton("✅ Підтвердити",
-                        CallbackData.of(CallbackId.ADOPTION_RESPONSE_DETAIL_TRY_CONFIRM, responseId, null));
+                        CallbackId.ADOPTION_RESPONSE_DETAIL_TRY_CONFIRM, responseId);
                 builder.addButton("❌ Відхилити",
-                        CallbackData.of(CallbackId.ADOPTION_RESPONSE_DETAIL_TRY_CANCEL, responseId, null));
+                        CallbackId.ADOPTION_RESPONSE_DETAIL_TRY_CANCEL, responseId);
             }
             case CONFIRMED_BY_OWNER -> {
                 text.append("\n⏳ Очікує фінального підтвердження від охочого\n");
             }
             case REJECTED_BY_OWNER -> {
                 builder.addButton("🔄 Відновити",
-                        CallbackData.of(CallbackId.ADOPTION_RESPONSE_DETAIL_TRY_CONFIRM, responseId, null));
+                        CallbackId.ADOPTION_RESPONSE_DETAIL_TRY_CONFIRM, responseId);
             }
             case FINAL_CONFIRMED -> {
                 text.append("\n✅ Передачу завершено\n");

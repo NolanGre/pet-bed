@@ -1,4 +1,4 @@
-package op.edu.ua.petbed.adoption.application.dto;
+package op.edu.ua.petbed.adoption.dto;
 
 import org.jspecify.annotations.NullMarked;
 

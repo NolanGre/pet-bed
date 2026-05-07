@@ -1,8 +1,8 @@
 package op.edu.ua.petbed.adoption;
 
-import op.edu.ua.petbed.adoption.application.dto.AdoptionPostDTO;
-import op.edu.ua.petbed.adoption.application.dto.AdoptionPostDetailDTO;
-import op.edu.ua.petbed.adoption.application.dto.AdoptionRecommendationDTO;
+import op.edu.ua.petbed.adoption.dto.AdoptionPostDTO;
+import op.edu.ua.petbed.adoption.dto.AdoptionPostDetailDTO;
+import op.edu.ua.petbed.adoption.dto.AdoptionRecommendationDTO;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 

@@ -3,7 +3,7 @@ package op.edu.ua.petbed.adoption.domain.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import op.edu.ua.petbed.adoption.AdoptionSavedPostService;
-import op.edu.ua.petbed.adoption.application.dto.AdoptionPostDTO;
+import op.edu.ua.petbed.adoption.dto.AdoptionPostDTO;
 import op.edu.ua.petbed.adoption.domain.model.AdoptionPost;
 import op.edu.ua.petbed.adoption.domain.model.AdoptionSavedPost;
 import op.edu.ua.petbed.adoption.domain.repository.AdoptionPostRepository;
@@ -40,7 +40,7 @@ public class AdoptionSavedPostServiceImpl implements AdoptionSavedPostService {
                 .orElseThrow(() -> new PetBedException("Adoption post not found with id: " + postId,
                         PetBedException.ErrorCode.ADOPTION_POST_NOT_FOUND));
 
-        AdoptionSavedPost savedPost = new AdoptionSavedPost(postId, userId);
+        AdoptionSavedPost savedPost = AdoptionSavedPost.create(postId, userId);
         adoptionSavedPostRepository.save(savedPost);
 
         log.info("Saved adoption post: postId={}, userId={}", postId, userId);
@@ -87,6 +87,6 @@ public class AdoptionSavedPostServiceImpl implements AdoptionSavedPostService {
                     PetBedException.ErrorCode.INTERNAL_ERROR);
         }
 
-        return AdoptionPostDTO.fromEntity(post, pet.name(), pet.photoUrl());
+        return AdoptionPostDTO.fromEntity(post, pet.name(), pet.photoId(), pet.breed(), pet.color());
     }
 }

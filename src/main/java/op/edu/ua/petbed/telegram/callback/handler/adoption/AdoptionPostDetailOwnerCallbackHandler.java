@@ -3,10 +3,10 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionPostService;
 import op.edu.ua.petbed.adoption.AdoptionResponseService;
-import op.edu.ua.petbed.adoption.application.dto.AdoptionPostDetailDTO;
-import op.edu.ua.petbed.adoption.application.dto.AdoptionResponseDTO;
+import op.edu.ua.petbed.adoption.dto.AdoptionPostDetailDTO;
+import op.edu.ua.petbed.adoption.dto.AdoptionResponseDTO;
 import op.edu.ua.petbed.adoption.domain.model.enums.AdoptionPostStatus;
-import op.edu.ua.petbed.telegram.callback.CallbackData;
+
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -69,13 +69,13 @@ public class AdoptionPostDetailOwnerCallbackHandler implements CallbackHandler {
         // Add response button if post is active
         if (post.status() == AdoptionPostStatus.ACTIVE && !responses.isEmpty()) {
             builder.addButton("📨 Переглянути відгуки",
-                    CallbackData.of(CallbackId.ADOPTION_RESPONSE_DETAIL, postId, null));
+                    CallbackId.ADOPTION_RESPONSE_DETAIL, postId);
         }
 
         // Add cancel button if not completed
         if (post.status() != AdoptionPostStatus.COMPLETED) {
             builder.addButton("🗑️ Скасувати оголошення",
-                    CallbackData.of(CallbackId.ADOPTION_POST_TRY_DELETE, postId, null));
+                    CallbackId.ADOPTION_POST_TRY_DELETE, postId);
         }
 
         builder.backButtonFor(CallbackId.ADOPTION_MY_POSTS);

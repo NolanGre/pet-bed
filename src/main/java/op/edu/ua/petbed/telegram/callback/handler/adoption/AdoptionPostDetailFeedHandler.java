@@ -3,8 +3,8 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionPostService;
 import op.edu.ua.petbed.adoption.AdoptionSavedPostService;
-import op.edu.ua.petbed.adoption.application.dto.AdoptionPostDetailDTO;
-import op.edu.ua.petbed.telegram.callback.CallbackData;
+import op.edu.ua.petbed.adoption.dto.AdoptionPostDetailDTO;
+
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -65,14 +65,14 @@ public class AdoptionPostDetailFeedHandler implements CallbackHandler {
         // Build keyboard
         InlineKeyboardBuilder builder = InlineKeyboardBuilder.builder();
         builder.addButton("✉️ Відгукнутись",
-                CallbackData.of(CallbackId.ADOPTION_RESPONSE_CREATE, postId, null));
+                CallbackId.ADOPTION_RESPONSE_CREATE, postId);
 
         if (isSaved) {
             builder.addButton("💔 Видалити зі збережених",
-                    CallbackData.of(CallbackId.ADOPTION_UNSAVE_POST, postId, null));
+                    CallbackId.ADOPTION_UNSAVE_POST, postId);
         } else {
             builder.addButton("❤️ Зберегти",
-                    CallbackData.of(CallbackId.ADOPTION_SAVE_POST, postId, null));
+                    CallbackId.ADOPTION_SAVE_POST, postId);
         }
 
         builder.backButtonTo(CallbackId.ADOPTION_GET);

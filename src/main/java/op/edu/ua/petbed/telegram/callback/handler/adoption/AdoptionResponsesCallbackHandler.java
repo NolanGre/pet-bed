@@ -2,8 +2,8 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionResponseService;
-import op.edu.ua.petbed.adoption.application.dto.AdoptionResponseDTO;
-import op.edu.ua.petbed.telegram.callback.CallbackData;
+import op.edu.ua.petbed.adoption.dto.AdoptionResponseDTO;
+
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -61,10 +61,9 @@ public class AdoptionResponsesCallbackHandler implements CallbackHandler {
             String label = response.getStatusEmoji() + " " +
                     response.responderUsername() +
                     " - " + truncate(response.comment(), 20);
-            builder.addButton(label, CallbackData.of(
+            builder.addButton(label,
                     CallbackId.ADOPTION_RESPONSE_DETAIL_CONFIRM,
-                    response.id(),
-                    null));
+                    response.id());
         });
 
         builder.backButtonTo(CallbackId.ADOPTION_POST_DETAIL);

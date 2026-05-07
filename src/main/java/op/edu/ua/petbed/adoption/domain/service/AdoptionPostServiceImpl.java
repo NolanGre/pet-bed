@@ -3,10 +3,10 @@ package op.edu.ua.petbed.adoption.domain.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import op.edu.ua.petbed.adoption.AdoptionPostService;
-import op.edu.ua.petbed.adoption.application.dto.AdoptionPostDTO;
-import op.edu.ua.petbed.adoption.application.dto.AdoptionPostDetailDTO;
-import op.edu.ua.petbed.adoption.application.dto.AdoptionRecommendationDTO;
-import op.edu.ua.petbed.adoption.application.dto.AdoptionResponseDTO;
+import op.edu.ua.petbed.adoption.dto.AdoptionPostDTO;
+import op.edu.ua.petbed.adoption.dto.AdoptionPostDetailDTO;
+import op.edu.ua.petbed.adoption.dto.AdoptionRecommendationDTO;
+import op.edu.ua.petbed.adoption.dto.AdoptionResponseDTO;
 import op.edu.ua.petbed.adoption.domain.model.AdoptionPost;
 import op.edu.ua.petbed.adoption.domain.model.AdoptionResponse;
 import op.edu.ua.petbed.adoption.domain.model.AdoptionSavedPost;
@@ -68,7 +68,7 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
                     PetBedException.ErrorCode.INTERNAL_ERROR);
         }
 
-        return AdoptionPostDTO.fromEntity(saved, pet.name(), pet.photoUrl());
+        return AdoptionPostDTO.fromEntity(saved, pet.name(), pet.photoId(), pet.breed(), pet.color());
     }
 
     @Override
@@ -87,7 +87,7 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
                 .toList();
 
         return new AdoptionPostDetailDTO(
-                AdoptionPostDTO.fromEntity(post, pet.name(), pet.photoUrl()),
+                AdoptionPostDTO.fromEntity(post, pet.name(), pet.photoId(), pet.breed(), pet.color()),
                 responses
         );
     }
@@ -154,7 +154,7 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
                 post.getIdOrThrow(),
                 pet.id(),
                 pet.name(),
-                pet.photoUrl(),
+                pet.photoId(),
                 pet.breed() != null ? pet.breed() : "",
                 pet.color() != null ? pet.color() : "",
                 post.getOwnerComment(),
@@ -167,7 +167,7 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
     @Transactional
     public void recordView(Long postId, Long userId) {
         if (!adoptionViewHistoryRepository.existsByPostIdAndUserId(postId, userId)) {
-            AdoptionViewHistory viewHistory = new AdoptionViewHistory(postId, userId);
+            AdoptionViewHistory viewHistory = AdoptionViewHistory.create(postId, userId);
             adoptionViewHistoryRepository.save(viewHistory);
         }
 
@@ -197,7 +197,7 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
 
     private AdoptionPostDTO mapToPostDTO(AdoptionPost post) {
         PetDTO pet = petService.findById(post.getPetId());
-        return AdoptionPostDTO.fromEntity(post, pet.name(), pet.photoUrl());
+        return AdoptionPostDTO.fromEntity(post, pet.name(), pet.photoId(), pet.breed(), pet.color());
     }
 
     private AdoptionResponseDTO mapToResponseDTO(AdoptionResponse response) {

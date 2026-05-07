@@ -61,7 +61,8 @@ public class AdoptionGiveCallbackHandler implements CallbackHandler {
 
         pets.forEach(pet -> builder.addButton(
                 pet.name(),
-                CallbackId.ADOPTION_SELECT_PET.withEntityId(pet.id())
+                CallbackId.ADOPTION_SELECT_PET,
+                pet.id()
         ));
 
         builder.addButton("➕ Додати нову тварину", CallbackId.ADOPTION_ADD_PET);

@@ -3,7 +3,7 @@ package op.edu.ua.petbed.adoption.domain.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import op.edu.ua.petbed.adoption.AdoptionResponseService;
-import op.edu.ua.petbed.adoption.application.dto.AdoptionResponseDTO;
+import op.edu.ua.petbed.adoption.dto.AdoptionResponseDTO;
 import op.edu.ua.petbed.adoption.domain.model.AdoptionPost;
 import op.edu.ua.petbed.adoption.domain.model.AdoptionResponse;
 import op.edu.ua.petbed.adoption.domain.repository.AdoptionPostRepository;

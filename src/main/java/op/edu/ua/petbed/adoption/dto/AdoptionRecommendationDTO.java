@@ -1,4 +1,4 @@
-package op.edu.ua.petbed.adoption.application.dto;
+package op.edu.ua.petbed.adoption.dto;
 
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -17,6 +17,6 @@ public record AdoptionRecommendationDTO(
         String petBreed,
         String petColor,
         @Nullable String ownerComment,
-        Instant createdAt,
+        @Nullable Instant createdAt,
         boolean isSaved
 ) {}

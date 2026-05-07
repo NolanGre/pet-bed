@@ -2,8 +2,8 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionPostService;
-import op.edu.ua.petbed.adoption.application.dto.AdoptionPostDTO;
-import op.edu.ua.petbed.telegram.callback.CallbackData;
+import op.edu.ua.petbed.adoption.dto.AdoptionPostDTO;
+
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -55,7 +55,7 @@ public class AdoptionPostTryCancelHandler implements CallbackHandler {
                         """.formatted(post.petName()))
                 .keyboard(InlineKeyboardBuilder.builder()
                         .addButton("❌ Так, скасувати",
-                                CallbackData.of(CallbackId.ADOPTION_POST_DELETE, postId, null))
+                                CallbackId.ADOPTION_POST_DELETE, postId)
                         .backButtonTo(CallbackId.ADOPTION_POST_DETAIL)
                         .build())
                 .build();

@@ -3,7 +3,7 @@ package op.edu.ua.petbed.telegram.form.handler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import op.edu.ua.petbed.adoption.AdoptionResponseService;
-import op.edu.ua.petbed.adoption.application.dto.AdoptionResponseDTO;
+import op.edu.ua.petbed.adoption.dto.AdoptionResponseDTO;
 import op.edu.ua.petbed.telegram.form.FormData;
 import op.edu.ua.petbed.telegram.form.scheme.FormStep;
 import op.edu.ua.petbed.telegram.form.scheme.FormType;

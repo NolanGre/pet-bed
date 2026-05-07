@@ -2,8 +2,8 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionResponseService;
-import op.edu.ua.petbed.adoption.application.dto.AdoptionResponseDTO;
-import op.edu.ua.petbed.telegram.callback.CallbackData;
+import op.edu.ua.petbed.adoption.dto.AdoptionResponseDTO;
+
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -52,7 +52,7 @@ public class AdoptionResponseTryRejectHandler implements CallbackHandler {
                         """.formatted(response.responderUsername()))
                 .keyboard(InlineKeyboardBuilder.builder()
                         .addButton("❌ Так, відхилити",
-                                CallbackData.of(CallbackId.ADOPTION_RESPONSE_DETAIL_CANCEL, responseId, null))
+                                CallbackId.ADOPTION_RESPONSE_DETAIL_CANCEL, responseId)
                         .backButtonTo(CallbackId.ADOPTION_RESPONSE_DETAIL)
                         .build())
                 .build();
