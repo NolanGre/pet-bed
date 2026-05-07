@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.11.xsd">
+
+    <!-- ==================== UPDATE ADOPTION TABLES ==================== -->
+
+    <!-- Add status column to adoption_posts -->
+    <changeSet id="0011-01-add-status-to-adoption-posts" author="developer">
+        <addColumn tableName="adoption_posts">
+            <column name="status" type="VARCHAR(50)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <sql>ALTER TABLE adoption_posts
+            ADD CONSTRAINT chk_adoption_posts_status
+            CHECK (status IN ('ACTIVE', 'PENDING_CONFIRMATION', 'COMPLETED', 'CANCELLED'));</sql>
+    </changeSet>
+
+    <!-- Add pending_response_id column to adoption_posts -->
+    <changeSet id="0011-02-add-pending-response-to-adoption-posts" author="developer">
+        <addColumn tableName="adoption_posts">
+            <column name="pending_response_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add status column to adoption_responses -->
+    <changeSet id="0011-03-add-status-to-adoption-responses" author="developer">
+        <addColumn tableName="adoption_responses">
+            <column name="status" type="VARCHAR(50)" defaultValue="NEW">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <sql>ALTER TABLE adoption_responses
+            ADD CONSTRAINT chk_adoption_responses_status
+            CHECK (status IN ('NEW', 'CONFIRMED_BY_OWNER', 'REJECTED_BY_OWNER', 'FINAL_CONFIRMED', 'CANCELLED'));</sql>
+    </changeSet>
+
+    <!-- Add unique constraint to adoption_responses (one response per user per post) -->
+    <changeSet id="0011-04-add-unique-constraint-adoption-responses" author="developer">
+        <addUniqueConstraint tableName="adoption_responses"
+                             columnNames="adoption_post_id, user_id"
+                             constraintName="uq_adoption_responses_post_user"/>
+    </changeSet>
+
+    <!-- ==================== INDEXES ==================== -->
+
+    <changeSet id="0011-05-create-adoption-indexes" author="developer">
+        <!-- adoption_posts indexes -->
+        <createIndex tableName="adoption_posts" indexName="idx_adoption_status">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex tableName="adoption_posts" indexName="idx_adoption_created_at">
+            <column name="created_at"/>
+        </createIndex>
+
+        <!-- adoption_responses indexes -->
+        <createIndex tableName="adoption_responses" indexName="idx_adoption_response_status">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

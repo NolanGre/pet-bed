@@ -47,7 +47,19 @@ public class PetBedException extends RuntimeException {
         FOUND_REQUEST_NOT_FOUND("Found request not found"),
         MATCH_SCORE_REQUIRED("Score is required"),
         MATCH_QUEUE_ENTRY_NOT_PERSISTED("Match queue entry is not persisted yet"),
-        VIEWED_BY_REQUIRED("ViewedBy is required");
+        VIEWED_BY_REQUIRED("ViewedBy is required"),
+
+        // Adoption module
+        ADOPTION_POST_NOT_PERSISTED("Adoption post is not persisted yet"),
+        ADOPTION_POST_NOT_FOUND("Adoption post not found"),
+        ADOPTION_POST_INVALID_STATUS("Invalid adoption post status for this operation"),
+        ADOPTION_POST_ALREADY_EXISTS("Active adoption post already exists for this pet"),
+        ADOPTION_RESPONSE_NOT_PERSISTED("Adoption response is not persisted yet"),
+        ADOPTION_RESPONSE_NOT_FOUND("Adoption response not found"),
+        ADOPTION_RESPONSE_INVALID_STATUS("Invalid adoption response status for this operation"),
+        ADOPTION_RESPONSE_ALREADY_EXISTS("You have already responded to this post"),
+        ADOPTION_UNAUTHORIZED("You are not authorized to perform this action on this adoption post"),
+        ADOPTION_SAVED_POST_NOT_FOUND("Saved post not found");
 
         private final String userMessage;
     }
