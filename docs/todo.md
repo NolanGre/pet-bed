@@ -445,11 +445,11 @@ ADOPTION_UNSAVE_POST("Видалити зі збережених");
   - AdoptionCompletionService (внутрішній)
 
 ### Ітерація 3: Telegram Integration (Give — для власника)
-- [ ] Фаза 7: CREATE_ADOPTION_POST Form
+- [x] Фаза 7: CREATE_ADOPTION_POST Form — ✅ FormType + CreateAdoptionPostHandler
 - [ ] Фаза 8: AdoptionGive*, AdoptionMyPosts*, AdoptionPostDetailOwner*, AdoptionResponses* handlers
 
 ### Ітерація 4: Telegram Integration (Get — для охочого)
-- [ ] Фаза 7: CREATE_ADOPTION_RESPONSE Form
+- [x] Фаза 7: CREATE_ADOPTION_RESPONSE Form — ✅ FormType + CreateAdoptionResponseHandler
 - [ ] Фаза 8: AdoptionGet*, AdoptionResponseCreate*, AdoptionSaved*, AdoptionFinal* handlers
 
 ### Ітерація 5: Completion

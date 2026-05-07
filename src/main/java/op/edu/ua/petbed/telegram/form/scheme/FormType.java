@@ -56,6 +56,12 @@ public enum FormType {
             FormStep.choice("⚥ Оберіть стать", List.of(PetSex.values())).optional(),
             FormStep.choice("📏 Оберіть розмір", List.of(PetSize.values())).optional(),
             FormStep.text("📝 Опишіть особливі ознаки")
+    )),
+    CREATE_ADOPTION_POST(List.of(
+            FormStep.text("💬 Додайте коментар про тварину (опціонально)").optional()
+    )),
+    CREATE_ADOPTION_RESPONSE(List.of(
+            FormStep.text("💬 Додайте коментар до вашого відгуку (опціонально)").optional()
     ));
 
     private final List<FormStep> steps;
