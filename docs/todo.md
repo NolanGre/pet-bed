@@ -446,14 +446,25 @@ ADOPTION_UNSAVE_POST("Видалити зі збережених");
 
 ### Ітерація 3: Telegram Integration (Give — для власника)
 - [x] Фаза 7: CREATE_ADOPTION_POST Form — ✅ FormType + CreateAdoptionPostHandler
-- [ ] Фаза 8: AdoptionGive*, AdoptionMyPosts*, AdoptionPostDetailOwner*, AdoptionResponses* handlers
+- [x] Фаза 8: Give flow handlers — ✅ 10 callback handlers created
+  - AdoptionGiveCallbackHandler, AdoptionSelectPetCallbackHandler, AdoptionAddPetCallbackHandler
+  - AdoptionMyPostsCallbackHandler, AdoptionPostDetailOwnerCallbackHandler
+  - AdoptionResponsesCallbackHandler, AdoptionResponseDetailOwnerCallbackHandler
+  - AdoptionResponseTryConfirmHandler, AdoptionResponseConfirmActionHandler
+  - AdoptionResponseTryRejectHandler, AdoptionResponseRejectActionHandler
+  - AdoptionPostTryCancelHandler, AdoptionPostCancelActionHandler
 
 ### Ітерація 4: Telegram Integration (Get — для охочого)
 - [x] Фаза 7: CREATE_ADOPTION_RESPONSE Form — ✅ FormType + CreateAdoptionResponseHandler
-- [ ] Фаза 8: AdoptionGet*, AdoptionResponseCreate*, AdoptionSaved*, AdoptionFinal* handlers
+- [x] Фаза 8: Get flow handlers — ✅ 8 callback handlers created
+  - AdoptionGetCallbackHandler, AdoptionGetNextHandler, AdoptionResponseCreateHandler
+  - AdoptionSavePostHandler, AdoptionUnsavePostHandler
+  - AdoptionMyResponsesCallbackHandler, AdoptionFinalConfirmHandler
+  - AdoptionPostDetailFeedHandler
 
 ### Ітерація 5: Completion
 - [ ] Фаза 6: Events (опціонально)
+- [x] Фаза 8: Shared handlers — ✅ AdoptionMenuCallbackHandler
 - [ ] Фаза 9: Testing
 
 ---
