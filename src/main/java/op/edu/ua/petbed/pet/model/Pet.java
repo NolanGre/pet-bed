@@ -119,6 +119,10 @@ public class Pet extends AbstractAuditableEntity {
         this.status = newStatus;
     }
 
+    public void transferOwnership(Long newOwnerId) {
+        this.ownerId = newOwnerId;
+    }
+
     @Override
     public final boolean equals(@Nullable Object o) {
         if (this == o) return true;

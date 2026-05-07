@@ -58,6 +58,10 @@ public class PetBedException extends RuntimeException {
         ADOPTION_RESPONSE_NOT_FOUND("Adoption response not found"),
         ADOPTION_RESPONSE_INVALID_STATUS("Invalid adoption response status for this operation"),
         ADOPTION_RESPONSE_ALREADY_EXISTS("You have already responded to this post"),
+        ADOPTION_RESPONSE_NOT_AUTHORIZED("You are not authorized to perform this action on this response"),
+        ADOPTION_RESPONSE_SELF_RESPONSE("Cannot respond to your own post"),
+        ADOPTION_RESPONSE_NOT_FINALIZED("Response must be finalized before completing adoption"),
+        ADOPTION_POST_NOT_AUTHORIZED("You are not authorized to perform this action on this post"),
         ADOPTION_UNAUTHORIZED("You are not authorized to perform this action on this adoption post"),
         ADOPTION_SAVED_POST_NOT_FOUND("Saved post not found");
 

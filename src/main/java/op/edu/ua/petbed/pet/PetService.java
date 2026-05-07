@@ -26,4 +26,6 @@ public interface PetService {
     void updateStatus(Long petId, PetStatus status);
 
     void updateSpecialFeatures(Long petId, String specialFeatures);
+
+    void transferOwnership(Long petId, Long newOwnerId);
 }

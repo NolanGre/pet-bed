@@ -437,8 +437,12 @@ ADOPTION_UNSAVE_POST("Видалити зі збережених");
 - [ ] Фаза 10: CallbackId Enum — ⏳ Існуючі CallbackId потребують оновлення
 
 ### Ітерація 2: Data Access
-- [ ] Фаза 3: Repositories
-- [ ] Фаза 5: Domain Services
+- [x] Фаза 3: Repositories — ✅ Repository interfaces створено
+- [x] Фаза 5: Domain Services — ✅ Interfaces + Implementations створено
+  - AdoptionPostService + AdoptionPostServiceImpl
+  - AdoptionResponseService + AdoptionResponseServiceImpl
+  - AdoptionSavedPostService + AdoptionSavedPostServiceImpl
+  - AdoptionCompletionService (внутрішній)
 
 ### Ітерація 3: Telegram Integration (Give — для власника)
 - [ ] Фаза 7: CREATE_ADOPTION_POST Form

@@ -104,6 +104,18 @@ public class PetServiceImpl implements PetService {
         log.info("Updated pet special features: id={}", petId);
     }
 
+    @Override
+    @Transactional
+    public void transferOwnership(Long petId, Long newOwnerId) {
+        Pet pet = petRepository.findById(petId)
+                .orElseThrow(() -> new PetBedException("Pet not found with id: " + petId, PetBedException.ErrorCode.PET_NOT_FOUND));
+
+        pet.transferOwnership(newOwnerId);
+        petRepository.save(pet);
+
+        log.info("Transferred pet ownership: id={}, newOwnerId={}", petId, newOwnerId);
+    }
+
     private PetDTO toDto(Pet pet) {
         return new PetDTO(
                 pet.getIdOrThrow(),
