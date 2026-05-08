@@ -9,7 +9,6 @@ import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
 import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
 import op.edu.ua.petbed.telegram.response.ResponseBuilder;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
@@ -59,7 +58,7 @@ public class AdoptionGetCallbackHandler implements CallbackHandler {
         return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                 .text("""
                         📭 Немає доступних оголошень.
-                        
+
                         Зараз немає тварин для адопції.
                         Перевірте пізніше!
                         """)
@@ -90,9 +89,9 @@ public class AdoptionGetCallbackHandler implements CallbackHandler {
                 .navButtonsFor(CallbackId.ADOPTION_GET, post.postId(), child -> {
                     if (child == CallbackId.ADOPTION_SAVE_POST) return !post.isSaved();
                     if (child == CallbackId.ADOPTION_UNSAVE_POST) return post.isSaved();
-                    return true;
+                    if (child == CallbackId.ADOPTION_GET_NEXT) return true;
+                    return false;
                 })
-                .addButton("➡️ Наступна", CallbackId.ADOPTION_GET, (long) offset + 1)
                 .backButtonFor(CallbackId.ADOPTION)
                 .build();
     }

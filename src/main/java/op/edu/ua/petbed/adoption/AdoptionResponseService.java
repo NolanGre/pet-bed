@@ -2,8 +2,8 @@ package op.edu.ua.petbed.adoption;
 
 import op.edu.ua.petbed.common.dto.AdoptionResponseDTO;
 import org.jspecify.annotations.NullMarked;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  * Public API for managing adoption responses.
@@ -24,12 +24,13 @@ public interface AdoptionResponseService {
     AdoptionResponseDTO create(Long postId, Long responderId, String comment);
 
     /**
-     * Finds all responses for a specific adoption post.
+     * Finds responses for a specific adoption post with pagination.
      *
      * @param postId the adoption post ID
-     * @return list of response DTOs sorted by status priority
+     * @param pageable pagination parameters
+     * @return page of response DTOs sorted by status priority
      */
-    List<AdoptionResponseDTO> findByPostId(Long postId);
+    Page<AdoptionResponseDTO> findByPostId(Long postId, Pageable pageable);
 
     /**
      * Finds a response by its ID.
@@ -93,4 +94,13 @@ public interface AdoptionResponseService {
      * @return true if the user has already responded
      */
     boolean hasResponded(Long postId, Long userId);
+
+    /**
+     * Finds responses by a specific user (responder) with pagination.
+     *
+     * @param responderId the responder's user ID
+     * @param pageable pagination parameters
+     * @return page of response DTOs sorted by creation date
+     */
+    Page<AdoptionResponseDTO> findByResponderId(Long responderId, Pageable pageable);
 }

@@ -84,7 +84,7 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
         List<AdoptionResponseDTO> responses = adoptionResponseRepository
                 .findByPostIdOrderByStatusPriority(id)
                 .stream()
-                .map(this::mapToResponseDTO)
+                .map(r -> mapToResponseDTO(r, pet.name()))
                 .toList();
 
         return new AdoptionPostDetailDTO(
@@ -182,13 +182,14 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
         return AdoptionPostDTO.fromEntity(post, pet.name(), pet.photoId(), pet.breed(), pet.color());
     }
 
-    private AdoptionResponseDTO mapToResponseDTO(AdoptionResponse response) {
+    private AdoptionResponseDTO mapToResponseDTO(AdoptionResponse response, String postPetName) {
         var responder = userService.findById(response.getResponderId());
 
         return AdoptionResponseDTO.fromEntity(
                 response,
                 responder.telegramUsername(),
-                responder.telegramUsername()
+                responder.telegramUsername(),
+                postPetName
         );
     }
 }

@@ -3,20 +3,22 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionResponseService;
 import op.edu.ua.petbed.common.dto.AdoptionResponseDTO;
-
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
+import op.edu.ua.petbed.telegram.response.CallbackListItem;
 import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
+import op.edu.ua.petbed.telegram.response.KeyboardLayout;
 import op.edu.ua.petbed.telegram.response.ResponseBuilder;
 import org.jspecify.annotations.NullMarked;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
-
-import java.util.List;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 /**
- * Handler for ADOPTION_RESPONSES_LIST callback - shows list of responses for a post.
+ * Handler for ADOPTION_RESPONSES_LIST callback - shows list of responses for a post with pagination.
  */
 @NullMarked
 @Component
@@ -32,55 +34,66 @@ public class AdoptionResponsesCallbackHandler implements CallbackHandler {
 
     @Override
     public BotApiMethod<?> handle(CallbackQueryContext context) {
-        // Get postId from entityId
         Long postId = context.callbackData().entityId();
         if (postId == null) {
-            return ResponseBuilder.editMessage(context.chatId(), context.messageId())
-                    .text("❌ Помилка: ID оголошення не вказано")
-                    .keyboard(InlineKeyboardBuilder.builder()
-                            .backButtonTo(CallbackId.ADOPTION_POST_DETAIL)
-                            .build())
-                    .build();
+            return errorMessage(context, "ID оголошення не вказано");
         }
 
-        List<AdoptionResponseDTO> responses = adoptionResponseService.findByPostId(postId);
+        int offset = context.callbackData().offset() != null ? context.callbackData().offset() : 0;
+        Page<AdoptionResponseDTO> responses = adoptionResponseService.findByPostId(postId,
+                PageRequest.of(offset, KeyboardLayout.DEFAULT.pageSize()));
 
         if (responses.isEmpty()) {
-            return ResponseBuilder.editMessage(context.chatId(), context.messageId())
-                    .text("📨 Поки немає відгуків на це оголошення.")
-                    .keyboard(InlineKeyboardBuilder.builder()
-                            .backButtonTo(CallbackId.ADOPTION_POST_DETAIL)
-                            .build())
-                    .build();
+            return noResponsesMessage(context);
         }
 
-        // Build keyboard with response list
-        InlineKeyboardBuilder builder = InlineKeyboardBuilder.builder();
-
-        responses.forEach(response -> {
-            String label = response.getStatusEmoji() + " " +
-                    response.responderUsername() +
-                    " - " + truncate(response.comment(), 20);
-            builder.addButton(label,
-                    CallbackId.ADOPTION_RESPONSE_SINGLE,
-                    response.id());
-        });
-
-        builder.backButtonTo(CallbackId.ADOPTION_POST_DETAIL);
-
         return ResponseBuilder.editMessage(context.chatId(), context.messageId())
-                .text("📨 Відгуки на ваше оголошення:")
-                .keyboard(builder.build())
+                .text(formatHeader(responses))
+                .keyboard(buildKeyboard(context, responses))
                 .build();
+    }
+
+    private BotApiMethod<?> errorMessage(CallbackQueryContext context, String error) {
+        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
+                .text("❌ Помилка: " + error)
+                .keyboard(InlineKeyboardBuilder.builder()
+                        .backButtonTo(CallbackId.ADOPTION_POST_DETAIL)
+                        .build())
+                .build();
+    }
+
+    private BotApiMethod<?> noResponsesMessage(CallbackQueryContext context) {
+        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
+                .text("📨 Поки немає відгуків на це оголошення.")
+                .keyboard(InlineKeyboardBuilder.builder()
+                        .backButtonTo(CallbackId.ADOPTION_POST_DETAIL)
+                        .build())
+                .build();
+    }
+
+    private String formatHeader(Page<AdoptionResponseDTO> responses) {
+        return "📨 Відгуки на ваше оголошення:";
+    }
+
+    private InlineKeyboardMarkup buildKeyboard(CallbackQueryContext context, Page<AdoptionResponseDTO> responses) {
+        return InlineKeyboardBuilder.builder()
+                .paginatedList(toPageDto(responses), context.callbackData())
+                .backButtonTo(CallbackId.ADOPTION_POST_DETAIL)
+                .build();
+    }
+
+    private Page<CallbackListItem> toPageDto(Page<AdoptionResponseDTO> responses) {
+        return responses.map(response -> new CallbackListItem(
+                CallbackId.ADOPTION_RESPONSE_SINGLE,
+                response.id(),
+                response.getStatusEmoji() + " " + truncate(response.responderUsername(), 20)
+        ));
     }
 
     private String truncate(String text, int maxLength) {
         if (text == null || text.isBlank()) {
-            return "(без коментаря)";
+            return "(без імені)";
         }
-        if (text.length() <= maxLength) {
-            return text;
-        }
-        return text.substring(0, maxLength) + "...";
+        return text.length() <= maxLength ? text : text.substring(0, maxLength) + "...";
     }
 }

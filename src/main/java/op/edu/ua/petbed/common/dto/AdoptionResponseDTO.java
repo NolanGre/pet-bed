@@ -11,6 +11,7 @@ import java.time.Instant;
 public record AdoptionResponseDTO(
         Long id,
         Long postId,
+        String postPetName,
         Long responderId,
         String responderUsername,
         String responderTelegramUsername,
@@ -18,10 +19,11 @@ public record AdoptionResponseDTO(
         AdoptionResponseStatus status,
         @Nullable Instant createdAt
 ) {
-    public static AdoptionResponseDTO fromEntity(AdoptionResponse entity, String responderUsername, String responderTelegramUsername) {
+    public static AdoptionResponseDTO fromEntity(AdoptionResponse entity, String responderUsername, String responderTelegramUsername, String postPetName) {
         return new AdoptionResponseDTO(
                 entity.getIdOrThrow(),
                 entity.getAdoptionPostId(),
+                postPetName,
                 entity.getResponderId(),
                 responderUsername,
                 responderTelegramUsername,

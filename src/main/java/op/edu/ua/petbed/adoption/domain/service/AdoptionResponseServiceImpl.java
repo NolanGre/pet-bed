@@ -13,11 +13,12 @@ import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.pet.PetService;
 import op.edu.ua.petbed.user.UserService;
 import org.jspecify.annotations.NullMarked;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
 
 @NullMarked
 @Service
@@ -65,11 +66,9 @@ public class AdoptionResponseServiceImpl implements AdoptionResponseService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AdoptionResponseDTO> findByPostId(Long postId) {
-        return adoptionResponseRepository.findByPostIdOrderByStatusPriority(postId)
-                .stream()
-                .map(this::mapToDTO)
-                .toList();
+    public Page<AdoptionResponseDTO> findByPostId(Long postId, Pageable pageable) {
+        return adoptionResponseRepository.findByPostIdOrderByStatusPriority(postId, pageable)
+                .map(this::mapToDTO);
     }
 
     @Override
@@ -123,7 +122,8 @@ public class AdoptionResponseServiceImpl implements AdoptionResponseService {
         response.rejectByOwner();
         adoptionResponseRepository.save(response);
 
-        log.info("Rejected adoption response: id={}, postId={}, ownerId={}", responseId, post.getIdOrThrow(), ownerId);
+        log.info("Rejected adoption response: id={}, postId={}, ownerId={}",
+                responseId, post.getIdOrThrow(), ownerId);
     }
 
     @Override
@@ -143,7 +143,8 @@ public class AdoptionResponseServiceImpl implements AdoptionResponseService {
         response.restore();
         adoptionResponseRepository.save(response);
 
-        log.info("Restored adoption response: id={}, postId={}, ownerId={}", responseId, post.getIdOrThrow(), ownerId);
+        log.info("Restored adoption response: id={}, postId={}, ownerId={}",
+                responseId, post.getIdOrThrow(), ownerId);
     }
 
     @Override
@@ -156,8 +157,18 @@ public class AdoptionResponseServiceImpl implements AdoptionResponseService {
             throw new PetBedException("Not authorized to finalize this response", PetBedException.ErrorCode.ADOPTION_RESPONSE_NOT_AUTHORIZED);
         }
 
+        if (response.getStatus() != op.edu.ua.petbed.adoption.domain.model.AdoptionResponseStatus.CONFIRMED_BY_OWNER) {
+            throw new PetBedException("Response must be confirmed by owner first", PetBedException.ErrorCode.ADOPTION_RESPONSE_INVALID_STATUS);
+        }
+
         response.finalConfirm();
         adoptionResponseRepository.save(response);
+
+        AdoptionPost post = adoptionPostRepository.findById(response.getAdoptionPostId())
+                .orElseThrow(() -> new PetBedException("Adoption post not found", PetBedException.ErrorCode.ADOPTION_POST_NOT_FOUND));
+
+        post.complete();
+        adoptionPostRepository.save(post);
 
         adoptionCompletionService.completeAdoption(response);
 
@@ -187,12 +198,25 @@ public class AdoptionResponseServiceImpl implements AdoptionResponseService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean hasResponded(Long postId, Long userId) {
         return adoptionResponseRepository.existsByAdoptionPostIdAndResponderId(postId, userId);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AdoptionResponseDTO> findByResponderId(Long responderId, Pageable pageable) {
+        return adoptionResponseRepository.findByResponderId(responderId, pageable)
+                .map(this::mapToDTO);
+    }
+
     private AdoptionResponseDTO mapToDTO(AdoptionResponse response) {
         var responder = userService.findById(response.getResponderId());
+
+        var post = adoptionPostRepository.findById(response.getAdoptionPostId())
+                .orElseThrow(() -> new PetBedException("Adoption post not found",
+                        PetBedException.ErrorCode.ADOPTION_POST_NOT_FOUND));
+        var pet = petService.findById(post.getPetId());
 
         Instant createdAt = response.getCreatedAt();
         if (createdAt == null) {
@@ -202,7 +226,8 @@ public class AdoptionResponseServiceImpl implements AdoptionResponseService {
         return AdoptionResponseDTO.fromEntity(
                 response,
                 responder.telegramUsername(),
-                responder.telegramUsername()
+                responder.telegramUsername(),
+                pet.name()
         );
     }
 }

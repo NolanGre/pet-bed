@@ -3,6 +3,8 @@ package op.edu.ua.petbed.adoption.domain.repository;
 import op.edu.ua.petbed.adoption.domain.model.AdoptionResponse;
 import op.edu.ua.petbed.adoption.domain.model.AdoptionResponseStatus;
 import org.jspecify.annotations.NullMarked;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -19,6 +21,8 @@ public interface AdoptionResponseRepository extends JpaRepository<AdoptionRespon
     List<AdoptionResponse> findByAdoptionPostIdAndStatus(Long postId, AdoptionResponseStatus status);
 
     List<AdoptionResponse> findByResponderId(Long responderId);
+
+    Page<AdoptionResponse> findByResponderId(Long responderId, Pageable pageable);
 
     boolean existsByAdoptionPostIdAndResponderId(Long postId, Long responderId);
 
@@ -42,4 +46,16 @@ public interface AdoptionResponseRepository extends JpaRepository<AdoptionRespon
            "WHEN 'REJECTED_BY_OWNER' THEN 3 " +
            "ELSE 4 END, ar.createdAt DESC")
     List<AdoptionResponse> findByPostIdOrderByStatusPriority(@Param("postId") Long postId);
+
+    /**
+     * Finds responses with pagination sorted by status priority.
+     */
+    @Query(value = "SELECT ar FROM AdoptionResponse ar WHERE ar.adoptionPostId = :postId " +
+           "ORDER BY CASE ar.status " +
+           "WHEN 'CONFIRMED_BY_OWNER' THEN 1 " +
+           "WHEN 'NEW' THEN 2 " +
+           "WHEN 'REJECTED_BY_OWNER' THEN 3 " +
+           "ELSE 4 END, ar.createdAt DESC",
+           countQuery = "SELECT COUNT(ar) FROM AdoptionResponse ar WHERE ar.adoptionPostId = :postId")
+    Page<AdoptionResponse> findByPostIdOrderByStatusPriority(@Param("postId") Long postId, Pageable pageable);
 }
