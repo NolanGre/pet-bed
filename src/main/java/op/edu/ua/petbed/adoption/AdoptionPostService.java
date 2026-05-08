@@ -1,10 +1,12 @@
 package op.edu.ua.petbed.adoption;
 
-import op.edu.ua.petbed.adoption.dto.AdoptionPostDTO;
-import op.edu.ua.petbed.adoption.dto.AdoptionPostDetailDTO;
-import op.edu.ua.petbed.adoption.dto.AdoptionRecommendationDTO;
+import op.edu.ua.petbed.common.dto.AdoptionPostDTO;
+import op.edu.ua.petbed.common.dto.AdoptionPostDetailDTO;
+import op.edu.ua.petbed.common.dto.AdoptionRecommendationDTO;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -34,20 +36,13 @@ public interface AdoptionPostService {
     AdoptionPostDetailDTO findById(Long id);
 
     /**
-     * Finds all active adoption posts for a specific owner.
+     * Finds adoption posts for a specific owner with pagination.
      *
      * @param ownerId the owner user ID
-     * @return list of active adoption post DTOs
+     * @param pageable pagination parameters
+     * @return page of adoption post DTOs
      */
-    List<AdoptionPostDTO> findActiveByOwnerId(Long ownerId);
-
-    /**
-     * Finds all adoption posts for a specific owner (any status).
-     *
-     * @param ownerId the owner user ID
-     * @return list of adoption post DTOs
-     */
-    List<AdoptionPostDTO> findAllByOwnerId(Long ownerId);
+    Page<AdoptionPostDTO> findAllByOwnerId(Long ownerId, Pageable pageable);
 
     /**
      * Cancels an active adoption post.

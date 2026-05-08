@@ -1,7 +1,7 @@
-package op.edu.ua.petbed.adoption.dto;
+package op.edu.ua.petbed.common.dto;
 
 import op.edu.ua.petbed.adoption.domain.model.AdoptionPost;
-import op.edu.ua.petbed.adoption.domain.model.enums.AdoptionPostStatus;
+import op.edu.ua.petbed.common.model.AdoptionPostStatus;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 

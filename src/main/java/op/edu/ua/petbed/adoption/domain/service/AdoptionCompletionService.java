@@ -41,17 +41,13 @@ public class AdoptionCompletionService {
                 .orElseThrow(() -> new PetBedException("Adoption post not found",
                         PetBedException.ErrorCode.ADOPTION_POST_NOT_FOUND));
 
-        // Complete the post
         post.complete();
         adoptionPostRepository.save(post);
 
-        // Transfer pet ownership
         petService.transferOwnership(post.getPetId(), response.getResponderId());
 
-        // Reset pet status to DEFAULT
         petService.updateStatus(post.getPetId(), PetStatus.DEFAULT);
 
-        log.info("Completed adoption: postId={}, petId={}, newOwnerId={}",
-                post.getIdOrThrow(), post.getPetId(), response.getResponderId());
+        log.info("Completed adoption: postId={}, petId={}, newOwnerId={}", post.getIdOrThrow(), post.getPetId(), response.getResponderId());
     }
 }

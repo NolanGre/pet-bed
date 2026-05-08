@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 
 /**
- * Handler for ADOPTION_RESPONSE_DETAIL_CONFIRM - actually confirms the response.
+ * Handler for ADOPTION_RESPONSE_SINGLE_CONFIRM - actually confirms the response.
  */
 @NullMarked
 @Component
@@ -24,7 +24,7 @@ public class AdoptionResponseConfirmActionHandler implements CallbackHandler {
 
     @Override
     public CallbackId getCallbackId() {
-        return CallbackId.ADOPTION_RESPONSE_DETAIL_CONFIRM;
+        return CallbackId.ADOPTION_RESPONSE_SINGLE_CONFIRM;
     }
 
     @Override
@@ -34,7 +34,7 @@ public class AdoptionResponseConfirmActionHandler implements CallbackHandler {
             return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                     .text("❌ Помилка: ID відгуку не вказано")
                     .keyboard(InlineKeyboardBuilder.builder()
-                            .backButtonTo(CallbackId.ADOPTION_RESPONSE_DETAIL)
+                            .backButtonTo(CallbackId.ADOPTION_RESPONSE_SINGLE)
                             .build())
                     .build();
         }
@@ -51,7 +51,7 @@ public class AdoptionResponseConfirmActionHandler implements CallbackHandler {
                         Інші відгуки автоматично відхилено.
                         """)
                 .keyboard(InlineKeyboardBuilder.builder()
-                        .backButtonTo(CallbackId.ADOPTION_RESPONSE_DETAIL)
+                        .backButtonTo(CallbackId.ADOPTION_RESPONSE_SINGLE)
                         .build())
                 .build();
     }

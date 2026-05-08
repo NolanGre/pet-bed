@@ -70,6 +70,29 @@ public class UserServiceImpl implements UserService {
                 .orElse(null);
     }
 
+    @Override
+    public int getAdoptionHistoryOffset(Long userId) {
+        return userRepository.findById(userId)
+                .map(User::getAdoptionHistoryOffset)
+                .orElse(0);
+    }
+
+    @Override
+    public void incrementAdoptionHistoryOffset(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new PetBedException("User not found with internalId: " + userId, PetBedException.ErrorCode.USER_NOT_FOUND));
+        user.setAdoptionHistoryOffset(user.getAdoptionHistoryOffset() + 1);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void resetAdoptionHistoryOffset(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new PetBedException("User not found with internalId: " + userId, PetBedException.ErrorCode.USER_NOT_FOUND));
+        user.setAdoptionHistoryOffset(0);
+        userRepository.save(user);
+    }
+
     private UserDTO toDto(User user) {
         return new UserDTO(
                 user.getIdOrThrow(),

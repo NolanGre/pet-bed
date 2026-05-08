@@ -2,7 +2,8 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionResponseService;
-import op.edu.ua.petbed.adoption.dto.AdoptionResponseDTO;
+import op.edu.ua.petbed.adoption.domain.model.AdoptionResponseStatus;
+import op.edu.ua.petbed.common.dto.AdoptionResponseDTO;
 
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
@@ -12,9 +13,10 @@ import op.edu.ua.petbed.telegram.response.ResponseBuilder;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 /**
- * Handler for ADOPTION_RESPONSE_DETAIL callback - shows single response details with action buttons.
+ * Handler for ADOPTION_RESPONSE_SINGLE callback - shows single response details with action buttons.
  */
 @NullMarked
 @Component
@@ -25,7 +27,7 @@ public class AdoptionResponseDetailOwnerCallbackHandler implements CallbackHandl
 
     @Override
     public CallbackId getCallbackId() {
-        return CallbackId.ADOPTION_RESPONSE_DETAIL;
+        return CallbackId.ADOPTION_RESPONSE_SINGLE;
     }
 
     @Override
@@ -42,6 +44,15 @@ public class AdoptionResponseDetailOwnerCallbackHandler implements CallbackHandl
 
         AdoptionResponseDTO response = adoptionResponseService.findById(responseId);
 
+        String text = formatResponseInfo(response);
+
+        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
+                .text(text)
+                .keyboard(buildKeyboard(response, responseId))
+                .build();
+    }
+
+    private String formatResponseInfo(AdoptionResponseDTO response) {
         StringBuilder text = new StringBuilder();
         text.append("👤 @").append(response.responderUsername()).append("\n\n");
         text.append("Статус: ").append(response.getStatusEmoji()).append("\n");
@@ -50,36 +61,29 @@ public class AdoptionResponseDetailOwnerCallbackHandler implements CallbackHandl
             text.append("\n💬 ").append(response.comment()).append("\n");
         }
 
-        // Build keyboard based on response status
-        InlineKeyboardBuilder builder = InlineKeyboardBuilder.builder();
-
         switch (response.status()) {
-            case NEW -> {
-                builder.addButton("✅ Підтвердити",
-                        CallbackId.ADOPTION_RESPONSE_DETAIL_TRY_CONFIRM, responseId);
-                builder.addButton("❌ Відхилити",
-                        CallbackId.ADOPTION_RESPONSE_DETAIL_TRY_CANCEL, responseId);
-            }
-            case CONFIRMED_BY_OWNER -> {
-                text.append("\n⏳ Очікує фінального підтвердження від охочого\n");
-            }
-            case REJECTED_BY_OWNER -> {
-                builder.addButton("🔄 Відновити",
-                        CallbackId.ADOPTION_RESPONSE_DETAIL_TRY_CONFIRM, responseId);
-            }
-            case FINAL_CONFIRMED -> {
-                text.append("\n✅ Передачу завершено\n");
-            }
-            default -> {
-                // No actions for other statuses
-            }
+            case CONFIRMED_BY_OWNER -> text.append("\n⏳ Очікує фінального підтвердження від охочого\n");
+            case FINAL_CONFIRMED -> text.append("\n✅ Передачу завершено\n");
+            default -> {}
         }
 
-        builder.backButtonTo(CallbackId.ADOPTION_POST_DETAIL);
+        return text.toString();
+    }
 
-        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
-                .text(text.toString())
-                .keyboard(builder.build())
+    private InlineKeyboardMarkup buildKeyboard(AdoptionResponseDTO response, Long responseId) {
+        return InlineKeyboardBuilder.builder()
+                .navButtonsFor(CallbackId.ADOPTION_RESPONSE_SINGLE, responseId, child -> {
+                    var status = response.status();
+                    if (status == AdoptionResponseStatus.NEW) {
+                        return child == CallbackId.ADOPTION_RESPONSE_SINGLE_TRY_CONFIRM
+                                || child == CallbackId.ADOPTION_RESPONSE_SINGLE_TRY_REJECT;
+                    }
+                    if (status == AdoptionResponseStatus.REJECTED_BY_OWNER) {
+                        return child == CallbackId.ADOPTION_RESPONSE_SINGLE_TRY_RESTORE;
+                    }
+                    return false;
+                })
+                .backButtonTo(CallbackId.ADOPTION_RESPONSES_LIST)
                 .build();
     }
 }

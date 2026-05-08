@@ -1,7 +1,7 @@
 package op.edu.ua.petbed.adoption.domain.repository;
 
 import op.edu.ua.petbed.adoption.domain.model.AdoptionResponse;
-import op.edu.ua.petbed.adoption.domain.model.enums.AdoptionResponseStatus;
+import op.edu.ua.petbed.adoption.domain.model.AdoptionResponseStatus;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

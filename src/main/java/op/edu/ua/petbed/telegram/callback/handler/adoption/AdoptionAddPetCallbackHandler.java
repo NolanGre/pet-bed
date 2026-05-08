@@ -27,7 +27,6 @@ public class AdoptionAddPetCallbackHandler implements CallbackHandler {
 
     @Override
     public BotApiMethod<?> handle(CallbackQueryContext context) {
-        // Start ADD_PET form, return to ADOPTION_GIVE after completion
         return formService.startCreateForm(
                 FormType.ADD_PET,
                 CallbackId.ADOPTION_GIVE,

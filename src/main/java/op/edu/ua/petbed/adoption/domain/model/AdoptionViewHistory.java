@@ -1,20 +1,20 @@
 package op.edu.ua.petbed.adoption.domain.model;
 
 import jakarta.persistence.*;
-import lombok.*;
-import op.edu.ua.petbed.common.model.AbstractAuditableEntity;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 
 import java.time.Instant;
 
 @NullMarked
-@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED, onConstructor_ = @SuppressWarnings("NullAway"))
 @AllArgsConstructor
 @Entity
 @Table(name = "adoption_view_history")
 @IdClass(AdoptionViewHistoryId.class)
-public class AdoptionViewHistory extends AbstractAuditableEntity {
+public class AdoptionViewHistory {
 
     @Id
     @Column(name = "post_id", nullable = false)
@@ -36,5 +36,17 @@ public class AdoptionViewHistory extends AbstractAuditableEntity {
                 userId,
                 Instant.now()
         );
+    }
+
+    public Long getPostId() {
+        return postId;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public Instant getViewedAt() {
+        return viewedAt;
     }
 }

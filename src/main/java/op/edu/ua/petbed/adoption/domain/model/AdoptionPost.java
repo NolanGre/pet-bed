@@ -2,7 +2,7 @@ package op.edu.ua.petbed.adoption.domain.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import op.edu.ua.petbed.adoption.domain.model.enums.AdoptionPostStatus;
+import op.edu.ua.petbed.common.model.AdoptionPostStatus;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.AbstractAuditableEntity;
 import org.hibernate.proxy.HibernateProxy;
@@ -98,6 +98,15 @@ public class AdoptionPost extends AbstractAuditableEntity {
 
     public boolean isPendingConfirmation() {
         return status == AdoptionPostStatus.PENDING_CONFIRMATION;
+    }
+
+    public void resetToActive() {
+        if (status != AdoptionPostStatus.PENDING_CONFIRMATION) {
+            throw new PetBedException("Cannot reset post that is not pending confirmation",
+                    PetBedException.ErrorCode.ADOPTION_POST_INVALID_STATUS);
+        }
+        this.status = AdoptionPostStatus.ACTIVE;
+        this.pendingResponseId = null;
     }
 
     @Override

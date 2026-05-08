@@ -2,7 +2,6 @@ package op.edu.ua.petbed.adoption.domain.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import op.edu.ua.petbed.adoption.domain.model.enums.AdoptionResponseStatus;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.AbstractAuditableEntity;
 import org.hibernate.proxy.HibernateProxy;

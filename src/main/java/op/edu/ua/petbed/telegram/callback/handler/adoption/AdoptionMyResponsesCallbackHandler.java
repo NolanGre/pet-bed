@@ -2,8 +2,6 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionResponseService;
-import op.edu.ua.petbed.adoption.dto.AdoptionResponseDTO;
-import op.edu.ua.petbed.telegram.callback.CallbackData;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -12,8 +10,6 @@ import op.edu.ua.petbed.telegram.response.ResponseBuilder;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
-
-import java.util.List;
 
 /**
  * Handler for ADOPTION_MY_RESPONSES callback - shows list of user's responses.

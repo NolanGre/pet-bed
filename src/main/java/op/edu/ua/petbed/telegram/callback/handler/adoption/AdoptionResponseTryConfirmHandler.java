@@ -2,7 +2,7 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionResponseService;
-import op.edu.ua.petbed.adoption.dto.AdoptionResponseDTO;
+import op.edu.ua.petbed.common.dto.AdoptionResponseDTO;
 
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 
 /**
- * Handler for ADOPTION_RESPONSE_DETAIL_TRY_CONFIRM - shows confirmation dialog.
+ * Handler for ADOPTION_RESPONSE_SINGLE_TRY_CONFIRM - shows confirmation dialog.
  */
 @NullMarked
 @Component
@@ -25,7 +25,7 @@ public class AdoptionResponseTryConfirmHandler implements CallbackHandler {
 
     @Override
     public CallbackId getCallbackId() {
-        return CallbackId.ADOPTION_RESPONSE_DETAIL_TRY_CONFIRM;
+        return CallbackId.ADOPTION_RESPONSE_SINGLE_TRY_CONFIRM;
     }
 
     @Override
@@ -35,7 +35,7 @@ public class AdoptionResponseTryConfirmHandler implements CallbackHandler {
             return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                     .text("❌ Помилка: ID відгуку не вказано")
                     .keyboard(InlineKeyboardBuilder.builder()
-                            .backButtonTo(CallbackId.ADOPTION_RESPONSE_DETAIL)
+                            .backButtonTo(CallbackId.ADOPTION_RESPONSE_SINGLE)
                             .build())
                     .build();
         }
@@ -55,8 +55,8 @@ public class AdoptionResponseTryConfirmHandler implements CallbackHandler {
                         """.formatted(response.responderUsername()))
                 .keyboard(InlineKeyboardBuilder.builder()
                         .addButton("✅ Так, підтвердити",
-                                CallbackId.ADOPTION_RESPONSE_DETAIL_CONFIRM, responseId)
-                        .backButtonTo(CallbackId.ADOPTION_RESPONSE_DETAIL)
+                                CallbackId.ADOPTION_RESPONSE_SINGLE_CONFIRM, responseId)
+                        .backButtonTo(CallbackId.ADOPTION_RESPONSE_SINGLE)
                         .build())
                 .build();
     }

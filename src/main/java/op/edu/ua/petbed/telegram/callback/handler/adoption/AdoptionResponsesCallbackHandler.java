@@ -2,7 +2,7 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionResponseService;
-import op.edu.ua.petbed.adoption.dto.AdoptionResponseDTO;
+import op.edu.ua.petbed.common.dto.AdoptionResponseDTO;
 
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
@@ -16,7 +16,7 @@ import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import java.util.List;
 
 /**
- * Handler for ADOPTION_RESPONSE_DETAIL callback - shows list of responses for a post.
+ * Handler for ADOPTION_RESPONSES_LIST callback - shows list of responses for a post.
  */
 @NullMarked
 @Component
@@ -27,7 +27,7 @@ public class AdoptionResponsesCallbackHandler implements CallbackHandler {
 
     @Override
     public CallbackId getCallbackId() {
-        return CallbackId.ADOPTION_RESPONSE_DETAIL;
+        return CallbackId.ADOPTION_RESPONSES_LIST;
     }
 
     @Override
@@ -62,7 +62,7 @@ public class AdoptionResponsesCallbackHandler implements CallbackHandler {
                     response.responderUsername() +
                     " - " + truncate(response.comment(), 20);
             builder.addButton(label,
-                    CallbackId.ADOPTION_RESPONSE_DETAIL_CONFIRM,
+                    CallbackId.ADOPTION_RESPONSE_SINGLE,
                     response.id());
         });
 

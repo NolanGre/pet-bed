@@ -1,7 +1,7 @@
 package op.edu.ua.petbed.adoption.domain.repository;
 
 import op.edu.ua.petbed.adoption.domain.model.AdoptionPost;
-import op.edu.ua.petbed.adoption.domain.model.enums.AdoptionPostStatus;
+import op.edu.ua.petbed.common.model.AdoptionPostStatus;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
@@ -28,6 +28,9 @@ public interface AdoptionPostRepository extends JpaRepository<AdoptionPost, Long
 
     @Query("SELECT ap FROM AdoptionPost ap WHERE ap.petId IN (SELECT p.id FROM Pet p WHERE p.ownerId = :ownerId) AND ap.status = :status ORDER BY ap.createdAt DESC")
     List<AdoptionPost> findByOwnerIdAndStatus(@Param("ownerId") Long ownerId, @Param("status") AdoptionPostStatus status);
+
+    @Query("SELECT ap FROM AdoptionPost ap WHERE ap.petId IN (SELECT p.id FROM Pet p WHERE p.ownerId = :ownerId) ORDER BY ap.createdAt DESC")
+    Page<AdoptionPost> findByOwnerId(@Param("ownerId") Long ownerId, Pageable pageable);
 
     /**
      * Finds unviewed active posts for a user, excluding their own posts.

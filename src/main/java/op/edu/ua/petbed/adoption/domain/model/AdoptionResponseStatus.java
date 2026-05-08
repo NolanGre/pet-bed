@@ -1,4 +1,4 @@
-package op.edu.ua.petbed.adoption.domain.model.enums;
+package op.edu.ua.petbed.adoption.domain.model;
 
 public enum AdoptionResponseStatus {
     NEW,

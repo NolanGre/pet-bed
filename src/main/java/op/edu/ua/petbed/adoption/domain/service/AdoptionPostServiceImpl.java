@@ -3,15 +3,14 @@ package op.edu.ua.petbed.adoption.domain.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import op.edu.ua.petbed.adoption.AdoptionPostService;
-import op.edu.ua.petbed.adoption.dto.AdoptionPostDTO;
-import op.edu.ua.petbed.adoption.dto.AdoptionPostDetailDTO;
-import op.edu.ua.petbed.adoption.dto.AdoptionRecommendationDTO;
-import op.edu.ua.petbed.adoption.dto.AdoptionResponseDTO;
+import op.edu.ua.petbed.common.dto.AdoptionPostDTO;
+import op.edu.ua.petbed.common.dto.AdoptionPostDetailDTO;
+import op.edu.ua.petbed.common.dto.AdoptionRecommendationDTO;
+import op.edu.ua.petbed.common.dto.AdoptionResponseDTO;
 import op.edu.ua.petbed.adoption.domain.model.AdoptionPost;
 import op.edu.ua.petbed.adoption.domain.model.AdoptionResponse;
-import op.edu.ua.petbed.adoption.domain.model.AdoptionSavedPost;
 import op.edu.ua.petbed.adoption.domain.model.AdoptionViewHistory;
-import op.edu.ua.petbed.adoption.domain.model.enums.AdoptionPostStatus;
+import op.edu.ua.petbed.common.model.AdoptionPostStatus;
 import op.edu.ua.petbed.adoption.domain.repository.AdoptionPostRepository;
 import op.edu.ua.petbed.adoption.domain.repository.AdoptionResponseRepository;
 import op.edu.ua.petbed.adoption.domain.repository.AdoptionSavedPostRepository;
@@ -20,10 +19,12 @@ import op.edu.ua.petbed.common.dto.PetDTO;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.PetStatus;
 import op.edu.ua.petbed.pet.PetService;
+import op.edu.ua.petbed.user.UserService;
 import op.edu.ua.petbed.user.model.User;
 import op.edu.ua.petbed.user.repository.UserRepository;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -43,7 +44,7 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
     private final AdoptionSavedPostRepository adoptionSavedPostRepository;
     private final AdoptionViewHistoryRepository adoptionViewHistoryRepository;
     private final PetService petService;
-    private final UserRepository userRepository;
+    private final UserService userService;
 
     @Override
     @Transactional
@@ -94,20 +95,9 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AdoptionPostDTO> findActiveByOwnerId(Long ownerId) {
-        return adoptionPostRepository.findByOwnerIdAndStatus(ownerId, AdoptionPostStatus.ACTIVE)
-                .stream()
-                .map(this::mapToPostDTO)
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<AdoptionPostDTO> findAllByOwnerId(Long ownerId) {
-        return adoptionPostRepository.findByOwnerId(ownerId)
-                .stream()
-                .map(this::mapToPostDTO)
-                .toList();
+    public Page<AdoptionPostDTO> findAllByOwnerId(Long ownerId, Pageable pageable) {
+        return adoptionPostRepository.findByOwnerId(ownerId, pageable)
+                .map(this::mapToPostDTO);
     }
 
     @Override
@@ -155,8 +145,8 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
                 pet.id(),
                 pet.name(),
                 pet.photoId(),
-                pet.breed() != null ? pet.breed() : "",
-                pet.color() != null ? pet.color() : "",
+                pet.breed(),
+                pet.color(),
                 post.getOwnerComment(),
                 post.getCreatedAt(),
                 isSaved
@@ -171,27 +161,19 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
             adoptionViewHistoryRepository.save(viewHistory);
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new PetBedException("User not found", PetBedException.ErrorCode.USER_NOT_FOUND));
-        user.setAdoptionHistoryOffset(user.getAdoptionHistoryOffset() + 1);
-        userRepository.save(user);
+        userService.incrementAdoptionHistoryOffset(userId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getOffset(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new PetBedException("User not found", PetBedException.ErrorCode.USER_NOT_FOUND));
-        return user.getAdoptionHistoryOffset();
+        return userService.getAdoptionHistoryOffset(userId);
     }
 
     @Override
     @Transactional
     public void resetOffset(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new PetBedException("User not found", PetBedException.ErrorCode.USER_NOT_FOUND));
-        user.setAdoptionHistoryOffset(0);
-        userRepository.save(user);
+        userService.resetAdoptionHistoryOffset(userId);
         adoptionViewHistoryRepository.deleteByUserId(userId);
     }
 
@@ -201,14 +183,12 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
     }
 
     private AdoptionResponseDTO mapToResponseDTO(AdoptionResponse response) {
-        User responder = userRepository.findById(response.getResponderId())
-                .orElseThrow(() -> new PetBedException("Responder not found",
-                        PetBedException.ErrorCode.USER_NOT_FOUND));
+        var responder = userService.findById(response.getResponderId());
 
         return AdoptionResponseDTO.fromEntity(
                 response,
-                responder.getTelegramUsername(),
-                responder.getTelegramUsername()
+                responder.telegramUsername(),
+                responder.telegramUsername()
         );
     }
 }

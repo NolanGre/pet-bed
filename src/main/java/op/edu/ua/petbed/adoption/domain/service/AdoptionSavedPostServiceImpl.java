@@ -3,7 +3,7 @@ package op.edu.ua.petbed.adoption.domain.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import op.edu.ua.petbed.adoption.AdoptionSavedPostService;
-import op.edu.ua.petbed.adoption.dto.AdoptionPostDTO;
+import op.edu.ua.petbed.common.dto.AdoptionPostDTO;
 import op.edu.ua.petbed.adoption.domain.model.AdoptionPost;
 import op.edu.ua.petbed.adoption.domain.model.AdoptionSavedPost;
 import op.edu.ua.petbed.adoption.domain.repository.AdoptionPostRepository;
@@ -12,6 +12,8 @@ import op.edu.ua.petbed.common.dto.PetDTO;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.pet.PetService;
 import org.jspecify.annotations.NullMarked;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,13 +34,11 @@ public class AdoptionSavedPostServiceImpl implements AdoptionSavedPostService {
     @Transactional
     public void save(Long postId, Long userId) {
         if (isSaved(postId, userId)) {
-            return; // Already saved, idempotent
+            return;
         }
 
-        // Verify post exists
-        AdoptionPost post = adoptionPostRepository.findById(postId)
-                .orElseThrow(() -> new PetBedException("Adoption post not found with id: " + postId,
-                        PetBedException.ErrorCode.ADOPTION_POST_NOT_FOUND));
+        adoptionPostRepository.findById(postId)
+                .orElseThrow(() -> new PetBedException("Adoption post not found with id: " + postId, PetBedException.ErrorCode.ADOPTION_POST_NOT_FOUND));
 
         AdoptionSavedPost savedPost = AdoptionSavedPost.create(postId, userId);
         adoptionSavedPostRepository.save(savedPost);
@@ -50,7 +50,7 @@ public class AdoptionSavedPostServiceImpl implements AdoptionSavedPostService {
     @Transactional
     public void unsave(Long postId, Long userId) {
         if (!isSaved(postId, userId)) {
-            return; // Not saved, idempotent
+            return;
         }
 
         adoptionSavedPostRepository.deleteByPostIdAndUserId(postId, userId);
@@ -60,16 +60,9 @@ public class AdoptionSavedPostServiceImpl implements AdoptionSavedPostService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AdoptionPostDTO> findSavedByUserId(Long userId) {
-        return adoptionSavedPostRepository.findByUserId(userId)
-                .stream()
-                .map(savedPost -> {
-                    AdoptionPost post = adoptionPostRepository.findById(savedPost.getPostId())
-                            .orElseThrow(() -> new PetBedException("Adoption post not found",
-                                    PetBedException.ErrorCode.ADOPTION_POST_NOT_FOUND));
-                    return mapToDTO(post);
-                })
-                .toList();
+    public Page<AdoptionPostDTO> findSavedByUserId(Long userId, Pageable pageable) {
+        return adoptionSavedPostRepository.findByUserId(userId, pageable)
+                .map(this::mapToDTO);
     }
 
     @Override
@@ -78,7 +71,10 @@ public class AdoptionSavedPostServiceImpl implements AdoptionSavedPostService {
         return adoptionSavedPostRepository.existsByPostIdAndUserId(postId, userId);
     }
 
-    private AdoptionPostDTO mapToDTO(AdoptionPost post) {
+    private AdoptionPostDTO mapToDTO(AdoptionSavedPost savedPost) {
+        AdoptionPost post = adoptionPostRepository.findById(savedPost.getPostId())
+                .orElseThrow(() -> new PetBedException("Adoption post not found",
+                        PetBedException.ErrorCode.ADOPTION_POST_NOT_FOUND));
         PetDTO pet = petService.findById(post.getPetId());
 
         Instant createdAt = post.getCreatedAt();

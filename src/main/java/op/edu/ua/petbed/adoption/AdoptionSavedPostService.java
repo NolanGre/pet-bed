@@ -1,9 +1,9 @@
 package op.edu.ua.petbed.adoption;
 
-import op.edu.ua.petbed.adoption.dto.AdoptionPostDTO;
+import op.edu.ua.petbed.common.dto.AdoptionPostDTO;
 import org.jspecify.annotations.NullMarked;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  * Public API for managing saved adoption posts.
@@ -29,12 +29,13 @@ public interface AdoptionSavedPostService {
     void unsave(Long postId, Long userId);
 
     /**
-     * Finds all saved adoption posts for a user.
+     * Finds saved adoption posts for a user with pagination.
      *
-     * @param userId the user ID
-     * @return list of saved adoption post DTOs
+     * @param userId   the user ID
+     * @param pageable the pagination parameters
+     * @return page of saved adoption post DTOs
      */
-    List<AdoptionPostDTO> findSavedByUserId(Long userId);
+    Page<AdoptionPostDTO> findSavedByUserId(Long userId, Pageable pageable);
 
     /**
      * Checks if a user has saved a specific post.

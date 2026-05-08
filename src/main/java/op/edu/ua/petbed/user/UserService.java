@@ -17,4 +17,10 @@ public interface UserService {
 
     @Nullable
     LocationDTO getLocation(Long userId);
+
+    int getAdoptionHistoryOffset(Long userId);
+
+    void incrementAdoptionHistoryOffset(Long userId);
+
+    void resetAdoptionHistoryOffset(Long userId);
 }

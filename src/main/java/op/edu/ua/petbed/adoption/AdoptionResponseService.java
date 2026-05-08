@@ -1,6 +1,6 @@
 package op.edu.ua.petbed.adoption;
 
-import op.edu.ua.petbed.adoption.dto.AdoptionResponseDTO;
+import op.edu.ua.petbed.common.dto.AdoptionResponseDTO;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.List;

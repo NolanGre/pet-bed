@@ -2,8 +2,7 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionResponseService;
-import op.edu.ua.petbed.adoption.dto.AdoptionResponseDTO;
-import op.edu.ua.petbed.telegram.callback.CallbackData;
+import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -12,6 +11,7 @@ import op.edu.ua.petbed.telegram.response.ResponseBuilder;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 
 /**
  * Handler for final confirmation by the responder (ADOPTION_FINAL_CONFIRM equivalent).
@@ -26,8 +26,6 @@ public class AdoptionFinalConfirmHandler implements CallbackHandler {
 
     @Override
     public CallbackId getCallbackId() {
-        // This should be ADOPTION_FINAL_CONFIRM but it's not in the enum
-        // Using ADOPTION_MY_RESPONSE_DETAIL_CANCEL as placeholder
         return CallbackId.ADOPTION_MY_RESPONSE_DETAIL_CANCEL;
     }
 
@@ -35,18 +33,17 @@ public class AdoptionFinalConfirmHandler implements CallbackHandler {
     public BotApiMethod<?> handle(CallbackQueryContext context) {
         Long responseId = context.callbackData().entityId();
         if (responseId == null) {
-            return ResponseBuilder.editMessage(context.chatId(), context.messageId())
-                    .text("❌ Помилка: ID відгуку не вказано")
-                    .keyboard(InlineKeyboardBuilder.builder()
-                            .backButtonFor(CallbackId.ADOPTION_MY_RESPONSES)
-                            .build())
-                    .build();
+            throw new PetBedException("Entity callback must be not null.", PetBedException.ErrorCode.INVALID_CALLBACK);
         }
 
         Long responderId = context.auth().userInternalId();
 
         adoptionResponseService.finalConfirm(responseId, responderId);
 
+        return buildSuccessfulMessage(context);
+    }
+
+    private EditMessageText buildSuccessfulMessage(CallbackQueryContext context) {
         return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                 .text("""
                         ✅ Передачу підтверджено!
@@ -55,7 +52,7 @@ public class AdoptionFinalConfirmHandler implements CallbackHandler {
                         Зв'яжіться з попереднім власником для організації переїзду тварини.
                         """)
                 .keyboard(InlineKeyboardBuilder.builder()
-                        .backButtonFor(CallbackId.ADOPTION)
+                        .backButtonTo(CallbackId.ADOPTION)
                         .build())
                 .build();
     }

@@ -1,4 +1,4 @@
-package op.edu.ua.petbed.adoption.domain.model.enums;
+package op.edu.ua.petbed.common.model;
 
 public enum AdoptionPostStatus {
     ACTIVE,
