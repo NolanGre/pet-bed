@@ -12,7 +12,7 @@ import op.edu.ua.petbed.telegram.response.ResponseBuilder;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -40,6 +40,7 @@ public class AdoptionGetCallbackHandler implements CallbackHandler {
         Long userId = context.auth().userInternalId();
         var callbackData = context.callbackData();
         int offset = callbackData.offset() != null ? callbackData.offset() : 0;
+        Long entityId = callbackData.entityId();
 
         if (offset == 0) {
             adoptionPostService.resetOffset(userId);
@@ -53,26 +54,27 @@ public class AdoptionGetCallbackHandler implements CallbackHandler {
 
         adoptionPostService.recordView(post.postId(), userId);
 
-        return mapToResponse(context, post);
+        return mapToResponse(context, post, offset);
     }
 
-    private PartialBotApiMethod<?> mapToResponse(CallbackQueryContext context, AdoptionRecommendationDTO post) {
-        deleteCurrentMessage(context.chatId(), context.messageId());
+    private PartialBotApiMethod<?> mapToResponse(CallbackQueryContext context, AdoptionRecommendationDTO post, int offset) {
+        removeKeyboardFromCurrentMessage(context.chatId(), context.messageId());
 
         return ResponseBuilder.sendPhoto(context.chatId(), post.petPhotoUrl())
                 .caption(formatPostInfo(post))
-                .keyboard(buildKeyboard(post))
+                .keyboard(buildKeyboard(post, offset))
                 .build();
     }
 
-    private void deleteCurrentMessage(Long chatId, Integer messageId) {
+    private void removeKeyboardFromCurrentMessage(Long chatId, Integer messageId) {
         try {
-            telegramClient.execute(DeleteMessage.builder()
+            telegramClient.execute(EditMessageReplyMarkup.builder()
                     .chatId(chatId)
                     .messageId(messageId)
+                    .replyMarkup(InlineKeyboardMarkup.builder().build())
                     .build());
         } catch (TelegramApiException e) {
-            log.error("Failed to delete message {}: {}", messageId, e.getMessage());
+            log.error("Failed to remove keyboard from message {}: {}", messageId, e.getMessage());
         }
     }
 
@@ -145,12 +147,12 @@ public class AdoptionGetCallbackHandler implements CallbackHandler {
         }
     }
 
-    private InlineKeyboardMarkup buildKeyboard(AdoptionRecommendationDTO post) {
+    private InlineKeyboardMarkup buildKeyboard(AdoptionRecommendationDTO post, int offset) {
         return InlineKeyboardBuilder.builder()
+                .addButton("➡️ Наступна", CallbackId.ADOPTION_GET, post.postId(), offset + 1)
                 .navButtonsFor(CallbackId.ADOPTION_GET, post.postId(), child -> {
                     if (child == CallbackId.ADOPTION_SAVE_POST) return !post.isSaved();
                     if (child == CallbackId.ADOPTION_UNSAVE_POST) return post.isSaved();
-                    if (child == CallbackId.ADOPTION_GET_NEXT) return true;
                     return false;
                 })
                 .backButtonTo(CallbackId.ADOPTION)

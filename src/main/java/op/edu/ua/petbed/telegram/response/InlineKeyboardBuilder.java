@@ -140,10 +140,19 @@ public class InlineKeyboardBuilder {
      * Adds a custom button with specified label, callback and entityId.
      */
     public InlineKeyboardBuilder addButton(String label, CallbackId callbackId, @Nullable Long entityId) {
-        String callbackData = CallbackData.of(callbackId, entityId, null).toString();
+        return addButton(label, callbackId, entityId, null);
+    }
+
+    /**
+     * Adds a custom button with specified label, callback, entityId and offset.
+     */
+    public InlineKeyboardBuilder addButton(String label, CallbackId callbackId, @Nullable Long entityId, @Nullable Integer offset) {
+        String callbackData = CallbackData.of(callbackId, entityId, offset).toString();
         navButtons.add(createButton(label, callbackData));
         return this;
     }
+
+    
 
     public InlineKeyboardBuilder paginatedList(Page<CallbackListItem> page, CallbackData currentCallbackData) {
         checkNotAdded(AddedMethod.PAGINATION, "paginatedList");
