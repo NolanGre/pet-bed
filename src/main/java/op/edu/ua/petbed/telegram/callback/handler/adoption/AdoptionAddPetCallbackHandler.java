@@ -29,7 +29,7 @@ public class AdoptionAddPetCallbackHandler implements CallbackHandler {
     public BotApiMethod<?> handle(CallbackQueryContext context) {
         return formService.startCreateForm(
                 FormType.ADD_PET,
-                CallbackId.ADOPTION_GIVE,
+                CallbackId.ADOPTION,
                 context.auth().userInternalId(),
                 context.chatId()
         );

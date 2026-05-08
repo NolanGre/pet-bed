@@ -71,6 +71,12 @@ public class AdoptionSavedPostServiceImpl implements AdoptionSavedPostService {
         return adoptionSavedPostRepository.existsByPostIdAndUserId(postId, userId);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByUserId(Long userId) {
+        return adoptionSavedPostRepository.existsByUserId(userId);
+    }
+
     private AdoptionPostDTO mapToDTO(AdoptionSavedPost savedPost) {
         AdoptionPost post = adoptionPostRepository.findById(savedPost.getPostId())
                 .orElseThrow(() -> new PetBedException("Adoption post not found",
@@ -83,6 +89,7 @@ public class AdoptionSavedPostServiceImpl implements AdoptionSavedPostService {
                     PetBedException.ErrorCode.INTERNAL_ERROR);
         }
 
-        return AdoptionPostDTO.fromEntity(post, pet.name(), pet.photoId(), pet.breed(), pet.color());
+        return AdoptionPostDTO.fromEntity(post, pet.name(), pet.photoId(), pet.breed(), pet.color(),
+                pet.age(), pet.sex(), pet.size(), pet.specialMarks());
     }
 }

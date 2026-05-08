@@ -36,7 +36,12 @@ public class AdoptionResponsesCallbackHandler implements CallbackHandler {
     public BotApiMethod<?> handle(CallbackQueryContext context) {
         Long postId = context.callbackData().entityId();
         if (postId == null) {
-            return errorMessage(context, "ID оголошення не вказано");
+            return ResponseBuilder.editMessage(context.chatId(), context.messageId())
+                    .text("❌ Помилка: ID оголошення не вказано")
+                    .keyboard(InlineKeyboardBuilder.builder()
+                            .backButtonTo(CallbackId.ADOPTION_MY_POSTS)
+                            .build())
+                    .build();
         }
 
         int offset = context.callbackData().offset() != null ? context.callbackData().offset() : 0;
@@ -44,29 +49,20 @@ public class AdoptionResponsesCallbackHandler implements CallbackHandler {
                 PageRequest.of(offset, KeyboardLayout.DEFAULT.pageSize()));
 
         if (responses.isEmpty()) {
-            return noResponsesMessage(context);
+            return noResponsesMessage(context, postId);
         }
 
         return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                 .text(formatHeader(responses))
-                .keyboard(buildKeyboard(context, responses))
+                .keyboard(buildKeyboard(context, responses, postId))
                 .build();
     }
 
-    private BotApiMethod<?> errorMessage(CallbackQueryContext context, String error) {
-        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
-                .text("❌ Помилка: " + error)
-                .keyboard(InlineKeyboardBuilder.builder()
-                        .backButtonTo(CallbackId.ADOPTION_POST_DETAIL)
-                        .build())
-                .build();
-    }
-
-    private BotApiMethod<?> noResponsesMessage(CallbackQueryContext context) {
+    private BotApiMethod<?> noResponsesMessage(CallbackQueryContext context, Long postId) {
         return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                 .text("📨 Поки немає відгуків на це оголошення.")
                 .keyboard(InlineKeyboardBuilder.builder()
-                        .backButtonTo(CallbackId.ADOPTION_POST_DETAIL)
+                        .backButtonTo(CallbackId.ADOPTION_POST_DETAIL, postId)
                         .build())
                 .build();
     }
@@ -75,10 +71,10 @@ public class AdoptionResponsesCallbackHandler implements CallbackHandler {
         return "📨 Відгуки на ваше оголошення:";
     }
 
-    private InlineKeyboardMarkup buildKeyboard(CallbackQueryContext context, Page<AdoptionResponseDTO> responses) {
+    private InlineKeyboardMarkup buildKeyboard(CallbackQueryContext context, Page<AdoptionResponseDTO> responses, Long postId) {
         return InlineKeyboardBuilder.builder()
                 .paginatedList(toPageDto(responses), context.callbackData())
-                .backButtonTo(CallbackId.ADOPTION_POST_DETAIL)
+                .backButtonTo(CallbackId.ADOPTION_POST_DETAIL, postId)
                 .build();
     }
 

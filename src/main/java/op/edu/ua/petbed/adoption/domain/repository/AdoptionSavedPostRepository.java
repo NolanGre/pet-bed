@@ -25,5 +25,9 @@ public interface AdoptionSavedPostRepository extends JpaRepository<AdoptionSaved
 
     boolean existsByPostIdAndUserId(Long postId, Long userId);
 
+    boolean existsByUserId(Long userId);
+
     void deleteByPostIdAndUserId(Long postId, Long userId);
+
+    void deleteByPostId(Long postId);
 }

@@ -82,16 +82,6 @@ public class AdoptionPost extends AbstractAuditableEntity {
         this.status = AdoptionPostStatus.COMPLETED;
     }
 
-    /**
-     * Cancels the adoption post.
-     */
-    public void cancel() {
-        if (status == AdoptionPostStatus.COMPLETED) {
-            throw new PetBedException("Cannot cancel completed adoption", PetBedException.ErrorCode.ADOPTION_POST_INVALID_STATUS);
-        }
-        this.status = AdoptionPostStatus.CANCELLED;
-    }
-
     public boolean isActive() {
         return status == AdoptionPostStatus.ACTIVE;
     }

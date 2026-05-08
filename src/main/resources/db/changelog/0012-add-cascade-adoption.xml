@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.11.xsd">
+
+    <!-- ==================== ADD CASCADE DELETE TO ADOPTION TABLES ==================== -->
+
+    <!-- adoption_posts -> pets (ON DELETE CASCADE) -->
+    <changeSet id="0012-00-cascade-adoption-posts-pet" author="developer">
+        <sql>
+            ALTER TABLE adoption_posts
+            DROP CONSTRAINT IF EXISTS fk_adoption_posts_pet;
+        </sql>
+        <sql>
+            ALTER TABLE adoption_posts
+            ADD CONSTRAINT fk_adoption_posts_pet
+            FOREIGN KEY (pet_id)
+            REFERENCES pets(id)
+            ON DELETE CASCADE;
+        </sql>
+    </changeSet>
+
+    <!-- adoption_responses -> adoption_posts (ON DELETE CASCADE) -->
+    <changeSet id="0012-01-cascade-adoption-responses" author="developer">
+        <sql>
+            ALTER TABLE adoption_responses
+            DROP CONSTRAINT IF EXISTS fk_adoption_responses_post;
+        </sql>
+        <sql>
+            ALTER TABLE adoption_responses
+            ADD CONSTRAINT fk_adoption_responses_post
+            FOREIGN KEY (adoption_post_id)
+            REFERENCES adoption_posts(id)
+            ON DELETE CASCADE;
+        </sql>
+    </changeSet>
+
+    <!-- adoption_saved_posts -> adoption_posts (ON DELETE CASCADE) -->
+    <changeSet id="0012-02-cascade-adoption-saved-posts" author="developer">
+        <sql>
+            ALTER TABLE adoption_saved_posts
+            DROP CONSTRAINT IF EXISTS fk_asp_post;
+        </sql>
+        <sql>
+            ALTER TABLE adoption_saved_posts
+            ADD CONSTRAINT fk_asp_post
+            FOREIGN KEY (post_id)
+            REFERENCES adoption_posts(id)
+            ON DELETE CASCADE;
+        </sql>
+    </changeSet>
+
+    <!-- adoption_view_history -> adoption_posts (ON DELETE CASCADE) -->
+    <changeSet id="0012-03-cascade-adoption-view-history" author="developer">
+        <sql>
+            ALTER TABLE adoption_view_history
+            DROP CONSTRAINT IF EXISTS fk_avh_post;
+        </sql>
+        <sql>
+            ALTER TABLE adoption_view_history
+            ADD CONSTRAINT fk_avh_post
+            FOREIGN KEY (post_id)
+            REFERENCES adoption_posts(id)
+            ON DELETE CASCADE;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

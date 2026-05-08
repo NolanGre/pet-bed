@@ -62,16 +62,7 @@ public enum CallbackId {
 
     ADOPTION_GIVE(61, "🤝 Віддати тварину", ADOPTION),
     ADOPTION_SELECT_PET(611, "🐾 Обрати тварину", ADOPTION_GIVE),
-    ADOPTION_PET_DETAIL(6111, "", ADOPTION_SELECT_PET),      // Shows as paginated list in ADOPTION_GIVE
-
-    ADOPTION_ADD_PET(6112, "➕ Додати нову тварину", ADOPTION_SELECT_PET),   // Start form
-
-    ADOPTION_ADD_COMMENT(612, "💬 Додати коментар", ADOPTION_GIVE),   // Start form
-    ADOPTION_TRY_CONFIRM(613, "✅ Підтвердити", ADOPTION_GIVE),   // If it can be done
-    ADOPTION_FINAL_CONFIRM(6131, "🏁 Підтвердити", ADOPTION_TRY_CONFIRM),     // Submit form
-
-    ADOPTION_CLEAR(614, "🗑️ Очистити", ADOPTION_GIVE),
-    ADOPTION_CLEAR_CONFIRM(6141, "✅ Підтвердити", ADOPTION_CLEAR),
+    ADOPTION_ADD_PET(612, "➕ Додати нову тварину", ADOPTION_GIVE),   // Start form
 
     ADOPTION_GET(62, "🐾 Отримати тварину", ADOPTION),   // Shows by editing existing message
     ADOPTION_GET_NEXT(621, "➡️ Наступна", ADOPTION_GET),
@@ -98,6 +89,9 @@ public enum CallbackId {
 
     ADOPTION_POST_TRY_DELETE(6412, "🗑️ Видалити оголошення", ADOPTION_POST_DETAIL),
     ADOPTION_POST_DELETE(64121, "✅ Підтвердити", ADOPTION_POST_TRY_DELETE),
+
+    ADOPTION_MY_SAVED(65, "❤️ Збережені", ADOPTION),
+    ADOPTION_SAVED_DETAIL(651, "", ADOPTION_MY_SAVED),      // Shows as paginated list in ADOPTION_MY_SAVED
 
     // FOSTERING menu (7xx)
     FOSTERING(7, "⏳ Перетримка", MENU),

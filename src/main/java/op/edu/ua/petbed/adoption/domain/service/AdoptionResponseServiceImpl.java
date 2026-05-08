@@ -210,6 +210,12 @@ public class AdoptionResponseServiceImpl implements AdoptionResponseService {
                 .map(this::mapToDTO);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByResponderId(Long responderId) {
+        return adoptionResponseRepository.existsByResponderId(responderId);
+    }
+
     private AdoptionResponseDTO mapToDTO(AdoptionResponse response) {
         var responder = userService.findById(response.getResponderId());
 

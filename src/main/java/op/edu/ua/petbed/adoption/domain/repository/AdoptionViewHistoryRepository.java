@@ -22,4 +22,6 @@ public interface AdoptionViewHistoryRepository extends JpaRepository<AdoptionVie
     @Modifying
     @Query("DELETE FROM AdoptionViewHistory avh WHERE avh.userId = :userId")
     void deleteByUserId(@Param("userId") Long userId);
+
+    void deleteByPostId(Long postId);
 }

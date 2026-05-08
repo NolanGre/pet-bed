@@ -12,7 +12,7 @@ public record KeyboardLayout(
         int pageSize,
         int maxNavButtonLength
 ) {
-    public static final KeyboardLayout DEFAULT = new KeyboardLayout(5, 35);
+    public static final KeyboardLayout DEFAULT = new KeyboardLayout(5, 16);
 
     public List<List<InlineKeyboardButton>> arrange(
             List<InlineKeyboardButton> pagination,

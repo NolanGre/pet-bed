@@ -26,6 +26,8 @@ public interface AdoptionResponseRepository extends JpaRepository<AdoptionRespon
 
     boolean existsByAdoptionPostIdAndResponderId(Long postId, Long responderId);
 
+    boolean existsByResponderId(Long responderId);
+
     Optional<AdoptionResponse> findByAdoptionPostIdAndResponderId(Long postId, Long responderId);
 
     /**
@@ -58,4 +60,7 @@ public interface AdoptionResponseRepository extends JpaRepository<AdoptionRespon
            "ELSE 4 END, ar.createdAt DESC",
            countQuery = "SELECT COUNT(ar) FROM AdoptionResponse ar WHERE ar.adoptionPostId = :postId")
     Page<AdoptionResponse> findByPostIdOrderByStatusPriority(@Param("postId") Long postId, Pageable pageable);
+
+    @Modifying
+    void deleteByAdoptionPostId(Long postId);
 }

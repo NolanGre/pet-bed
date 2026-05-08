@@ -32,6 +32,9 @@ public interface AdoptionPostRepository extends JpaRepository<AdoptionPost, Long
     @Query("SELECT ap FROM AdoptionPost ap WHERE ap.petId IN (SELECT p.id FROM Pet p WHERE p.ownerId = :ownerId) ORDER BY ap.createdAt DESC")
     Page<AdoptionPost> findByOwnerId(@Param("ownerId") Long ownerId, Pageable pageable);
 
+    @Query("SELECT COUNT(ap) > 0 FROM AdoptionPost ap WHERE ap.petId IN (SELECT p.id FROM Pet p WHERE p.ownerId = :ownerId)")
+    boolean existsByOwnerId(@Param("ownerId") Long ownerId);
+
     /**
      * Finds unviewed active posts for a user, excluding their own posts.
      */

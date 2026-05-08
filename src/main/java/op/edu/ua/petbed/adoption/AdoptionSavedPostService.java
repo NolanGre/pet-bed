@@ -45,4 +45,12 @@ public interface AdoptionSavedPostService {
      * @return true if the post is saved
      */
     boolean isSaved(Long postId, Long userId);
+
+    /**
+     * Checks if a user has any saved posts.
+     *
+     * @param userId the user ID
+     * @return true if the user has at least one saved post
+     */
+    boolean existsByUserId(Long userId);
 }

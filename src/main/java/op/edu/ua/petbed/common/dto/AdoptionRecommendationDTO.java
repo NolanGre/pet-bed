@@ -1,5 +1,7 @@
 package op.edu.ua.petbed.common.dto;
 
+import op.edu.ua.petbed.common.model.PetSex;
+import op.edu.ua.petbed.common.model.PetSize;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -16,6 +18,10 @@ public record AdoptionRecommendationDTO(
         String petPhotoUrl,
         String petBreed,
         String petColor,
+        Integer petAge,
+        PetSex petSex,
+        PetSize petSize,
+        @Nullable String petSpecialMarks,
         @Nullable String ownerComment,
         @Nullable Instant createdAt,
         boolean isSaved

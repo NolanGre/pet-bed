@@ -69,7 +69,8 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
                     PetBedException.ErrorCode.INTERNAL_ERROR);
         }
 
-        return AdoptionPostDTO.fromEntity(saved, pet.name(), pet.photoId(), pet.breed(), pet.color());
+        return AdoptionPostDTO.fromEntity(saved, pet.name(), pet.photoId(), pet.breed(), pet.color(),
+                pet.age(), pet.sex(), pet.size(), pet.specialMarks());
     }
 
     @Override
@@ -88,7 +89,8 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
                 .toList();
 
         return new AdoptionPostDetailDTO(
-                AdoptionPostDTO.fromEntity(post, pet.name(), pet.photoId(), pet.breed(), pet.color()),
+                AdoptionPostDTO.fromEntity(post, pet.name(), pet.photoId(), pet.breed(), pet.color(),
+                        pet.age(), pet.sex(), pet.size(), pet.specialMarks()),
                 responses
         );
     }
@@ -113,8 +115,10 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
                     PetBedException.ErrorCode.ADOPTION_POST_NOT_AUTHORIZED);
         }
 
-        post.cancel();
-        adoptionPostRepository.save(post);
+        adoptionResponseRepository.deleteByAdoptionPostId(postId);
+        adoptionSavedPostRepository.deleteByPostId(postId);
+        adoptionViewHistoryRepository.deleteByPostId(postId);
+        adoptionPostRepository.delete(post);
 
         petService.updateStatus(post.getPetId(), PetStatus.DEFAULT);
 
@@ -124,6 +128,11 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
     @Override
     public boolean existsByPetId(Long petId) {
         return adoptionPostRepository.existsByPetId(petId);
+    }
+
+    @Override
+    public boolean existsByOwnerId(Long ownerId) {
+        return adoptionPostRepository.existsByOwnerId(ownerId);
     }
 
     @Override
@@ -147,6 +156,10 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
                 pet.photoId(),
                 pet.breed(),
                 pet.color(),
+                pet.age(),
+                pet.sex(),
+                pet.size(),
+                pet.specialMarks(),
                 post.getOwnerComment(),
                 post.getCreatedAt(),
                 isSaved
@@ -179,7 +192,8 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
 
     private AdoptionPostDTO mapToPostDTO(AdoptionPost post) {
         PetDTO pet = petService.findById(post.getPetId());
-        return AdoptionPostDTO.fromEntity(post, pet.name(), pet.photoId(), pet.breed(), pet.color());
+        return AdoptionPostDTO.fromEntity(post, pet.name(), pet.photoId(), pet.breed(), pet.color(),
+                pet.age(), pet.sex(), pet.size(), pet.specialMarks());
     }
 
     private AdoptionResponseDTO mapToResponseDTO(AdoptionResponse response, String postPetName) {

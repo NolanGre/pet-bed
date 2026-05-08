@@ -84,7 +84,7 @@ public class AdoptionResponseDetailOwnerCallbackHandler implements CallbackHandl
                     }
                     return false;
                 })
-                .backButtonTo(CallbackId.ADOPTION_RESPONSES_LIST)
+                .backButtonTo(CallbackId.ADOPTION_RESPONSES_LIST, response.postId())
                 .build();
     }
 }

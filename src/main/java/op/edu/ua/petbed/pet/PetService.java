@@ -23,6 +23,8 @@ public interface PetService {
 
     Page<PetDTO> findPetsAvailableForLostSearch(Long ownerId, Pageable pageable);
 
+    Page<PetDTO> findPetsAvailableForGive(Long ownerId, Pageable pageable);
+
     void updateStatus(Long petId, PetStatus status);
 
     void updateSpecialFeatures(Long petId, String specialFeatures);

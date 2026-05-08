@@ -13,6 +13,7 @@ import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 
 /**
  * Handler for ADOPTION_SELECT_PET callback - initiates CREATE_ADOPTION_POST form for selected pet.
+ * The petId is passed via callback entityId and stored in form data.
  */
 @NullMarked
 @Component
@@ -30,8 +31,7 @@ public class AdoptionSelectPetCallbackHandler implements CallbackHandler {
     public BotApiMethod<?> handle(CallbackQueryContext context) {
         Long petId = context.callbackData().entityId();
         if (petId == null) {
-            throw new PetBedException("Pet ID is required for ADOPTION_SELECT_PET",
-                    PetBedException.ErrorCode.INVALID_CALLBACK);
+            throw new PetBedException("Pet ID is required for ADOPTION_SELECT_PET", PetBedException.ErrorCode.INVALID_CALLBACK);
         }
 
         return formService.startUpdateForm(

@@ -38,8 +38,6 @@ public class LostCallbackHandler implements CallbackHandler {
 
     @Override
     public BotApiMethod<?> handle(CallbackQueryContext context) {
-        // Clear any existing finder recommendation cache when entering Lost menu
-        // This handles the case when user clicks "back" from recommendations
         finderRecommendationService.remove(context.auth().userInternalId());
 
         return mapToResponse(context);

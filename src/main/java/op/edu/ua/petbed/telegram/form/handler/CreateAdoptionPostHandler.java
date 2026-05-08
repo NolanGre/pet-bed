@@ -37,21 +37,15 @@ public class CreateAdoptionPostHandler implements FormSubmissionHandler {
     public BotApiMethod<?> handle(FormData data) {
         log.debug("Processing CREATE_ADOPTION_POST form for user: {}", data.userId());
 
-        // Get the petId from entityId (passed when form is started)
         Long petId = data.entityIdOrThrow();
-
-        // Get form steps
         List<FormStep> steps = FormType.CREATE_ADOPTION_POST.steps();
 
-        // Step 0: Owner comment (optional)
-        @Nullable String ownerComment = data.textOrNull(steps.get(0));
+        String ownerComment = data.textOrNull(steps.get(0));
 
-        // Create adoption post
         log.debug("Creating adoption post for pet: {}, comment: {}", petId, ownerComment);
         AdoptionPostDTO post = adoptionPostService.create(petId, ownerComment);
         log.info("Created adoption post with id: {} for pet: {}", post.id(), petId);
 
-        // Return success message with back button
         return ResponseBuilder.sendMessage(data.chatId())
                 .text("✅ Анкету на передачу тварини створено! Охочі зможуть залишати відгуки.")
                 .keyboard(InlineKeyboardBuilder.builder()

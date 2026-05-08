@@ -1,9 +1,8 @@
 package op.edu.ua.petbed.telegram.callback.handler.adoption;
 
 import lombok.RequiredArgsConstructor;
-import op.edu.ua.petbed.adoption.AdoptionPostService;
+import op.edu.ua.petbed.adoption.AdoptionSavedPostService;
 import op.edu.ua.petbed.common.dto.AdoptionPostDTO;
-import op.edu.ua.petbed.common.model.AdoptionPostStatus;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -21,19 +20,19 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 /**
- * Handler for ADOPTION_MY_POSTS callback - shows list of owner's adoption posts.
+ * Handler for ADOPTION_MY_SAVED callback - shows list of user's saved adoption posts.
  */
 @NullMarked
 @Component
 @RequiredArgsConstructor
-public class AdoptionMyPostsCallbackHandler implements CallbackHandler {
+public class AdoptionMySavedCallbackHandler implements CallbackHandler {
 
-    private final AdoptionPostService adoptionPostService;
+    private final AdoptionSavedPostService adoptionSavedPostService;
     private final TelegramMessageService messageService;
 
     @Override
     public CallbackId getCallbackId() {
-        return CallbackId.ADOPTION_MY_POSTS;
+        return CallbackId.ADOPTION_MY_SAVED;
     }
 
     @Override
@@ -42,15 +41,15 @@ public class AdoptionMyPostsCallbackHandler implements CallbackHandler {
         var callbackData = context.callbackData();
 
         int offset = callbackData.offset() != null ? callbackData.offset() : 0;
-        Page<AdoptionPostDTO> posts = adoptionPostService.findAllByOwnerId(userId,
+        Page<AdoptionPostDTO> posts = adoptionSavedPostService.findSavedByUserId(userId,
                 PageRequest.of(offset, KeyboardLayout.DEFAULT.pageSize()));
 
         if (posts.isEmpty()) {
-            return noPostsExistMessage(context);
+            return noSavedPostsMessage(context);
         }
 
         SendMessage message = ResponseBuilder.sendMessage(context.chatId())
-                .text("📋 Ваші оголошення про передачу:")
+                .text("❤️ Ваші збережені оголошення:")
                 .keyboard(buildKeyboard(context, posts))
                 .build();
 
@@ -66,31 +65,24 @@ public class AdoptionMyPostsCallbackHandler implements CallbackHandler {
 
     private Page<CallbackListItem> toPageDto(Page<AdoptionPostDTO> posts) {
         return posts.map(post -> new CallbackListItem(
-                CallbackId.ADOPTION_POST_DETAIL,
+                CallbackId.ADOPTION_GET,
                 post.id(),
-                getStatusEmoji(post.status()) + " " + post.petName()
+                "❤️ " + post.petName()
         ));
     }
 
-    private SendMessage noPostsExistMessage(CallbackQueryContext context) {
+    private SendMessage noSavedPostsMessage(CallbackQueryContext context) {
         return ResponseBuilder.sendMessage(context.chatId())
                 .text("""
-                        📋 У вас ще немає оголошень про передачу тварин.
+                        ❤️ У вас немає збережених оголошень.
 
-                        Створіть перше оголошення!
+                        Переглядайте оголошення в розділі "Отримати тварину"
+                        і зберігайте ті, що вас зацікавили.
                         """)
                 .keyboard(InlineKeyboardBuilder.builder()
-                        .navButtonsFor(CallbackId.ADOPTION_MY_POSTS)
+                        .addButton("🔍 Переглянути оголошення", CallbackId.ADOPTION_GET)
                         .backButtonTo(CallbackId.ADOPTION)
                         .build())
                 .build();
-    }
-
-    private String getStatusEmoji(AdoptionPostStatus status) {
-        return switch (status) {
-            case ACTIVE -> "🟢";
-            case PENDING_CONFIRMATION -> "⏳";
-            case COMPLETED -> "✅";
-        };
     }
 }

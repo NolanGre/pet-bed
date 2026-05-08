@@ -10,16 +10,18 @@ import op.edu.ua.petbed.telegram.response.CallbackListItem;
 import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
 import op.edu.ua.petbed.telegram.response.KeyboardLayout;
 import op.edu.ua.petbed.telegram.response.ResponseBuilder;
+import op.edu.ua.petbed.telegram.service.TelegramMessageService;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 /**
  * Handler for ADOPTION_GIVE callback - shows list of owner's pets that can be put up for adoption.
+ * Similar to LOST_START: shows pets list + "Add pet" button.
  */
 @NullMarked
 @Component
@@ -27,6 +29,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 public class AdoptionGiveCallbackHandler implements CallbackHandler {
 
     private final PetService petService;
+    private final TelegramMessageService telegramMessageService;
 
     @Override
     public CallbackId getCallbackId() {
@@ -35,42 +38,42 @@ public class AdoptionGiveCallbackHandler implements CallbackHandler {
 
     @Override
     public BotApiMethod<?> handle(CallbackQueryContext context) {
-        Long userId = context.auth().userInternalId();
         var callbackData = context.callbackData();
-
         int offset = callbackData.offset() != null ? callbackData.offset() : 0;
-        Page<PetDTO> pets = petService.findPetsAvailableForLostSearch(userId,
-                PageRequest.of(offset, KeyboardLayout.DEFAULT.pageSize()));
 
+        Page<PetDTO> pets = petService.findPetsAvailableForGive(
+                context.auth().userInternalId(),
+                PageRequest.of(offset, KeyboardLayout.DEFAULT.pageSize())
+        );
+
+        SendMessage message;
         if (pets.isEmpty()) {
-            return petsEmptyMessage(context);
+            message = ResponseBuilder.sendMessage(context.chatId())
+                    .text("""
+                            🐾 У вас немає тварин, яких можна віддати.
+
+                            Спочатку додайте тварину до свого профілю.
+                            """)
+                    .keyboard(InlineKeyboardBuilder.builder()
+                            .addButton("➕ Додати тварину", CallbackId.ADOPTION_ADD_PET)
+                            .backButtonTo(CallbackId.ADOPTION)
+                            .build())
+                    .build();
+        } else {
+            message = ResponseBuilder.sendMessage(context.chatId())
+                    .text("🐾 Оберіть тварину для передачі:")
+                    .keyboard(buildKeyboard(context, pets))
+                    .build();
         }
 
-        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
-                .text("🐾 Оберіть тварину для передачі:")
-                .keyboard(buildKeyboard(context, pets))
-                .build();
-    }
-
-    private EditMessageText petsEmptyMessage(CallbackQueryContext context) {
-        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
-                .text("""
-                        🐾 У вас немає тварин, яких можна віддати.
-                        
-                        Спочатку додайте тварину до свого профілю.
-                        """)
-                .keyboard(InlineKeyboardBuilder.builder()
-                        .navButtonsFor(CallbackId.ADOPTION_GIVE)
-                        .backButtonFor(CallbackId.ADOPTION)
-                        .build())
-                .build();
+        return telegramMessageService.editOrSend(context, message);
     }
 
     private InlineKeyboardMarkup buildKeyboard(CallbackQueryContext context, Page<PetDTO> pets) {
         return InlineKeyboardBuilder.builder()
                 .paginatedList(toPageDto(pets), context.callbackData())
-                .navButtonsFor(getCallbackId())
-                .backButtonFor(getCallbackId())
+                .addButton("➕ Додати тварину", CallbackId.ADOPTION_ADD_PET)
+                .backButtonTo(CallbackId.ADOPTION)
                 .build();
     }
 

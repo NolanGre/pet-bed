@@ -61,6 +61,14 @@ public interface AdoptionPostService {
      */
     boolean existsByPetId(Long petId);
 
+    /**
+     * Checks if a user has any adoption posts.
+     *
+     * @param ownerId the owner user ID
+     * @return true if the user has at least one post
+     */
+    boolean existsByOwnerId(Long ownerId);
+
     // Feed methods
 
     /**

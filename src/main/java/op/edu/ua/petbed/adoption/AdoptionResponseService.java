@@ -103,4 +103,12 @@ public interface AdoptionResponseService {
      * @return page of response DTOs sorted by creation date
      */
     Page<AdoptionResponseDTO> findByResponderId(Long responderId, Pageable pageable);
+
+    /**
+     * Checks if a user has any responses.
+     *
+     * @param responderId the responder's user ID
+     * @return true if the user has at least one response
+     */
+    boolean existsByResponderId(Long responderId);
 }

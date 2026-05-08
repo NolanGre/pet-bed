@@ -35,7 +35,7 @@ public class AdoptionPostTryCancelHandler implements CallbackHandler {
             return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                     .text("❌ Помилка: ID оголошення не вказано")
                     .keyboard(InlineKeyboardBuilder.builder()
-                            .backButtonTo(CallbackId.ADOPTION_POST_DETAIL)
+                            .backButtonTo(CallbackId.ADOPTION_MY_POSTS)
                             .build())
                     .build();
         }
@@ -45,9 +45,9 @@ public class AdoptionPostTryCancelHandler implements CallbackHandler {
         return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                 .text("""
                         ⚠️ Скасувати оголошення?
-                        
+
                         Тварина: %s
-                        
+
                         При скасуванні:
                         - Оголошення буде закрито
                         - Всі відгуки будуть відхилені
@@ -56,7 +56,7 @@ public class AdoptionPostTryCancelHandler implements CallbackHandler {
                 .keyboard(InlineKeyboardBuilder.builder()
                         .addButton("❌ Так, скасувати",
                                 CallbackId.ADOPTION_POST_DELETE, postId)
-                        .backButtonTo(CallbackId.ADOPTION_POST_DETAIL)
+                        .backButtonTo(CallbackId.ADOPTION_POST_DETAIL, postId)
                         .build())
                 .build();
     }

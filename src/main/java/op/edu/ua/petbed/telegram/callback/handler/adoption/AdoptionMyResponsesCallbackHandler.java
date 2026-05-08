@@ -10,11 +10,13 @@ import op.edu.ua.petbed.telegram.response.CallbackListItem;
 import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
 import op.edu.ua.petbed.telegram.response.KeyboardLayout;
 import op.edu.ua.petbed.telegram.response.ResponseBuilder;
+import op.edu.ua.petbed.telegram.service.TelegramMessageService;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 /**
@@ -26,6 +28,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 public class AdoptionMyResponsesCallbackHandler implements CallbackHandler {
 
     private final AdoptionResponseService adoptionResponseService;
+    private final TelegramMessageService messageService;
 
     @Override
     public CallbackId getCallbackId() {
@@ -44,21 +47,23 @@ public class AdoptionMyResponsesCallbackHandler implements CallbackHandler {
             return noResponsesMessage(context);
         }
 
-        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
+        SendMessage message = ResponseBuilder.sendMessage(context.chatId())
                 .text(formatHeader(responses))
                 .keyboard(buildKeyboard(context, responses))
                 .build();
+
+        return messageService.editOrReplace(context, message);
     }
 
-    private BotApiMethod<?> noResponsesMessage(CallbackQueryContext context) {
-        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
+    private SendMessage noResponsesMessage(CallbackQueryContext context) {
+        return ResponseBuilder.sendMessage(context.chatId())
                 .text("""
                         ✉️ Мої відгуки
 
                         Ви ще не відгукувались на жодне оголошення.
                         """)
                 .keyboard(InlineKeyboardBuilder.builder()
-                        .backButtonFor(CallbackId.ADOPTION)
+                        .backButtonTo(CallbackId.ADOPTION)
                         .build())
                 .build();
     }
@@ -70,7 +75,7 @@ public class AdoptionMyResponsesCallbackHandler implements CallbackHandler {
     private InlineKeyboardMarkup buildKeyboard(CallbackQueryContext context, Page<AdoptionResponseDTO> responses) {
         return InlineKeyboardBuilder.builder()
                 .paginatedList(toPageDto(responses), context.callbackData())
-                .backButtonFor(CallbackId.ADOPTION)
+                .backButtonTo(CallbackId.ADOPTION)
                 .build();
     }
 

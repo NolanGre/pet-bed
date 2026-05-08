@@ -94,7 +94,6 @@ public class AdoptionPostDetailOwnerCallbackHandler implements CallbackHandler {
             case ACTIVE -> "🟢 Активне";
             case PENDING_CONFIRMATION -> "⏳ Очікує підтвердження";
             case COMPLETED -> "✅ Завершено";
-            case CANCELLED -> "❌ Скасовано";
         };
     }
 }
