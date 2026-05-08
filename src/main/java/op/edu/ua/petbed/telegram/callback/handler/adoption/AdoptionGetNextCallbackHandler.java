@@ -49,9 +49,9 @@ public class AdoptionGetNextCallbackHandler implements CallbackHandler {
         return mapToResponse(context, post);
     }
 
-    private EditMessageText mapToResponse(CallbackQueryContext context, AdoptionRecommendationDTO post) {
-        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
-                .text(formatPostInfo(post))
+    private PartialBotApiMethod<?> mapToResponse(CallbackQueryContext context, AdoptionRecommendationDTO post) {
+        return ResponseBuilder.editPhoto(context.chatId(), context.messageId(), post.petPhotoUrl())
+                .caption(formatPostInfo(post))
                 .keyboard(buildKeyboard(post))
                 .build();
     }
