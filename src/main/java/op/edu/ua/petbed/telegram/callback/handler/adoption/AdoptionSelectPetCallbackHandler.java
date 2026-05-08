@@ -34,10 +34,9 @@ public class AdoptionSelectPetCallbackHandler implements CallbackHandler {
                     PetBedException.ErrorCode.INVALID_CALLBACK);
         }
 
-        // Start CREATE_ADOPTION_POST form with the selected petId
         return formService.startUpdateForm(
                 FormType.CREATE_ADOPTION_POST,
-                CallbackId.ADOPTION_GIVE,  // Return to ADOPTION_GIVE if cancelled
+                CallbackId.ADOPTION_GIVE,
                 context.auth().userInternalId(),
                 context.chatId(),
                 petId

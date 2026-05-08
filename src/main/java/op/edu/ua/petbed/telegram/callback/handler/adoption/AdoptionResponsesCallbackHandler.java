@@ -91,7 +91,7 @@ public class AdoptionResponsesCallbackHandler implements CallbackHandler {
     }
 
     private String truncate(String text, int maxLength) {
-        if (text == null || text.isBlank()) {
+        if (text.isBlank()) {
             return "(без імені)";
         }
         return text.length() <= maxLength ? text : text.substring(0, maxLength) + "...";

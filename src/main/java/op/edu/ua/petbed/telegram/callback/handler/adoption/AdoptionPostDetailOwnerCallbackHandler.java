@@ -2,11 +2,10 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionPostService;
-import op.edu.ua.petbed.common.dto.AdoptionPostDetailDTO;
 import op.edu.ua.petbed.common.dto.AdoptionPostDTO;
+import op.edu.ua.petbed.common.dto.AdoptionPostDetailDTO;
 import op.edu.ua.petbed.common.dto.AdoptionResponseDTO;
 import op.edu.ua.petbed.common.model.AdoptionPostStatus;
-
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;

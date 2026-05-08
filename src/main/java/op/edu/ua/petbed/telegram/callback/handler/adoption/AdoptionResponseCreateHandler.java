@@ -34,10 +34,9 @@ public class AdoptionResponseCreateHandler implements CallbackHandler {
                     PetBedException.ErrorCode.INVALID_CALLBACK);
         }
 
-        // Start CREATE_ADOPTION_RESPONSE form with the postId
         return formService.startUpdateForm(
                 FormType.CREATE_ADOPTION_RESPONSE,
-                CallbackId.ADOPTION_GET,  // Return to feed if cancelled
+                CallbackId.ADOPTION_GET,
                 context.auth().userInternalId(),
                 context.chatId(),
                 postId

@@ -2,8 +2,8 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionPostService;
-import op.edu.ua.petbed.common.model.AdoptionPostStatus;
 import op.edu.ua.petbed.common.dto.AdoptionPostDTO;
+import op.edu.ua.petbed.common.model.AdoptionPostStatus;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -72,7 +72,7 @@ public class AdoptionMyPostsCallbackHandler implements CallbackHandler {
         return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                 .text("""
                         📋 У вас ще немає оголошень про передачу тварин.
-
+                        
                         Створіть перше оголошення!
                         """)
                 .keyboard(InlineKeyboardBuilder.builder()

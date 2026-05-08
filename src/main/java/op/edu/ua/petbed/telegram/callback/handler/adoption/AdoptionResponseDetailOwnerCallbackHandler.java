@@ -64,7 +64,8 @@ public class AdoptionResponseDetailOwnerCallbackHandler implements CallbackHandl
         switch (response.status()) {
             case CONFIRMED_BY_OWNER -> text.append("\n⏳ Очікує фінального підтвердження від охочого\n");
             case FINAL_CONFIRMED -> text.append("\n✅ Передачу завершено\n");
-            default -> {}
+            default -> {
+            }
         }
 
         return text.toString();
