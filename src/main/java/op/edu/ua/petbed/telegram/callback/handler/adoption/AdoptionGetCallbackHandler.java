@@ -42,11 +42,15 @@ public class AdoptionGetCallbackHandler implements CallbackHandler {
         int offset = callbackData.offset() != null ? callbackData.offset() : 0;
         Long entityId = callbackData.entityId();
 
+        log.info("ADOPTION_GET handle: userId={}, offset={}, entityId={}", userId, offset, entityId);
+
         if (offset == 0) {
             adoptionPostService.resetOffset(userId);
         }
 
         AdoptionRecommendationDTO post = adoptionPostService.findNextForFeed(userId, offset);
+
+        log.info("ADOPTION_GET findNextForFeed result: post={}", post != null ? post.postId() : null);
 
         if (post == null) {
             return noPostsExistMessage(context);
