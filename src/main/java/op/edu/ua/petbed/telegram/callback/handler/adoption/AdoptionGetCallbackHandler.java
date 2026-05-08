@@ -62,12 +62,17 @@ public class AdoptionGetCallbackHandler implements CallbackHandler {
     }
 
     private PartialBotApiMethod<?> mapToResponse(CallbackQueryContext context, AdoptionRecommendationDTO post, int offset) {
+        log.info("mapToResponse: postId={}, offset={}", post.postId(), offset);
+
         removeKeyboardFromCurrentMessage(context.chatId(), context.messageId());
 
-        return ResponseBuilder.sendPhoto(context.chatId(), post.petPhotoUrl())
+        var response = ResponseBuilder.sendPhoto(context.chatId(), post.petPhotoUrl())
                 .caption(formatPostInfo(post))
                 .keyboard(buildKeyboard(post, offset))
                 .build();
+
+        log.info("mapToResponse: returning SendPhoto with keyboard offset={}", offset + 1);
+        return response;
     }
 
     private void removeKeyboardFromCurrentMessage(Long chatId, Integer messageId) {
@@ -152,8 +157,11 @@ public class AdoptionGetCallbackHandler implements CallbackHandler {
     }
 
     private InlineKeyboardMarkup buildKeyboard(AdoptionRecommendationDTO post, int offset) {
+        int nextOffset = offset + 1;
+        log.info("buildKeyboard: postId={}, currentOffset={}, nextOffset={}", post.postId(), offset, nextOffset);
+
         return InlineKeyboardBuilder.builder()
-                .addButton("➡️ Наступна", CallbackId.ADOPTION_GET, post.postId(), offset + 1)
+                .addButton("➡️ Наступна", CallbackId.ADOPTION_GET, post.postId(), nextOffset)
                 .navButtonsFor(CallbackId.ADOPTION_GET, post.postId(), child -> {
                     if (child == CallbackId.ADOPTION_SAVE_POST) return !post.isSaved();
                     if (child == CallbackId.ADOPTION_UNSAVE_POST) return post.isSaved();
