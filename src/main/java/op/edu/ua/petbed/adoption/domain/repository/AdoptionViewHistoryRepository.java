@@ -3,6 +3,7 @@ package op.edu.ua.petbed.adoption.domain.repository;
 import op.edu.ua.petbed.adoption.domain.model.AdoptionViewHistory;
 import op.edu.ua.petbed.adoption.domain.model.AdoptionViewHistoryId;
 import org.jspecify.annotations.NullMarked;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +19,8 @@ public interface AdoptionViewHistoryRepository extends JpaRepository<AdoptionVie
     boolean existsByPostIdAndUserId(Long postId, Long userId);
 
     List<AdoptionViewHistory> findByUserId(Long userId);
+
+    List<AdoptionViewHistory> findByUserIdOrderByViewedAtDesc(Long userId, Pageable pageable);
 
     @Modifying
     @Query("DELETE FROM AdoptionViewHistory avh WHERE avh.userId = :userId")

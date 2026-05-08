@@ -72,12 +72,32 @@ public interface AdoptionPostService {
     // Feed methods
 
     /**
-     * Finds the next adoption post for the user's feed.
+     * Finds the next unviewed adoption post for the user's feed.
+     *
+     * @param userId the user ID
+     * @return the next recommendation, or null if no more posts
+     */
+    @Nullable
+    AdoptionRecommendationDTO findNextUnviewed(Long userId);
+
+    /**
+     * Finds an adoption post by ID with saved status for a user.
+     *
+     * @param postId the post ID
+     * @param userId the user ID (to check if saved)
+     * @return the recommendation DTO, or null if not found
+     */
+    @Nullable
+    AdoptionRecommendationDTO findById(Long postId, Long userId);
+
+    /**
+     * Finds the next adoption post for the user's feed (legacy method).
      *
      * @param userId the user ID
      * @param offset the current offset
      * @return the next recommendation, or null if no more posts
      */
+    @Deprecated
     @Nullable
     AdoptionRecommendationDTO findNextForFeed(Long userId, int offset);
 

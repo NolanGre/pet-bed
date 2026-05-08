@@ -2,8 +2,6 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionPostService;
-import op.edu.ua.petbed.adoption.domain.model.AdoptionViewHistory;
-import op.edu.ua.petbed.adoption.domain.repository.AdoptionViewHistoryRepository;
 import op.edu.ua.petbed.common.dto.AdoptionRecommendationDTO;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
@@ -12,34 +10,33 @@ import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
 import op.edu.ua.petbed.telegram.response.ResponseBuilder;
 import op.edu.ua.petbed.user.UserService;
 import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 /**
- * Handler for ADOPTION_GET callback - shows adoption posts in the feed.
- * Uses user offset for navigation (not callback offset).
+ * Handler for ADOPTION_GET_NEXT callback - shows next adoption post.
+ * Resets user offset to 0 and gets next unviewed post.
  */
 @NullMarked
 @Component
 @RequiredArgsConstructor
-public class AdoptionGetCallbackHandler implements CallbackHandler {
+public class AdoptionGetNextCallbackHandler implements CallbackHandler {
 
     private final AdoptionPostService adoptionPostService;
-    private final AdoptionViewHistoryRepository viewHistoryRepository;
     private final UserService userService;
 
     @Override
     public CallbackId getCallbackId() {
-        return CallbackId.ADOPTION_GET;
+        return CallbackId.ADOPTION_GET_NEXT;
     }
 
     @Override
     public PartialBotApiMethod<?> handle(CallbackQueryContext context) {
         Long userId = context.auth().userInternalId();
+
+        userService.resetAdoptionHistoryOffset(userId);
 
         AdoptionRecommendationDTO post = adoptionPostService.findNextUnviewed(userId);
 

@@ -66,9 +66,10 @@ public enum CallbackId {
 
     ADOPTION_GET(62, "🐾 Отримати тварину", ADOPTION),   // Shows by editing existing message
     ADOPTION_GET_NEXT(621, "➡️ Наступна", ADOPTION_GET),
-    ADOPTION_RESPONSE_CREATE(622, "✉️ Відгукнутись", ADOPTION_GET),
-    ADOPTION_SAVE_POST(623, "❤️ Зберегти", ADOPTION_GET),
-    ADOPTION_UNSAVE_POST(624, "💔 Видалити зі збережених", ADOPTION_GET),  // Start form for comment
+    ADOPTION_GET_PREV(622, "◀️ Минула", ADOPTION_GET),
+    ADOPTION_RESPONSE_CREATE(623, "✉️ Відгукнутись", ADOPTION_GET),
+    ADOPTION_SAVE_POST(624, "❤️ Зберегти", ADOPTION_GET),
+    ADOPTION_UNSAVE_POST(625, "💔 Видалити зі збережених", ADOPTION_GET),  // Start form for comment
 
     ADOPTION_MY_RESPONSES(63, "✉️ Мої відгуки", ADOPTION),
     ADOPTION_MY_RESPONSE_DETAIL(631, "", ADOPTION_MY_RESPONSES),  // Shows as paginated list in ADOPTION_MY_RESPONSES

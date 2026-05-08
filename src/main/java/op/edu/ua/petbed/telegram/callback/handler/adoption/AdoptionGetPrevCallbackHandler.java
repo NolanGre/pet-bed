@@ -19,14 +19,16 @@ import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMet
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
+import java.util.List;
+
 /**
- * Handler for ADOPTION_GET callback - shows adoption posts in the feed.
- * Uses user offset for navigation (not callback offset).
+ * Handler for ADOPTION_GET_PREV callback - shows previous adoption post from history.
+ * Gets post from view history by user offset, then increments offset.
  */
 @NullMarked
 @Component
 @RequiredArgsConstructor
-public class AdoptionGetCallbackHandler implements CallbackHandler {
+public class AdoptionGetPrevCallbackHandler implements CallbackHandler {
 
     private final AdoptionPostService adoptionPostService;
     private final AdoptionViewHistoryRepository viewHistoryRepository;
@@ -34,20 +36,32 @@ public class AdoptionGetCallbackHandler implements CallbackHandler {
 
     @Override
     public CallbackId getCallbackId() {
-        return CallbackId.ADOPTION_GET;
+        return CallbackId.ADOPTION_GET_PREV;
     }
 
     @Override
     public PartialBotApiMethod<?> handle(CallbackQueryContext context) {
         Long userId = context.auth().userInternalId();
 
-        AdoptionRecommendationDTO post = adoptionPostService.findNextUnviewed(userId);
+        int currentOffset = userService.getAdoptionHistoryOffset(userId);
 
-        if (post == null) {
-            return noPostsExistMessage(context);
+        List<AdoptionViewHistory> history = viewHistoryRepository
+                .findByUserIdOrderByViewedAtDesc(userId, PageRequest.of(currentOffset, 1));
+
+        if (history.isEmpty()) {
+            return noHistoryMessage(context);
         }
 
-        adoptionPostService.recordView(post.postId(), userId);
+        AdoptionViewHistory viewRecord = history.get(0);
+        Long postId = viewRecord.getPostId();
+
+        AdoptionRecommendationDTO post = adoptionPostService.findById(postId, userId);
+        if (post == null) {
+            userService.incrementAdoptionHistoryOffset(userId);
+            return noHistoryMessage(context);
+        }
+
+        userService.incrementAdoptionHistoryOffset(userId);
 
         return mapToResponse(context, post);
     }
@@ -59,14 +73,11 @@ public class AdoptionGetCallbackHandler implements CallbackHandler {
                 .build();
     }
 
-    private EditMessageText noPostsExistMessage(CallbackQueryContext context) {
+    private EditMessageText noHistoryMessage(CallbackQueryContext context) {
         return ResponseBuilder.editMessage(context.chatId(), context.messageId())
-                .text("""
-                    📭 Наразі немає доступних анкет.
-
-                    Спробуйте пізніше!
-                    """)
+                .text("📭 Ви ще не переглядали жодної анкети.\n\nНатисніть 'Наступна' для перегляду.")
                 .keyboard(InlineKeyboardBuilder.builder()
+                        .addButton("➡️ Наступна", CallbackId.ADOPTION_GET_NEXT)
                         .backButtonTo(CallbackId.ADOPTION)
                         .build())
                 .build();

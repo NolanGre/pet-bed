@@ -137,6 +137,48 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
 
     @Override
     @Transactional(readOnly = true)
+    public @Nullable AdoptionRecommendationDTO findNextUnviewed(Long userId) {
+        var posts = adoptionPostRepository.findUnviewedActivePosts(userId, PageRequest.of(0, 1));
+
+        if (posts.isEmpty()) {
+            return null;
+        }
+
+        AdoptionPost post = posts.getContent().get(0);
+        return mapToRecommendationDTO(post, userId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public @Nullable AdoptionRecommendationDTO findById(Long postId, Long userId) {
+        return adoptionPostRepository.findById(postId)
+                .map(post -> mapToRecommendationDTO(post, userId))
+                .orElse(null);
+    }
+
+    private AdoptionRecommendationDTO mapToRecommendationDTO(AdoptionPost post, Long userId) {
+        PetDTO pet = petService.findById(post.getPetId());
+        boolean isSaved = adoptionSavedPostRepository.existsByPostIdAndUserId(post.getIdOrThrow(), userId);
+
+        return new AdoptionRecommendationDTO(
+                post.getIdOrThrow(),
+                pet.id(),
+                pet.name(),
+                pet.photoId(),
+                pet.breed(),
+                pet.color(),
+                pet.age(),
+                pet.sex(),
+                pet.size(),
+                pet.specialMarks(),
+                post.getOwnerComment(),
+                post.getCreatedAt(),
+                isSaved
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public @Nullable AdoptionRecommendationDTO findNextForFeed(Long userId, int offset) {
         Pageable pageable = PageRequest.of(offset, 1);
         var posts = adoptionPostRepository.findUnviewedActivePosts(userId, pageable);
