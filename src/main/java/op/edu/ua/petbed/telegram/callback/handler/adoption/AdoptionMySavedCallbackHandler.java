@@ -65,7 +65,7 @@ public class AdoptionMySavedCallbackHandler implements CallbackHandler {
 
     private Page<CallbackListItem> toPageDto(Page<AdoptionPostDTO> posts) {
         return posts.map(post -> new CallbackListItem(
-                CallbackId.ADOPTION_GET,
+                CallbackId.ADOPTION_SAVED_DETAIL,
                 post.id(),
                 "❤️ " + post.petName()
         ));

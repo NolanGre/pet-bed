@@ -8,8 +8,6 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
-
 /**
  * Public API for managing adoption posts.
  * This interface is part of the Spring Modulith public API.
@@ -20,7 +18,7 @@ public interface AdoptionPostService {
     /**
      * Creates a new adoption post for a pet.
      *
-     * @param petId the ID of the pet to put up for adoption
+     * @param petId        the ID of the pet to put up for adoption
      * @param ownerComment optional comment from the owner
      * @return the created adoption post DTO
      * @throws op.edu.ua.petbed.common.exceptions.PetBedException if pet already has an active adoption post
@@ -38,7 +36,7 @@ public interface AdoptionPostService {
     /**
      * Finds adoption posts for a specific owner with pagination.
      *
-     * @param ownerId the owner user ID
+     * @param ownerId  the owner user ID
      * @param pageable pagination parameters
      * @return page of adoption post DTOs
      */
@@ -47,7 +45,7 @@ public interface AdoptionPostService {
     /**
      * Cancels an active adoption post.
      *
-     * @param postId the adoption post ID
+     * @param postId  the adoption post ID
      * @param ownerId the owner user ID (for authorization)
      * @throws op.edu.ua.petbed.common.exceptions.PetBedException if post not found or not owned by user
      */
@@ -81,27 +79,6 @@ public interface AdoptionPostService {
     AdoptionRecommendationDTO findNextUnviewed(Long userId);
 
     /**
-     * Finds an adoption post by ID with saved status for a user.
-     *
-     * @param postId the post ID
-     * @param userId the user ID (to check if saved)
-     * @return the recommendation DTO, or null if not found
-     */
-    @Nullable
-    AdoptionRecommendationDTO findById(Long postId, Long userId);
-
-    /**
-     * Finds the next adoption post for the user's feed (legacy method).
-     *
-     * @param userId the user ID
-     * @param offset the current offset
-     * @return the next recommendation, or null if no more posts
-     */
-    @Deprecated
-    @Nullable
-    AdoptionRecommendationDTO findNextForFeed(Long userId, int offset);
-
-    /**
      * Records that a user has viewed a post.
      *
      * @param postId the post ID
@@ -110,17 +87,21 @@ public interface AdoptionPostService {
     void recordView(Long postId, Long userId);
 
     /**
-     * Gets the current feed offset for a user.
+     * Finds a previous adoption post from user's view history.
+     * Gets the post at the specified offset and increments offset if post is found.
      *
      * @param userId the user ID
-     * @return the current offset
+     * @return the recommendation with post ID from history, or null if no more posts
      */
-    int getOffset(Long userId);
+    @Nullable
+    AdoptionRecommendationDTO findPreviousFromHistory(Long userId);
 
     /**
-     * Resets the feed offset for a user.
+     * Finds an adoption post as recommendation DTO by its ID.
      *
-     * @param userId the user ID
+     * @param postId the post ID
+     * @return the recommendation DTO or null if not found
      */
-    void resetOffset(Long userId);
+    @Nullable
+    AdoptionRecommendationDTO findByIdAsRecommendation(Long postId);
 }

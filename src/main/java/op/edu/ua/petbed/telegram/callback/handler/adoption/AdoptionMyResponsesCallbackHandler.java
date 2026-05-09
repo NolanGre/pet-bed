@@ -81,7 +81,7 @@ public class AdoptionMyResponsesCallbackHandler implements CallbackHandler {
 
     private Page<CallbackListItem> toPageDto(Page<AdoptionResponseDTO> responses) {
         return responses.map(response -> new CallbackListItem(
-                CallbackId.ADOPTION_RESPONSE_SINGLE,
+                CallbackId.ADOPTION_MY_RESPONSE_DETAIL,
                 response.id(),
                 response.getStatusEmoji() + " " + response.postPetName()
         ));

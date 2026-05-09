@@ -2,6 +2,8 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionResponseService;
+import op.edu.ua.petbed.common.dto.AdoptionResponseDTO;
+import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -12,45 +14,43 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 
 /**
- * Handler for ADOPTION_POST_RESPONSE_CONFIRM - actually confirms the response.
+ * Handler for ADOPTION_MY_RESPONSE_DETAIL_CANCEL_CONFIRM - executes response cancellation.
  */
 @NullMarked
 @Component
 @RequiredArgsConstructor
-public class AdoptionResponseConfirmActionHandler implements CallbackHandler {
+public class AdoptionMyResponseDetailCancelConfirmHandler implements CallbackHandler {
 
     private final AdoptionResponseService adoptionResponseService;
 
     @Override
     public CallbackId getCallbackId() {
-        return CallbackId.ADOPTION_POST_RESPONSE_CONFIRM;
+        return CallbackId.ADOPTION_MY_RESPONSE_DETAIL_CANCEL_CONFIRM;
     }
 
     @Override
     public BotApiMethod<?> handle(CallbackQueryContext context) {
         Long responseId = context.callbackData().entityId();
         if (responseId == null) {
-            return ResponseBuilder.editMessage(context.chatId(), context.messageId())
-                    .text("❌ Помилка: ID відгуку не вказано")
-                    .keyboard(InlineKeyboardBuilder.builder()
-                            .backButtonFor(CallbackId.ADOPTION_MY_POSTS)
-                            .build())
-                    .build();
+            throw new PetBedException("ID відгуку не вказано",
+                    PetBedException.ErrorCode.INVALID_CALLBACK);
         }
 
-        Long ownerId = context.auth().userInternalId();
+        Long responderId = context.auth().userInternalId();
 
-        adoptionResponseService.confirmByOwner(responseId, ownerId);
+        AdoptionResponseDTO response = adoptionResponseService.findById(responseId);
+
+if (!response.responderId().equals(responderId)) {
+            throw new PetBedException("Ви не можете скасувати цей відгук",
+                    PetBedException.ErrorCode.ADOPTION_RESPONSE_NOT_AUTHORIZED);
+        }
+
+        adoptionResponseService.declineFinalization(responseId, responderId);
 
         return ResponseBuilder.editMessage(context.chatId(), context.messageId())
-                .text("""
-                        ✅ Відгук підтверджено!
-                        
-                        Охочий отримає повідомлення та зможе фінально підтвердити передачу.
-                        Інші відгуки автоматично відхилено.
-                        """)
+                .text("🗑️ Ваш відгук скасовано")
                 .keyboard(InlineKeyboardBuilder.builder()
-                        .backButtonTo(CallbackId.ADOPTION_POST_RESPONSE_DETAIL, responseId)
+                        .backButtonTo(CallbackId.ADOPTION_MY_RESPONSES)
                         .build())
                 .build();
     }

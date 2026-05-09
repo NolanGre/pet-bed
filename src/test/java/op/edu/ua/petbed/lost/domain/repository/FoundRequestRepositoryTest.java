@@ -1,6 +1,7 @@
 package op.edu.ua.petbed.lost.domain.repository;
 
 import op.edu.ua.petbed.common.model.PetType;
+import op.edu.ua.petbed.lost.application.dto.CreateFoundRequestDTO;
 import op.edu.ua.petbed.lost.domain.model.FoundRequest;
 import op.edu.ua.petbed.testcontainers.PostgresTestContainer;
 import org.junit.jupiter.api.*;
@@ -46,7 +47,14 @@ class FoundRequestRepositoryTest extends PostgresTestContainer {
     private FoundRequest createFoundRequest(Long finderId, PetType type, double lat, double lon) {
         GeometryFactory gf = new GeometryFactory();
         Point location = gf.createPoint(new Coordinate(lon, lat));
-        return FoundRequest.create(finderId, "photo_url", type, location, "Test description");
+        CreateFoundRequestDTO dto = CreateFoundRequestDTO.builder()
+                .finderId(finderId)
+                .photoUrl("photo_url")
+                .petType(type)
+                .location(location)
+                .breed("Test description")
+                .build();
+        return FoundRequest.create(dto);
     }
 
     private Timestamp hoursAgo(int hours) {

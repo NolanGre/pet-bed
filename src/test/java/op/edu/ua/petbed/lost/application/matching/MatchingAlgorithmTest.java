@@ -5,6 +5,7 @@ import op.edu.ua.petbed.common.model.PetSex;
 import op.edu.ua.petbed.common.model.PetSize;
 import op.edu.ua.petbed.common.model.PetStatus;
 import op.edu.ua.petbed.common.model.PetType;
+import op.edu.ua.petbed.lost.application.dto.CreateFoundRequestDTO;
 import op.edu.ua.petbed.lost.domain.model.FoundRequest;
 import op.edu.ua.petbed.lost.domain.model.LostRequest;
 import org.junit.jupiter.api.DisplayNameGeneration;
@@ -69,7 +70,13 @@ class MatchingAlgorithmTest {
     }
 
     private static FoundRequest createFoundRequest(Point location, String description) {
-        return FoundRequest.create(1L, "photo.jpg", PetType.DOG, location, description);
+        return FoundRequest.create(CreateFoundRequestDTO.builder()
+                .finderId(1L)
+                .photoUrl("photo.jpg")
+                .petType(PetType.DOG)
+                .location(location)
+                .breed(description)
+                .build());
     }
 
     @Test

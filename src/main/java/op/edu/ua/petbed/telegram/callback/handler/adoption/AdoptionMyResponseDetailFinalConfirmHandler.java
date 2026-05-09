@@ -2,6 +2,7 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionResponseService;
+import op.edu.ua.petbed.common.dto.AdoptionResponseDTO;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
@@ -11,22 +12,21 @@ import op.edu.ua.petbed.telegram.response.ResponseBuilder;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 
 /**
- * Handler for ADOPTION_MY_RESPONSE_FINAL_CONFIRM callback.
- * Executes final confirmation by the responder to complete the adoption.
+ * Handler for ADOPTION_MY_RESPONSE_DETAIL_FINAL_CONFIRM - shows confirmation dialog
+ * before the RESPONDER (the user who submitted the response) does final confirmation.
  */
 @NullMarked
 @Component
 @RequiredArgsConstructor
-public class AdoptionFinalConfirmHandler implements CallbackHandler {
+public class AdoptionMyResponseDetailFinalConfirmHandler implements CallbackHandler {
 
     private final AdoptionResponseService adoptionResponseService;
 
     @Override
     public CallbackId getCallbackId() {
-        return CallbackId.ADOPTION_MY_RESPONSE_FINAL_CONFIRM;
+        return CallbackId.ADOPTION_MY_RESPONSE_DETAIL_FINAL_CONFIRM;
     }
 
     @Override
@@ -36,23 +36,21 @@ public class AdoptionFinalConfirmHandler implements CallbackHandler {
             throw new PetBedException("Entity callback must be not null.", PetBedException.ErrorCode.INVALID_CALLBACK);
         }
 
-        Long responderId = context.auth().userInternalId();
+        adoptionResponseService.findById(responseId);
 
-        adoptionResponseService.finalConfirm(responseId, responderId);
-
-        return buildSuccessfulMessage(context);
-    }
-
-    private EditMessageText buildSuccessfulMessage(CallbackQueryContext context) {
         return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                 .text("""
-                        ✅ Передачу підтверджено!
-                        
-                        Вітаємо! Тварина тепер ваша.
-                        Зв'яжіться з попереднім власником для організації переїзду тварини.
+                        🏁 Фінальне підтвердження
+
+                        Ви підтверджуєте завершення передачі тварини?
+
+                        Після підтвердження статус зміниться на "✅ Завершено"
+                        і ви вже не зможете скасувати відгук.
                         """)
                 .keyboard(InlineKeyboardBuilder.builder()
-                        .backButtonTo(CallbackId.ADOPTION)
+                        .addButton("✅ Так, підтвердити",
+                                CallbackId.ADOPTION_MY_RESPONSE_FINAL_CONFIRM, responseId)
+                        .backButtonTo(CallbackId.ADOPTION_MY_RESPONSE_DETAIL, responseId)
                         .build())
                 .build();
     }

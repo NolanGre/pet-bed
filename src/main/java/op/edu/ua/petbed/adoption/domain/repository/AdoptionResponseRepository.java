@@ -28,6 +28,11 @@ public interface AdoptionResponseRepository extends JpaRepository<AdoptionRespon
 
     boolean existsByResponderId(Long responderId);
 
+    @Query("SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END FROM AdoptionResponse r " +
+           "WHERE r.adoptionPostId = :postId AND r.responderId = :responderId " +
+           "AND r.status IN ('NEW', 'CONFIRMED_BY_OWNER')")
+    boolean existsActiveByAdoptionPostIdAndResponderId(Long postId, Long responderId);
+
     Optional<AdoptionResponse> findByAdoptionPostIdAndResponderId(Long postId, Long responderId);
 
     /**

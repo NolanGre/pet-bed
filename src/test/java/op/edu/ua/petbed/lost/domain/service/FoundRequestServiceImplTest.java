@@ -5,6 +5,7 @@ import op.edu.ua.petbed.common.dto.UserDTO;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.PetType;
 import op.edu.ua.petbed.common.model.UserType;
+import op.edu.ua.petbed.lost.application.dto.CreateFoundRequestDTO;
 import op.edu.ua.petbed.lost.application.event.FoundRequestCreatedEvent;
 import op.edu.ua.petbed.lost.domain.model.FoundRequest;
 import op.edu.ua.petbed.lost.domain.repository.FoundRequestRepository;
@@ -64,14 +65,19 @@ class FoundRequestServiceImplTest {
         return new UserDTO(id, 123456789L, "testuser", UserType.REGULAR, null);
     }
 
+    private static CreateFoundRequestDTO createDto(Long finderId, String photoUrl, PetType petType, Point location) {
+        return CreateFoundRequestDTO.builder()
+                .finderId(finderId)
+                .photoUrl(photoUrl)
+                .petType(petType)
+                .location(location)
+                .breed("Brown")
+                .build();
+    }
+
     private static FoundRequest existingFoundRequest(Long id, Long finderId) {
-        FoundRequest request = FoundRequest.create(
-                finderId,
-                "photo123",
-                PetType.DOG,
-                createPoint(50.45, 30.52),
-                "Brown dog found near park"
-        );
+        CreateFoundRequestDTO dto = createDto(finderId, "photo123", PetType.DOG, createPoint(50.45, 30.52));
+        FoundRequest request = FoundRequest.create(dto);
         ReflectionTestUtils.setField(request, "id", id);
         ReflectionTestUtils.setField(request, "createdAt", Instant.parse("2024-01-15T10:30:00Z"));
         return request;
@@ -85,61 +91,56 @@ class FoundRequestServiceImplTest {
         @Test
         void create_withValidData_createsFoundRequestAndReturnsDto() {
             // given
-            Long finderId = 1L;
-            String photoUrl = "photo123";
-            PetType petType = PetType.DOG;
-            Point location = createPoint(50.45, 30.52);
-            String description = "Brown dog found near park";
+            CreateFoundRequestDTO dto = createDto(1L, "photo123", PetType.DOG, createPoint(50.45, 30.52));
 
-            UserDTO finder = existingUser(finderId);
-            given(userService.findById(finderId)).willReturn(finder);
+            UserDTO finder = existingUser(1L);
+            given(userService.findById(1L)).willReturn(finder);
 
-            FoundRequest savedRequest = existingFoundRequest(1L, finderId);
+            FoundRequest savedRequest = existingFoundRequest(1L, 1L);
             given(foundRequestRepository.save(any(FoundRequest.class))).willReturn(savedRequest);
 
             // when
-            FoundRequestDTO result = underTest.create(finderId, photoUrl, petType, location, description);
+            FoundRequestDTO result = underTest.create(dto);
 
             // then
             assertThat(result).isNotNull();
             assertThat(result.id()).isEqualTo(1L);
-            assertThat(result.finderId()).isEqualTo(finderId);
-            assertThat(result.photoUrl()).isEqualTo(photoUrl);
-            assertThat(result.petType()).isEqualTo(petType);
-            assertThat(result.location()).isEqualTo(location);
-            assertThat(result.description()).isEqualTo(description);
+            assertThat(result.finderId()).isEqualTo(1L);
+            assertThat(result.photoUrl()).isEqualTo("photo123");
+            assertThat(result.petType()).isEqualTo(PetType.DOG);
+            assertThat(result.breedText()).isEqualTo("Brown");
             assertThat(result.createdAt()).isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
 
-            verify(userService).findById(finderId);
+            verify(userService).findById(1L);
             verify(foundRequestRepository).save(any(FoundRequest.class));
         }
 
         @Test
         void create_callsUserServiceFindById_withCorrectFinderId() {
             // given
-            Long finderId = 1L;
-            given(userService.findById(finderId)).willReturn(existingUser(finderId));
+            CreateFoundRequestDTO dto = createDto(1L, "photo", PetType.CAT, createPoint(50.0, 30.0));
+            given(userService.findById(1L)).willReturn(existingUser(1L));
             given(foundRequestRepository.save(any(FoundRequest.class)))
-                    .willReturn(existingFoundRequest(1L, finderId));
+                    .willReturn(existingFoundRequest(1L, 1L));
 
             // when
-            underTest.create(finderId, "photo", PetType.CAT, createPoint(50.0, 30.0), "test");
+            underTest.create(dto);
 
             // then
-            verify(userService).findById(finderId);
+            verify(userService).findById(1L);
         }
 
         @Test
         void create_publishesFoundRequestCreatedEvent_withSavedRequestId() {
             // given
-            Long finderId = 1L;
-            given(userService.findById(finderId)).willReturn(existingUser(finderId));
+            CreateFoundRequestDTO dto = createDto(1L, "photo", PetType.CAT, createPoint(50.0, 30.0));
+            given(userService.findById(1L)).willReturn(existingUser(1L));
 
-            FoundRequest savedRequest = existingFoundRequest(100L, finderId);
+            FoundRequest savedRequest = existingFoundRequest(100L, 1L);
             given(foundRequestRepository.save(any(FoundRequest.class))).willReturn(savedRequest);
 
             // when
-            underTest.create(finderId, "photo", PetType.CAT, createPoint(50.0, 30.0), "test");
+            underTest.create(dto);
 
             // then
             ArgumentCaptor<FoundRequestCreatedEvent> eventCaptor = ArgumentCaptor.forClass(FoundRequestCreatedEvent.class);
@@ -152,46 +153,40 @@ class FoundRequestServiceImplTest {
         @Test
         void create_savesFoundRequestWithCorrectData() {
             // given
-            Long finderId = 1L;
-            String photoUrl = "photo123";
-            PetType petType = PetType.DOG;
-            Point location = createPoint(50.45, 30.52);
-            String description = "Brown dog found near park";
+            CreateFoundRequestDTO dto = createDto(1L, "photo123", PetType.DOG, createPoint(50.45, 30.52));
 
-            given(userService.findById(finderId)).willReturn(existingUser(finderId));
+            given(userService.findById(1L)).willReturn(existingUser(1L));
             given(foundRequestRepository.save(any(FoundRequest.class)))
-                    .willReturn(existingFoundRequest(1L, finderId));
+                    .willReturn(existingFoundRequest(1L, 1L));
 
             // when
-            underTest.create(finderId, photoUrl, petType, location, description);
+            underTest.create(dto);
 
             // then
             ArgumentCaptor<FoundRequest> requestCaptor = ArgumentCaptor.forClass(FoundRequest.class);
             verify(foundRequestRepository).save(requestCaptor.capture());
 
             FoundRequest capturedRequest = requestCaptor.getValue();
-            assertThat(capturedRequest.getFinderId()).isEqualTo(finderId);
-            assertThat(capturedRequest.getPhotoUrl()).isEqualTo(photoUrl);
-            assertThat(capturedRequest.getPetType()).isEqualTo(petType);
-            assertThat(capturedRequest.getLocation()).isEqualTo(location);
-            assertThat(capturedRequest.getDescription()).isEqualTo(description);
+            assertThat(capturedRequest.getFinderId()).isEqualTo(1L);
+            assertThat(capturedRequest.getPhotoUrl()).isEqualTo("photo123");
+            assertThat(capturedRequest.getPetType()).isEqualTo(PetType.DOG);
+            assertThat(capturedRequest.getLocation()).isEqualTo(dto.location());
+            assertThat(capturedRequest.getBreedText()).isEqualTo("Brown");
         }
 
         @Test
         void create_whenCreatedAtIsNull_throwsPetBedException() {
             // given
-            Long finderId = 1L;
-            given(userService.findById(finderId)).willReturn(existingUser(finderId));
+            CreateFoundRequestDTO dto = createDto(1L, "photo", PetType.DOG, createPoint(50.0, 30.0));
+            given(userService.findById(1L)).willReturn(existingUser(1L));
 
-            FoundRequest savedRequest = FoundRequest.create(
-                    finderId, "photo", PetType.DOG, createPoint(50.0, 30.0), "test"
-            );
+            FoundRequest savedRequest = FoundRequest.create(dto);
             ReflectionTestUtils.setField(savedRequest, "id", 1L);
             // createdAt is null by default
             given(foundRequestRepository.save(any(FoundRequest.class))).willReturn(savedRequest);
 
             // when/then
-            assertThatThrownBy(() -> underTest.create(finderId, "photo", PetType.DOG, createPoint(50.0, 30.0), "test"))
+            assertThatThrownBy(() -> underTest.create(dto))
                     .isInstanceOf(PetBedException.class)
                     .hasMessageContaining("createdAt is null");
         }
@@ -199,12 +194,12 @@ class FoundRequestServiceImplTest {
         @Test
         void create_whenUserNotFound_throwsException() {
             // given
-            Long finderId = 999L;
-            given(userService.findById(finderId))
+            CreateFoundRequestDTO dto = createDto(999L, "photo", PetType.DOG, createPoint(50.0, 30.0));
+            given(userService.findById(999L))
                     .willThrow(new PetBedException("User not found", PetBedException.ErrorCode.USER_NOT_FOUND));
 
             // when/then
-            assertThatThrownBy(() -> underTest.create(finderId, "photo", PetType.DOG, createPoint(50.0, 30.0), "test"))
+            assertThatThrownBy(() -> underTest.create(dto))
                     .isInstanceOf(PetBedException.class)
                     .hasFieldOrPropertyWithValue("errorCode", PetBedException.ErrorCode.USER_NOT_FOUND);
 
@@ -233,7 +228,7 @@ class FoundRequestServiceImplTest {
             assertThat(result.id()).isEqualTo(requestId);
             assertThat(result.finderId()).isEqualTo(1L);
             assertThat(result.photoUrl()).isEqualTo("photo123");
-            assertThat(result.description()).isEqualTo("Brown dog found near park");
+            assertThat(result.breedText()).isEqualTo("Brown");
             verify(foundRequestRepository).findById(requestId);
         }
 
@@ -256,9 +251,8 @@ class FoundRequestServiceImplTest {
         void findById_whenCreatedAtIsNull_throwsPetBedException() {
             // given
             Long requestId = 1L;
-            FoundRequest request = FoundRequest.create(
-                    1L, "photo", PetType.DOG, createPoint(50.0, 30.0), "test"
-            );
+            CreateFoundRequestDTO dto = createDto(1L, "photo", PetType.DOG, createPoint(50.0, 30.0));
+            FoundRequest request = FoundRequest.create(dto);
             ReflectionTestUtils.setField(request, "id", requestId);
             // createdAt is null by default
             given(foundRequestRepository.findById(requestId)).willReturn(Optional.of(request));
@@ -281,13 +275,8 @@ class FoundRequestServiceImplTest {
             // given
             Long finderId = 1L;
             FoundRequest request1 = existingFoundRequest(1L, finderId);
-            FoundRequest request2 = FoundRequest.create(
-                    finderId,
-                    "photo456",
-                    PetType.CAT,
-                    createPoint(50.46, 30.53),
-                    "White cat found"
-            );
+            CreateFoundRequestDTO dto2 = createDto(finderId, "photo456", PetType.CAT, createPoint(50.46, 30.53));
+            FoundRequest request2 = FoundRequest.create(dto2);
             ReflectionTestUtils.setField(request2, "id", 2L);
             ReflectionTestUtils.setField(request2, "createdAt", Instant.parse("2024-01-16T12:00:00Z"));
 
@@ -326,9 +315,8 @@ class FoundRequestServiceImplTest {
             // given
             Long finderId = 1L;
             FoundRequest request1 = existingFoundRequest(1L, finderId);
-            FoundRequest request2 = FoundRequest.create(
-                    finderId, "photo", PetType.CAT, createPoint(50.0, 30.0), "test"
-            );
+            CreateFoundRequestDTO dto2 = createDto(finderId, "photo", PetType.CAT, createPoint(50.0, 30.0));
+            FoundRequest request2 = FoundRequest.create(dto2);
             ReflectionTestUtils.setField(request2, "id", 2L);
             // createdAt is null by default
 
@@ -347,13 +335,8 @@ class FoundRequestServiceImplTest {
             // given
             Long finderId = 1L;
             FoundRequest request1 = existingFoundRequest(1L, finderId);
-            FoundRequest request2 = FoundRequest.create(
-                    finderId,
-                    "photo2",
-                    PetType.CAT,
-                    createPoint(51.0, 31.0),
-                    "Second request"
-            );
+            CreateFoundRequestDTO dto2 = createDto(finderId, "photo2", PetType.CAT, createPoint(51.0, 31.0));
+            FoundRequest request2 = FoundRequest.create(dto2);
             ReflectionTestUtils.setField(request2, "id", 2L);
             ReflectionTestUtils.setField(request2, "createdAt", Instant.parse("2024-01-20T10:00:00Z"));
 

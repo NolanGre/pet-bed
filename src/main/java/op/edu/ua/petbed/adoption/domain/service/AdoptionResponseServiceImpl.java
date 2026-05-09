@@ -205,6 +205,12 @@ public class AdoptionResponseServiceImpl implements AdoptionResponseService {
 
     @Override
     @Transactional(readOnly = true)
+    public boolean hasActiveResponse(Long postId, Long userId) {
+        return adoptionResponseRepository.existsActiveByAdoptionPostIdAndResponderId(postId, userId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<AdoptionResponseDTO> findByResponderId(Long responderId, Pageable pageable) {
         return adoptionResponseRepository.findByResponderId(responderId, pageable)
                 .map(this::mapToDTO);

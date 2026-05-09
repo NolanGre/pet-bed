@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 
 /**
- * Handler for ADOPTION_RESPONSE_SINGLE_REJECT - actually rejects the response.
+ * Handler for ADOPTION_POST_RESPONSE_REJECT - actually rejects the response.
  */
 @NullMarked
 @Component
@@ -23,17 +23,17 @@ public class AdoptionResponseRejectActionHandler implements CallbackHandler {
 
     @Override
     public CallbackId getCallbackId() {
-        return CallbackId.ADOPTION_RESPONSE_SINGLE_REJECT;
+        return CallbackId.ADOPTION_POST_RESPONSE_REJECT;
     }
 
     @Override
     public BotApiMethod<?> handle(CallbackQueryContext context) {
         Long responseId = context.callbackData().entityId();
-        if (responseId == null) {
+if (responseId == null) {
             return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                     .text("❌ Помилка: ID відгуку не вказано")
                     .keyboard(InlineKeyboardBuilder.builder()
-                            .backButtonTo(CallbackId.ADOPTION_RESPONSE_SINGLE)
+                            .backButtonFor(CallbackId.ADOPTION_MY_POSTS)
                             .build())
                     .build();
         }
@@ -50,7 +50,7 @@ public class AdoptionResponseRejectActionHandler implements CallbackHandler {
                         Ви можете відновити цей відгук пізніше, якщо передумаєте.
                         """)
                 .keyboard(InlineKeyboardBuilder.builder()
-                        .backButtonTo(CallbackId.ADOPTION_RESPONSE_SINGLE)
+                        .backButtonTo(CallbackId.ADOPTION_POST_RESPONSE_DETAIL)
                         .build())
                 .build();
     }

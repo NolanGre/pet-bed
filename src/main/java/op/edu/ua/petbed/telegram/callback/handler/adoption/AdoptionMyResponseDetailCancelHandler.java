@@ -1,9 +1,6 @@
 package op.edu.ua.petbed.telegram.callback.handler.adoption;
 
 import lombok.RequiredArgsConstructor;
-import op.edu.ua.petbed.adoption.AdoptionResponseService;
-import op.edu.ua.petbed.common.dto.AdoptionResponseDTO;
-
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -14,46 +11,38 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 
 /**
- * Handler for ADOPTION_POST_RESPONSE_TRY_REJECT - shows rejection confirmation dialog.
+ * Handler for ADOPTION_MY_RESPONSE_DETAIL_CANCEL - shows confirmation dialog to cancel response.
  */
 @NullMarked
 @Component
 @RequiredArgsConstructor
-public class AdoptionResponseTryRejectHandler implements CallbackHandler {
-
-    private final AdoptionResponseService adoptionResponseService;
+public class AdoptionMyResponseDetailCancelHandler implements CallbackHandler {
 
     @Override
     public CallbackId getCallbackId() {
-        return CallbackId.ADOPTION_POST_RESPONSE_TRY_REJECT;
+        return CallbackId.ADOPTION_MY_RESPONSE_DETAIL_CANCEL;
     }
 
     @Override
     public BotApiMethod<?> handle(CallbackQueryContext context) {
         Long responseId = context.callbackData().entityId();
-if (responseId == null) {
+        if (responseId == null) {
             return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                     .text("❌ Помилка: ID відгуку не вказано")
                     .keyboard(InlineKeyboardBuilder.builder()
-                            .backButtonFor(CallbackId.ADOPTION_MY_POSTS)
+                            .backButtonTo(CallbackId.ADOPTION_MY_RESPONSES)
                             .build())
                     .build();
         }
 
-        AdoptionResponseDTO response = adoptionResponseService.findById(responseId);
-
         return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                 .text("""
-                        ⚠️ Відхилити відгук?
-                        
-                        Користувач @%s буде повідомлений про відхилення.
-                        
-                        Ви зможете відновити цей відгук пізніше, якщо передумаєте.
-                        """.formatted(response.responderUsername()))
+                        Ви впевнені що хочете відмінити свій відгук?
+                        """)
                 .keyboard(InlineKeyboardBuilder.builder()
-                        .addButton("❌ Так, відхилити",
-                                CallbackId.ADOPTION_POST_RESPONSE_REJECT, responseId)
-                        .backButtonTo(CallbackId.ADOPTION_POST_RESPONSE_DETAIL, responseId)
+                        .addButton("✅ Так, відмінити",
+                                CallbackId.ADOPTION_MY_RESPONSE_DETAIL_CANCEL_CONFIRM, responseId)
+                        .backButtonTo(CallbackId.ADOPTION_MY_RESPONSE_DETAIL, responseId)
                         .build())
                 .build();
     }

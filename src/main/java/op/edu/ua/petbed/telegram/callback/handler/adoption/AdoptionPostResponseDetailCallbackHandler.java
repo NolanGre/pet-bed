@@ -16,28 +16,28 @@ import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 /**
- * Handler for ADOPTION_RESPONSE_SINGLE callback - shows single response details with action buttons.
+ * Handler for ADOPTION_POST_RESPONSE_DETAIL callback - shows single response details with action buttons.
  */
 @NullMarked
 @Component
 @RequiredArgsConstructor
-public class AdoptionResponseDetailOwnerCallbackHandler implements CallbackHandler {
+public class AdoptionPostResponseDetailCallbackHandler implements CallbackHandler {
 
     private final AdoptionResponseService adoptionResponseService;
 
     @Override
     public CallbackId getCallbackId() {
-        return CallbackId.ADOPTION_RESPONSE_SINGLE;
+        return CallbackId.ADOPTION_POST_RESPONSE_DETAIL;
     }
 
     @Override
     public BotApiMethod<?> handle(CallbackQueryContext context) {
         Long responseId = context.callbackData().entityId();
-        if (responseId == null) {
+if (responseId == null) {
             return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                     .text("❌ Помилка: ID відгуку не вказано")
                     .keyboard(InlineKeyboardBuilder.builder()
-                            .backButtonTo(CallbackId.ADOPTION_POST_DETAIL)
+                            .backButtonFor(CallbackId.ADOPTION_MY_POSTS)
                             .build())
                     .build();
         }
@@ -73,18 +73,18 @@ public class AdoptionResponseDetailOwnerCallbackHandler implements CallbackHandl
 
     private InlineKeyboardMarkup buildKeyboard(AdoptionResponseDTO response, Long responseId) {
         return InlineKeyboardBuilder.builder()
-                .navButtonsFor(CallbackId.ADOPTION_RESPONSE_SINGLE, responseId, child -> {
+                .navButtonsFor(CallbackId.ADOPTION_POST_RESPONSE_DETAIL, responseId, child -> {
                     var status = response.status();
                     if (status == AdoptionResponseStatus.NEW) {
-                        return child == CallbackId.ADOPTION_RESPONSE_SINGLE_TRY_CONFIRM
-                                || child == CallbackId.ADOPTION_RESPONSE_SINGLE_TRY_REJECT;
+                        return child == CallbackId.ADOPTION_POST_RESPONSE_TRY_CONFIRM
+                                || child == CallbackId.ADOPTION_POST_RESPONSE_TRY_REJECT;
                     }
                     if (status == AdoptionResponseStatus.REJECTED_BY_OWNER) {
-                        return child == CallbackId.ADOPTION_RESPONSE_SINGLE_TRY_RESTORE;
+                        return child == CallbackId.ADOPTION_POST_RESPONSE_TRY_RESTORE;
                     }
                     return false;
                 })
-                .backButtonTo(CallbackId.ADOPTION_RESPONSES_LIST, response.postId())
+                .backButtonTo(CallbackId.ADOPTION_POST_DETAIL, response.postId())
                 .build();
     }
 }

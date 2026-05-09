@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 
 /**
- * Handler for ADOPTION_RESPONSE_SINGLE_TRY_CONFIRM - shows confirmation dialog.
+ * Handler for ADOPTION_POST_RESPONSE_TRY_CONFIRM - shows confirmation dialog.
  */
 @NullMarked
 @Component
@@ -25,17 +25,17 @@ public class AdoptionResponseTryConfirmHandler implements CallbackHandler {
 
     @Override
     public CallbackId getCallbackId() {
-        return CallbackId.ADOPTION_RESPONSE_SINGLE_TRY_CONFIRM;
+        return CallbackId.ADOPTION_POST_RESPONSE_TRY_CONFIRM;
     }
 
     @Override
     public BotApiMethod<?> handle(CallbackQueryContext context) {
         Long responseId = context.callbackData().entityId();
-        if (responseId == null) {
+if (responseId == null) {
             return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                     .text("❌ Помилка: ID відгуку не вказано")
                     .keyboard(InlineKeyboardBuilder.builder()
-                            .backButtonTo(CallbackId.ADOPTION_RESPONSE_SINGLE)
+                            .backButtonFor(CallbackId.ADOPTION_MY_POSTS)
                             .build())
                     .build();
         }
@@ -55,8 +55,8 @@ public class AdoptionResponseTryConfirmHandler implements CallbackHandler {
                         """.formatted(response.responderUsername()))
                 .keyboard(InlineKeyboardBuilder.builder()
                         .addButton("✅ Так, підтвердити",
-                                CallbackId.ADOPTION_RESPONSE_SINGLE_CONFIRM, responseId)
-                        .backButtonTo(CallbackId.ADOPTION_RESPONSE_SINGLE)
+                                CallbackId.ADOPTION_POST_RESPONSE_CONFIRM, responseId)
+                        .backButtonTo(CallbackId.ADOPTION_POST_RESPONSE_DETAIL, responseId)
                         .build())
                 .build();
     }

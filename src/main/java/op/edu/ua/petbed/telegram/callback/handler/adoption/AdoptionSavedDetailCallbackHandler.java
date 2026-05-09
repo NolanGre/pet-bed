@@ -2,70 +2,65 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionPostService;
+import op.edu.ua.petbed.adoption.AdoptionSavedPostService;
 import op.edu.ua.petbed.common.dto.AdoptionRecommendationDTO;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
 import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
 import op.edu.ua.petbed.telegram.response.ResponseBuilder;
-import op.edu.ua.petbed.user.UserService;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
-/**
- * Handler for ADOPTION_GET callback - shows adoption posts in the feed.
- * Uses user offset for navigation (not callback offset).
- */
 @NullMarked
 @Component
 @RequiredArgsConstructor
-public class AdoptionGetCallbackHandler implements CallbackHandler {
+public class AdoptionSavedDetailCallbackHandler implements CallbackHandler {
 
     private final AdoptionPostService adoptionPostService;
-    private final UserService userService;
+    private final AdoptionSavedPostService adoptionSavedPostService;
 
     @Override
     public CallbackId getCallbackId() {
-        return CallbackId.ADOPTION_GET;
+        return CallbackId.ADOPTION_SAVED_DETAIL;
     }
 
     @Override
     public PartialBotApiMethod<?> handle(CallbackQueryContext context) {
         Long userId = context.auth().userInternalId();
+        Long postId = context.callbackData().entityId();
 
-        userService.resetAdoptionHistoryOffset(userId);
-
-        AdoptionRecommendationDTO post = adoptionPostService.findNextUnviewed(userId);
-
-        if (post == null) {
-            return noPostsExistMessage(context);
+        if (postId == null) {
+            throw new IllegalStateException("Post ID is required for ADOPTION_SAVED_DETAIL");
         }
 
-        adoptionPostService.recordView(post.postId(), userId);
+        AdoptionRecommendationDTO post = adoptionPostService.findByIdAsRecommendation(postId);
+        if (post == null) {
+            return noPostFoundMessage(context);
+        }
 
-        return mapToResponse(context, post);
+        return mapToResponse(context, post, userId);
     }
 
-    private PartialBotApiMethod<?> mapToResponse(CallbackQueryContext context, AdoptionRecommendationDTO post) {
+    private PartialBotApiMethod<?> mapToResponse(CallbackQueryContext context,
+                                                  AdoptionRecommendationDTO post,
+                                                  Long userId) {
+        boolean isSaved = adoptionSavedPostService.isSaved(post.postId(), userId);
+
         return ResponseBuilder.editPhoto(context.chatId(), context.messageId(), post.petPhotoUrl())
                 .caption(formatPostInfo(post))
-                .keyboard(buildKeyboard(post))
+                .keyboard(buildKeyboard(post, isSaved))
                 .build();
     }
 
-    private EditMessageText noPostsExistMessage(CallbackQueryContext context) {
+    private EditMessageText noPostFoundMessage(CallbackQueryContext context) {
         return ResponseBuilder.editMessage(context.chatId(), context.messageId())
-                .text("""
-                        📭 Наразі немає доступних анкет.
-                        
-                        Спробуйте пізніше!
-                        """)
+                .text("❌ Оголошення не знайдено")
                 .keyboard(InlineKeyboardBuilder.builder()
-                        .addButton("◀️ Минула анкета", CallbackId.ADOPTION_GET_PREV)
-                        .backButtonTo(CallbackId.ADOPTION)
+                        .backButtonTo(CallbackId.ADOPTION_MY_SAVED)
                         .build())
                 .build();
     }
@@ -125,13 +120,18 @@ public class AdoptionGetCallbackHandler implements CallbackHandler {
         }
     }
 
-    private InlineKeyboardMarkup buildKeyboard(AdoptionRecommendationDTO post) {
-        return InlineKeyboardBuilder.builder()
-                .addButton("❤️ Зберегти", CallbackId.ADOPTION_SAVE_POST, post.postId())
-                .addButton("✉️ Відгукнутись", CallbackId.ADOPTION_RESPONSE_CREATE, post.postId())
-                .addButton("◀️ Минула", CallbackId.ADOPTION_GET_PREV, post.postId())
-                .addButton("➡️ Наступна", CallbackId.ADOPTION_GET_NEXT, post.postId())
-                .backButtonTo(CallbackId.ADOPTION)
-                .build();
+    private InlineKeyboardMarkup buildKeyboard(AdoptionRecommendationDTO post, boolean isSaved) {
+        var builder = InlineKeyboardBuilder.builder();
+
+        if (isSaved) {
+            builder.addButton("💔 Видалити зі збережених", CallbackId.ADOPTION_UNSAVE_POST, post.postId());
+        } else {
+            builder.addButton("❤️ Зберегти", CallbackId.ADOPTION_SAVE_POST, post.postId());
+        }
+
+        builder.addButton("✉️ Відгукнутись", CallbackId.ADOPTION_RESPONSE_CREATE, post.postId());
+        builder.backButtonTo(CallbackId.ADOPTION_MY_SAVED);
+
+        return builder.build();
     }
 }

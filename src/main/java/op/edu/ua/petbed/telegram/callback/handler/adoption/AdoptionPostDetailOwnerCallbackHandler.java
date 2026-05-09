@@ -1,32 +1,34 @@
 package op.edu.ua.petbed.telegram.callback.handler.adoption;
 
 import lombok.RequiredArgsConstructor;
-import op.edu.ua.petbed.adoption.AdoptionPostService;
-import op.edu.ua.petbed.common.dto.AdoptionPostDTO;
-import op.edu.ua.petbed.common.dto.AdoptionPostDetailDTO;
+import op.edu.ua.petbed.adoption.AdoptionResponseService;
 import op.edu.ua.petbed.common.dto.AdoptionResponseDTO;
-import op.edu.ua.petbed.common.model.AdoptionPostStatus;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
+import op.edu.ua.petbed.telegram.response.CallbackListItem;
 import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
+import op.edu.ua.petbed.telegram.response.KeyboardLayout;
 import op.edu.ua.petbed.telegram.response.ResponseBuilder;
+import op.edu.ua.petbed.telegram.service.TelegramMessageService;
 import org.jspecify.annotations.NullMarked;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
-import java.util.List;
-
 /**
- * Handler for ADOPTION_POST_DETAIL callback - shows post details with responses for the owner.
+ * Handler for ADOPTION_POST_DETAIL callback - shows paginated list of responses for a post.
  */
 @NullMarked
 @Component
 @RequiredArgsConstructor
 public class AdoptionPostDetailOwnerCallbackHandler implements CallbackHandler {
 
-    private final AdoptionPostService adoptionPostService;
+    private final AdoptionResponseService adoptionResponseService;
+    private final TelegramMessageService messageService;
 
     @Override
     public CallbackId getCallbackId() {
@@ -45,55 +47,54 @@ public class AdoptionPostDetailOwnerCallbackHandler implements CallbackHandler {
                     .build();
         }
 
-        AdoptionPostDetailDTO detail = adoptionPostService.findById(postId);
-        var post = detail.post();
-        List<AdoptionResponseDTO> responses = detail.responses();
+        int offset = context.callbackData().offset() != null ? context.callbackData().offset() : 0;
+        Page<AdoptionResponseDTO> responses = adoptionResponseService.findByPostId(postId,
+                PageRequest.of(offset, KeyboardLayout.DEFAULT.pageSize()));
 
-        String text = formatPostInfo(post, responses);
+        if (responses.isEmpty()) {
+            return noResponsesMessage(context, postId);
+        }
 
-        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
-                .text(text)
-                .keyboard(buildKeyboard(post, responses, postId))
+        SendMessage message = ResponseBuilder.sendMessage(context.chatId())
+                .text(formatHeader(responses))
+                .keyboard(buildKeyboard(context, responses, postId))
+                .build();
+
+        return messageService.editOrReplace(context, message);
+    }
+
+    private SendMessage noResponsesMessage(CallbackQueryContext context, Long postId) {
+        return ResponseBuilder.sendMessage(context.chatId())
+                .text("📨 Поки немає відгуків на це оголошення.")
+                .keyboard(InlineKeyboardBuilder.builder()
+                        .backButtonTo(CallbackId.ADOPTION_MY_POSTS)
+                        .build())
                 .build();
     }
 
-    private String formatPostInfo(AdoptionPostDTO post, List<AdoptionResponseDTO> responses) {
-        StringBuilder text = new StringBuilder();
-        text.append("🐾 ").append(post.petName()).append("\n\n");
-
-        if (post.ownerComment() != null && !post.ownerComment().isBlank()) {
-            text.append("💬 ").append(post.ownerComment()).append("\n\n");
-        }
-
-        text.append("Статус: ").append(getStatusText(post.status())).append("\n");
-
-        if (!responses.isEmpty()) {
-            text.append("\n📨 Відгуків: ").append(responses.size()).append("\n");
-        }
-
-        return text.toString();
+    private String formatHeader(Page<AdoptionResponseDTO> responses) {
+        return "📨 Відгуки на ваше оголошення:";
     }
 
-    private InlineKeyboardMarkup buildKeyboard(AdoptionPostDTO post, List<AdoptionResponseDTO> responses, Long postId) {
+    private InlineKeyboardMarkup buildKeyboard(CallbackQueryContext context, Page<AdoptionResponseDTO> responses, Long postId) {
         return InlineKeyboardBuilder.builder()
-                .navButtonsFor(CallbackId.ADOPTION_POST_DETAIL, postId, child -> {
-                    if (child == CallbackId.ADOPTION_RESPONSES_LIST) {
-                        return post.status() == AdoptionPostStatus.ACTIVE && !responses.isEmpty();
-                    }
-                    if (child == CallbackId.ADOPTION_POST_TRY_DELETE) {
-                        return post.status() != AdoptionPostStatus.COMPLETED;
-                    }
-                    return false;
-                })
-                .backButtonFor(CallbackId.ADOPTION_POST_DETAIL)
+                .paginatedList(toPageDto(responses), context.callbackData())
+                .backButtonTo(CallbackId.ADOPTION_MY_POSTS)
                 .build();
     }
 
-    private String getStatusText(AdoptionPostStatus status) {
-        return switch (status) {
-            case ACTIVE -> "🟢 Активне";
-            case PENDING_CONFIRMATION -> "⏳ Очікує підтвердження";
-            case COMPLETED -> "✅ Завершено";
-        };
+    private Page<CallbackListItem> toPageDto(Page<AdoptionResponseDTO> responses) {
+        return responses.map(response -> new CallbackListItem(
+                CallbackId.ADOPTION_POST_RESPONSE_DETAIL,
+                response.id(),
+                response.getStatusEmoji() + " " + truncate(response.responderUsername(), 20)
+        ));
+    }
+
+    private String truncate(String text, int maxLength) {
+        if (text.isBlank()) {
+            return "(без імені)";
+        }
+        return text.length() <= maxLength ? text : text.substring(0, maxLength) + "...";
     }
 }

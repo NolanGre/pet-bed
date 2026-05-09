@@ -96,6 +96,15 @@ public interface AdoptionResponseService {
     boolean hasResponded(Long postId, Long userId);
 
     /**
+     * Checks if a user has an active response (NEW or CONFIRMED_BY_OWNER) to a post.
+     *
+     * @param postId the adoption post ID
+     * @param userId the user ID
+     * @return true if the user has an active response
+     */
+    boolean hasActiveResponse(Long postId, Long userId);
+
+    /**
      * Finds responses by a specific user (responder) with pagination.
      *
      * @param responderId the responder's user ID

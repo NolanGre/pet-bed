@@ -3,7 +3,6 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionResponseService;
 import op.edu.ua.petbed.common.dto.AdoptionResponseDTO;
-
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -14,18 +13,18 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 
 /**
- * Handler for ADOPTION_POST_RESPONSE_TRY_REJECT - shows rejection confirmation dialog.
+ * Handler for ADOPTION_POST_RESPONSE_TRY_RESTORE - shows restoration confirmation dialog.
  */
 @NullMarked
 @Component
 @RequiredArgsConstructor
-public class AdoptionResponseTryRejectHandler implements CallbackHandler {
+public class AdoptionResponseTryRestoreHandler implements CallbackHandler {
 
     private final AdoptionResponseService adoptionResponseService;
 
     @Override
     public CallbackId getCallbackId() {
-        return CallbackId.ADOPTION_POST_RESPONSE_TRY_REJECT;
+        return CallbackId.ADOPTION_POST_RESPONSE_TRY_RESTORE;
     }
 
     @Override
@@ -44,15 +43,13 @@ if (responseId == null) {
 
         return ResponseBuilder.editMessage(context.chatId(), context.messageId())
                 .text("""
-                        ⚠️ Відхилити відгук?
-                        
-                        Користувач @%s буде повідомлений про відхилення.
-                        
-                        Ви зможете відновити цей відгук пізніше, якщо передумаєте.
+                        🔄 Відновити відгук?
+
+                        Користувач @%s знову зможе фінально підтвердити передачу.
                         """.formatted(response.responderUsername()))
                 .keyboard(InlineKeyboardBuilder.builder()
-                        .addButton("❌ Так, відхилити",
-                                CallbackId.ADOPTION_POST_RESPONSE_REJECT, responseId)
+                        .addButton("✅ Так, відновити",
+                                CallbackId.ADOPTION_POST_RESPONSE_RESTORE, responseId)
                         .backButtonTo(CallbackId.ADOPTION_POST_RESPONSE_DETAIL, responseId)
                         .build())
                 .build();

@@ -41,9 +41,6 @@ public class AdoptionCompletionService {
                 .orElseThrow(() -> new PetBedException("Adoption post not found",
                         PetBedException.ErrorCode.ADOPTION_POST_NOT_FOUND));
 
-        post.complete();
-        adoptionPostRepository.save(post);
-
         petService.transferOwnership(post.getPetId(), response.getResponderId());
 
         petService.updateStatus(post.getPetId(), PetStatus.DEFAULT);

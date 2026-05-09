@@ -110,9 +110,11 @@ class LostRequestTest {
             // when
             LostRequest result = LostRequest.create(pet, contactInfo, location);
 
-            // then
-            String expectedSearchText = "Барсик; Дворовий; Сірий; Смугастий; Білий хвіст";
-            assertThat(result.getSearchText()).isEqualTo(expectedSearchText);
+            // then - check individual fields instead of searchText
+            assertThat(result.getBreedText()).isEqualTo("Дворовий");
+            assertThat(result.getColorText()).isEqualTo("Сірий");
+            assertThat(result.getCoatText()).isEqualTo("Смугастий");
+            assertThat(result.getFeaturesText()).isEqualTo("Білий хвіст");
         }
 
         @Test
@@ -133,9 +135,11 @@ class LostRequestTest {
             // when
             LostRequest result = LostRequest.create(pet, contactInfo, location);
 
-            // then - generateSearchText calls trim() at the end
-            String expectedSearchText = "Рекс; Вівчарка; Чорний; Однотонний;";
-            assertThat(result.getSearchText()).isEqualTo(expectedSearchText);
+            // then - check individual fields
+            assertThat(result.getBreedText()).isEqualTo("Вівчарка");
+            assertThat(result.getColorText()).isEqualTo("Чорний");
+            assertThat(result.getCoatText()).isEqualTo("Однотонний");
+            assertThat(result.getFeaturesText()).isNull();
         }
 
         @Test

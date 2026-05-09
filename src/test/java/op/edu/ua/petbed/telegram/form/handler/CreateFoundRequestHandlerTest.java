@@ -6,6 +6,7 @@ import op.edu.ua.petbed.common.model.PetSize;
 import op.edu.ua.petbed.common.model.PetType;
 import op.edu.ua.petbed.common.model.UserType;
 import op.edu.ua.petbed.lost.FoundRequestService;
+import op.edu.ua.petbed.lost.application.dto.CreateFoundRequestDTO;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.form.FormData;
 import op.edu.ua.petbed.telegram.form.scheme.FormInput;
@@ -64,15 +65,16 @@ class CreateFoundRequestHandlerTest {
                     "photo123",
                     PetType.DOG,
                     GEOMETRY_FACTORY.createPoint(new Coordinate(30.52, 50.45)),
-                    "Labrador Golden Smooth male medium Friendly and playful",
+                    "Labrador",
+                    "Golden",
+                    "Smooth",
+                    "medium",
+                    "male",
+                    "Friendly and playful",
                     Instant.now()
             );
             given(foundRequestService.create(
-                    org.mockito.ArgumentMatchers.eq(USER_ID),
-                    org.mockito.ArgumentMatchers.eq("photo123"),
-                    org.mockito.ArgumentMatchers.eq(PetType.DOG),
-                    org.mockito.ArgumentMatchers.any(Point.class),
-                    org.mockito.ArgumentMatchers.anyString()
+                    org.mockito.ArgumentMatchers.any(CreateFoundRequestDTO.class)
             )).willReturn(createdDto);
 
             // when
@@ -84,20 +86,15 @@ class CreateFoundRequestHandlerTest {
             assertThat(message.getText()).contains("Анкету збережено");
             assertThat(message.getChatId()).isEqualTo(CHAT_ID.toString());
 
-            ArgumentCaptor<Point> locationCaptor = ArgumentCaptor.forClass(Point.class);
-            ArgumentCaptor<String> descriptionCaptor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<CreateFoundRequestDTO> dtoCaptor = ArgumentCaptor.forClass(CreateFoundRequestDTO.class);
+            verify(foundRequestService).create(dtoCaptor.capture());
 
-            verify(foundRequestService).create(
-                    org.mockito.ArgumentMatchers.eq(USER_ID),
-                    org.mockito.ArgumentMatchers.eq("photo123"),
-                    org.mockito.ArgumentMatchers.eq(PetType.DOG),
-                    locationCaptor.capture(),
-                    descriptionCaptor.capture()
-            );
-
-            Point capturedLocation = locationCaptor.getValue();
-            assertThat(capturedLocation.getX()).isEqualTo(30.52);
-            assertThat(capturedLocation.getY()).isEqualTo(50.45);
+            CreateFoundRequestDTO captured = dtoCaptor.getValue();
+            assertThat(captured.finderId()).isEqualTo(USER_ID);
+            assertThat(captured.photoUrl()).isEqualTo("photo123");
+            assertThat(captured.petType()).isEqualTo(PetType.DOG);
+            assertThat(captured.location().getX()).isEqualTo(30.52);
+            assertThat(captured.location().getY()).isEqualTo(50.45);
         }
 
         @Test
@@ -109,19 +106,13 @@ class CreateFoundRequestHandlerTest {
             underTest.handle(data);
 
             // then
-            ArgumentCaptor<String> descriptionCaptor = ArgumentCaptor.forClass(String.class);
-            verify(foundRequestService).create(
-                    org.mockito.ArgumentMatchers.any(),
-                    org.mockito.ArgumentMatchers.any(),
-                    org.mockito.ArgumentMatchers.any(),
-                    org.mockito.ArgumentMatchers.any(),
-                    descriptionCaptor.capture()
-            );
+            ArgumentCaptor<CreateFoundRequestDTO> dtoCaptor = ArgumentCaptor.forClass(CreateFoundRequestDTO.class);
+            verify(foundRequestService).create(dtoCaptor.capture());
 
-            String capturedDescription = descriptionCaptor.getValue();
-            assertThat(capturedDescription).contains("Labrador");
-            assertThat(capturedDescription).contains("Golden");
-            assertThat(capturedDescription).contains("Smooth");
+            CreateFoundRequestDTO captured = dtoCaptor.getValue();
+            assertThat(captured.breed()).contains("Labrador");
+            assertThat(captured.color()).contains("Golden");
+            assertThat(captured.coat()).contains("Smooth");
         }
 
         @Test
@@ -133,20 +124,13 @@ class CreateFoundRequestHandlerTest {
             underTest.handle(data);
 
             // then
-            ArgumentCaptor<String> descriptionCaptor = ArgumentCaptor.forClass(String.class);
-            verify(foundRequestService).create(
-                    org.mockito.ArgumentMatchers.any(),
-                    org.mockito.ArgumentMatchers.any(),
-                    org.mockito.ArgumentMatchers.any(),
-                    org.mockito.ArgumentMatchers.any(),
-                    descriptionCaptor.capture()
-            );
+            ArgumentCaptor<CreateFoundRequestDTO> dtoCaptor = ArgumentCaptor.forClass(CreateFoundRequestDTO.class);
+            verify(foundRequestService).create(dtoCaptor.capture());
 
-            String capturedDescription = descriptionCaptor.getValue();
-            assertThat(capturedDescription).contains("Labrador");
-            assertThat(capturedDescription).doesNotContain("null");
-            // Empty fields should not be in the description
-            assertThat(capturedDescription).doesNotContain("  ");
+            CreateFoundRequestDTO captured = dtoCaptor.getValue();
+            assertThat(captured.breed()).contains("Labrador");
+            assertThat(captured.color()).isNull();
+            assertThat(captured.coat()).isNull();
         }
 
         @Test
@@ -158,22 +142,16 @@ class CreateFoundRequestHandlerTest {
             underTest.handle(data);
 
             // then
-            ArgumentCaptor<String> descriptionCaptor = ArgumentCaptor.forClass(String.class);
-            verify(foundRequestService).create(
-                    org.mockito.ArgumentMatchers.any(),
-                    org.mockito.ArgumentMatchers.any(),
-                    org.mockito.ArgumentMatchers.any(),
-                    org.mockito.ArgumentMatchers.any(),
-                    descriptionCaptor.capture()
-            );
+            ArgumentCaptor<CreateFoundRequestDTO> dtoCaptor = ArgumentCaptor.forClass(CreateFoundRequestDTO.class);
+            verify(foundRequestService).create(dtoCaptor.capture());
 
-            String capturedDescription = descriptionCaptor.getValue();
-            assertThat(capturedDescription).contains("Labrador");
-            assertThat(capturedDescription).contains("Golden");
-            assertThat(capturedDescription).contains("Smooth");
-            assertThat(capturedDescription).contains("male");
-            assertThat(capturedDescription).contains("medium");
-            assertThat(capturedDescription).contains("Friendly and playful");
+            CreateFoundRequestDTO captured = dtoCaptor.getValue();
+            assertThat(captured.breed()).isEqualTo("Labrador");
+            assertThat(captured.color()).isEqualTo("Golden");
+            assertThat(captured.coat()).isEqualTo("Smooth");
+            assertThat(captured.sex()).isEqualTo("male");
+            assertThat(captured.size()).isEqualTo("medium");
+            assertThat(captured.features()).isEqualTo("Friendly and playful");
         }
 
         @Test
@@ -185,17 +163,16 @@ class CreateFoundRequestHandlerTest {
             underTest.handle(data);
 
             // then
-            ArgumentCaptor<String> descriptionCaptor = ArgumentCaptor.forClass(String.class);
-            verify(foundRequestService).create(
-                    org.mockito.ArgumentMatchers.any(),
-                    org.mockito.ArgumentMatchers.any(),
-                    org.mockito.ArgumentMatchers.any(),
-                    org.mockito.ArgumentMatchers.any(),
-                    descriptionCaptor.capture()
-            );
+            ArgumentCaptor<CreateFoundRequestDTO> dtoCaptor = ArgumentCaptor.forClass(CreateFoundRequestDTO.class);
+            verify(foundRequestService).create(dtoCaptor.capture());
 
-            String capturedDescription = descriptionCaptor.getValue();
-            assertThat(capturedDescription).isEmpty();
+            CreateFoundRequestDTO captured = dtoCaptor.getValue();
+            assertThat(captured.breed()).isNull();
+            assertThat(captured.color()).isNull();
+            assertThat(captured.coat()).isNull();
+            assertThat(captured.sex()).isNull();
+            assertThat(captured.size()).isNull();
+            assertThat(captured.features()).isNull();
         }
 
         @Test
@@ -235,16 +212,10 @@ class CreateFoundRequestHandlerTest {
             underTest.handle(data);
 
             // then
-            ArgumentCaptor<PetType> petTypeCaptor = ArgumentCaptor.forClass(PetType.class);
-            verify(foundRequestService).create(
-                    org.mockito.ArgumentMatchers.any(),
-                    org.mockito.ArgumentMatchers.any(),
-                    petTypeCaptor.capture(),
-                    org.mockito.ArgumentMatchers.any(),
-                    org.mockito.ArgumentMatchers.any()
-            );
+            ArgumentCaptor<CreateFoundRequestDTO> dtoCaptor = ArgumentCaptor.forClass(CreateFoundRequestDTO.class);
+            verify(foundRequestService).create(dtoCaptor.capture());
 
-            PetType capturedPetType = petTypeCaptor.getValue();
+            PetType capturedPetType = dtoCaptor.getValue().petType();
             assertThat(capturedPetType).isEqualTo(PetType.CAT);
         }
     }

@@ -3,25 +3,18 @@ package op.edu.ua.petbed.adoption.domain.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import op.edu.ua.petbed.adoption.AdoptionPostService;
-import op.edu.ua.petbed.common.dto.AdoptionPostDTO;
-import op.edu.ua.petbed.common.dto.AdoptionPostDetailDTO;
-import op.edu.ua.petbed.common.dto.AdoptionRecommendationDTO;
-import op.edu.ua.petbed.common.dto.AdoptionResponseDTO;
 import op.edu.ua.petbed.adoption.domain.model.AdoptionPost;
 import op.edu.ua.petbed.adoption.domain.model.AdoptionResponse;
 import op.edu.ua.petbed.adoption.domain.model.AdoptionViewHistory;
-import op.edu.ua.petbed.common.model.AdoptionPostStatus;
 import op.edu.ua.petbed.adoption.domain.repository.AdoptionPostRepository;
 import op.edu.ua.petbed.adoption.domain.repository.AdoptionResponseRepository;
 import op.edu.ua.petbed.adoption.domain.repository.AdoptionSavedPostRepository;
 import op.edu.ua.petbed.adoption.domain.repository.AdoptionViewHistoryRepository;
-import op.edu.ua.petbed.common.dto.PetDTO;
+import op.edu.ua.petbed.common.dto.*;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.PetStatus;
 import op.edu.ua.petbed.pet.PetService;
 import op.edu.ua.petbed.user.UserService;
-import op.edu.ua.petbed.user.model.User;
-import op.edu.ua.petbed.user.repository.UserRepository;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
@@ -148,48 +141,9 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
         return mapToRecommendationDTO(post, userId);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public @Nullable AdoptionRecommendationDTO findById(Long postId, Long userId) {
-        return adoptionPostRepository.findById(postId)
-                .map(post -> mapToRecommendationDTO(post, userId))
-                .orElse(null);
-    }
-
-    private AdoptionRecommendationDTO mapToRecommendationDTO(AdoptionPost post, Long userId) {
+    private AdoptionRecommendationDTO mapToRecommendationDTO(AdoptionPost post, @Nullable Long userId) {
         PetDTO pet = petService.findById(post.getPetId());
-        boolean isSaved = adoptionSavedPostRepository.existsByPostIdAndUserId(post.getIdOrThrow(), userId);
-
-        return new AdoptionRecommendationDTO(
-                post.getIdOrThrow(),
-                pet.id(),
-                pet.name(),
-                pet.photoId(),
-                pet.breed(),
-                pet.color(),
-                pet.age(),
-                pet.sex(),
-                pet.size(),
-                pet.specialMarks(),
-                post.getOwnerComment(),
-                post.getCreatedAt(),
-                isSaved
-        );
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public @Nullable AdoptionRecommendationDTO findNextForFeed(Long userId, int offset) {
-        Pageable pageable = PageRequest.of(offset, 1);
-        var posts = adoptionPostRepository.findUnviewedActivePosts(userId, pageable);
-
-        if (posts.isEmpty()) {
-            return null;
-        }
-
-        AdoptionPost post = posts.getContent().get(0);
-        PetDTO pet = petService.findById(post.getPetId());
-        boolean isSaved = adoptionSavedPostRepository.existsByPostIdAndUserId(post.getIdOrThrow(), userId);
+        boolean isSaved = userId != null && adoptionSavedPostRepository.existsByPostIdAndUserId(post.getIdOrThrow(), userId);
 
         return new AdoptionRecommendationDTO(
                 post.getIdOrThrow(),
@@ -215,21 +169,45 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
             AdoptionViewHistory viewHistory = AdoptionViewHistory.create(postId, userId);
             adoptionViewHistoryRepository.save(viewHistory);
         }
-
-        userService.incrementAdoptionHistoryOffset(userId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public int getOffset(Long userId) {
-        return userService.getAdoptionHistoryOffset(userId);
     }
 
     @Override
     @Transactional
-    public void resetOffset(Long userId) {
-        userService.resetAdoptionHistoryOffset(userId);
-        adoptionViewHistoryRepository.deleteByUserId(userId);
+    public @Nullable AdoptionRecommendationDTO findPreviousFromHistory(Long userId) {
+        log.debug("findPreviousFromHistory called for userId={}", userId);
+
+        userService.incrementAdoptionHistoryOffset(userId);
+        int currentOffset = userService.getAdoptionHistoryOffset(userId);
+        log.debug("After increment: offset={}", currentOffset);
+
+        var historyList = adoptionViewHistoryRepository
+                .findByUserIdOrderByViewedAtDesc(userId, PageRequest.of(currentOffset, 1));
+
+        log.debug("History list size: {}", historyList.size());
+
+        if (historyList.isEmpty()) {
+            log.debug("History is empty, returning null");
+            return null;
+        }
+
+        Long postId = historyList.get(0).getPostId();
+        log.debug("Found postId from history: {}", postId);
+
+        AdoptionRecommendationDTO post = findById(postId, userId);
+
+        if (post == null) {
+            log.debug("Post not found (deleted), trying next");
+            return findPreviousFromHistory(userId);
+        }
+
+        log.debug("Returning post: {}", post.petName());
+        return post;
+    }
+
+    private @Nullable AdoptionRecommendationDTO findById(Long postId, Long userId) {
+        return adoptionPostRepository.findById(postId)
+                .map(post -> mapToRecommendationDTO(post, userId))
+                .orElse(null);
     }
 
     private AdoptionPostDTO mapToPostDTO(AdoptionPost post) {
@@ -247,5 +225,12 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
                 responder.telegramUsername(),
                 postPetName
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public @Nullable AdoptionRecommendationDTO findByIdAsRecommendation(Long postId) {
+        var post = adoptionPostRepository.findById(postId).orElse(null);
+        return post != null ? mapToRecommendationDTO(post, null) : null;
     }
 }

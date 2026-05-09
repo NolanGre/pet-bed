@@ -2,28 +2,23 @@ package op.edu.ua.petbed.telegram.callback.handler.adoption;
 
 import lombok.RequiredArgsConstructor;
 import op.edu.ua.petbed.adoption.AdoptionPostService;
-import op.edu.ua.petbed.adoption.domain.model.AdoptionViewHistory;
-import op.edu.ua.petbed.adoption.domain.repository.AdoptionViewHistoryRepository;
 import op.edu.ua.petbed.common.dto.AdoptionRecommendationDTO;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
 import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
 import op.edu.ua.petbed.telegram.response.ResponseBuilder;
-import op.edu.ua.petbed.user.UserService;
+import op.edu.ua.petbed.telegram.service.TelegramMessageService;
 import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
-import java.util.List;
-
 /**
  * Handler for ADOPTION_GET_PREV callback - shows previous adoption post from history.
- * Gets post from view history by user offset, then increments offset.
+ * Gets post from view history via service, then increments offset.
  */
 @NullMarked
 @Component
@@ -31,8 +26,7 @@ import java.util.List;
 public class AdoptionGetPrevCallbackHandler implements CallbackHandler {
 
     private final AdoptionPostService adoptionPostService;
-    private final AdoptionViewHistoryRepository viewHistoryRepository;
-    private final UserService userService;
+    private final TelegramMessageService telegramMessageService;
 
     @Override
     public CallbackId getCallbackId() {
@@ -43,25 +37,10 @@ public class AdoptionGetPrevCallbackHandler implements CallbackHandler {
     public PartialBotApiMethod<?> handle(CallbackQueryContext context) {
         Long userId = context.auth().userInternalId();
 
-        int currentOffset = userService.getAdoptionHistoryOffset(userId);
-
-        List<AdoptionViewHistory> history = viewHistoryRepository
-                .findByUserIdOrderByViewedAtDesc(userId, PageRequest.of(currentOffset, 1));
-
-        if (history.isEmpty()) {
-            return noHistoryMessage(context);
-        }
-
-        AdoptionViewHistory viewRecord = history.get(0);
-        Long postId = viewRecord.getPostId();
-
-        AdoptionRecommendationDTO post = adoptionPostService.findById(postId, userId);
+        AdoptionRecommendationDTO post = adoptionPostService.findPreviousFromHistory(userId);
         if (post == null) {
-            userService.incrementAdoptionHistoryOffset(userId);
-            return noHistoryMessage(context);
+            return telegramMessageService.editOrReplace(context, noMoreHistoryMessage(context));
         }
-
-        userService.incrementAdoptionHistoryOffset(userId);
 
         return mapToResponse(context, post);
     }
@@ -73,9 +52,9 @@ public class AdoptionGetPrevCallbackHandler implements CallbackHandler {
                 .build();
     }
 
-    private EditMessageText noHistoryMessage(CallbackQueryContext context) {
-        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
-                .text("📭 Ви ще не переглядали жодної анкети.\n\nНатисніть 'Наступна' для перегляду.")
+    private SendMessage noMoreHistoryMessage(CallbackQueryContext context) {
+        return ResponseBuilder.sendMessage(context.chatId())
+                .text("📭 Ви дійшли до початку історії перегляду.\n\nБільше немає попередніх анкет.")
                 .keyboard(InlineKeyboardBuilder.builder()
                         .addButton("➡️ Наступна", CallbackId.ADOPTION_GET_NEXT)
                         .backButtonTo(CallbackId.ADOPTION)

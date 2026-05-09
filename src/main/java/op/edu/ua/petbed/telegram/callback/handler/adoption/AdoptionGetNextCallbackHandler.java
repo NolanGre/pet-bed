@@ -8,10 +8,12 @@ import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
 import op.edu.ua.petbed.telegram.response.InlineKeyboardBuilder;
 import op.edu.ua.petbed.telegram.response.ResponseBuilder;
+import op.edu.ua.petbed.telegram.service.TelegramMessageService;
 import op.edu.ua.petbed.user.UserService;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
@@ -26,6 +28,7 @@ public class AdoptionGetNextCallbackHandler implements CallbackHandler {
 
     private final AdoptionPostService adoptionPostService;
     private final UserService userService;
+    private final TelegramMessageService messageService;
 
     @Override
     public CallbackId getCallbackId() {
@@ -41,7 +44,7 @@ public class AdoptionGetNextCallbackHandler implements CallbackHandler {
         AdoptionRecommendationDTO post = adoptionPostService.findNextUnviewed(userId);
 
         if (post == null) {
-            return noPostsExistMessage(context);
+            return messageService.editOrReplace(context, noPostsExistMessage(context.chatId()));
         }
 
         adoptionPostService.recordView(post.postId(), userId);
@@ -56,14 +59,11 @@ public class AdoptionGetNextCallbackHandler implements CallbackHandler {
                 .build();
     }
 
-    private EditMessageText noPostsExistMessage(CallbackQueryContext context) {
-        return ResponseBuilder.editMessage(context.chatId(), context.messageId())
-                .text("""
-                    📭 Наразі немає доступних анкет.
-
-                    Спробуйте пізніше!
-                    """)
+    private SendMessage noPostsExistMessage(Long chatId) {
+        return ResponseBuilder.sendMessage(chatId)
+                .text("📭 Наразі немає доступних анкет.\n\nСпробуйте пізніше!")
                 .keyboard(InlineKeyboardBuilder.builder()
+                        .addButton("◀️ Минула анкета", CallbackId.ADOPTION_GET_PREV)
                         .backButtonTo(CallbackId.ADOPTION)
                         .build())
                 .build();

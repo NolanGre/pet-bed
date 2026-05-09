@@ -2,6 +2,7 @@ package op.edu.ua.petbed.lost.domain.model;
 
 import op.edu.ua.petbed.common.exceptions.PetBedException;
 import op.edu.ua.petbed.common.model.PetType;
+import op.edu.ua.petbed.lost.application.dto.CreateFoundRequestDTO;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Test;
@@ -22,21 +23,29 @@ class FoundRequestTest {
     @Test
     void create_withValidData_createsFoundRequest() {
         // given
-        Long finderId = 123L;
-        String photoUrl = "photo123.jpg";
-        PetType petType = PetType.DOG;
-        Point location = GEOMETRY_FACTORY.createPoint(new Coordinate(50.45, 30.52));
-        String description = "White dog with black spots";
+        CreateFoundRequestDTO dto = CreateFoundRequestDTO.builder()
+                .finderId(123L)
+                .photoUrl("photo123.jpg")
+                .petType(PetType.DOG)
+                .location(GEOMETRY_FACTORY.createPoint(new Coordinate(50.45, 30.52)))
+                .breed("Labrador")
+                .color("Golden")
+                .coat("Smooth")
+                .sex("male")
+                .size("medium")
+                .features("Friendly")
+                .build();
 
         // when
-        FoundRequest foundRequest = FoundRequest.create(finderId, photoUrl, petType, location, description);
+        FoundRequest foundRequest = FoundRequest.create(dto);
 
         // then
-        assertThat(foundRequest.getFinderId()).isEqualTo(finderId);
-        assertThat(foundRequest.getPhotoUrl()).isEqualTo(photoUrl);
-        assertThat(foundRequest.getPetType()).isEqualTo(petType);
-        assertThat(foundRequest.getLocation()).isEqualTo(location);
-        assertThat(foundRequest.getDescription()).isEqualTo(description);
+        assertThat(foundRequest.getFinderId()).isEqualTo(123L);
+        assertThat(foundRequest.getPhotoUrl()).isEqualTo("photo123.jpg");
+        assertThat(foundRequest.getPetType()).isEqualTo(PetType.DOG);
+        assertThat(foundRequest.getLocation()).isEqualTo(dto.location());
+        assertThat(foundRequest.getBreedText()).isEqualTo("Labrador");
+        assertThat(foundRequest.getColorText()).isEqualTo("Golden");
     }
 
     // .create() validation -----------------------------------------
@@ -44,31 +53,17 @@ class FoundRequestTest {
     @Test
     void create_withBlankPhotoUrl_throwsPetBedException() {
         // given
-        Long finderId = 123L;
-        String blankPhotoUrl = "   ";
-        PetType petType = PetType.DOG;
-        Point location = GEOMETRY_FACTORY.createPoint(new Coordinate(50.45, 30.52));
-        String description = "White dog with black spots";
+        CreateFoundRequestDTO dto = CreateFoundRequestDTO.builder()
+                .finderId(123L)
+                .photoUrl("   ")
+                .petType(PetType.DOG)
+                .location(GEOMETRY_FACTORY.createPoint(new Coordinate(50.45, 30.52)))
+                .build();
 
         // when & then
-        assertThatThrownBy(() -> FoundRequest.create(finderId, blankPhotoUrl, petType, location, description))
+        assertThatThrownBy(() -> FoundRequest.create(dto))
                 .isInstanceOf(PetBedException.class)
                 .hasFieldOrPropertyWithValue("errorCode", PetBedException.ErrorCode.LOST_REQUEST_PHOTO_URL_REQUIRED);
-    }
-
-    @Test
-    void create_withBlankDescription_throwsPetBedException() {
-        // given
-        Long finderId = 123L;
-        String photoUrl = "photo123.jpg";
-        PetType petType = PetType.DOG;
-        Point location = GEOMETRY_FACTORY.createPoint(new Coordinate(50.45, 30.52));
-        String blankDescription = "   ";
-
-        // when & then
-        assertThatThrownBy(() -> FoundRequest.create(finderId, photoUrl, petType, location, blankDescription))
-                .isInstanceOf(PetBedException.class)
-                .hasFieldOrPropertyWithValue("errorCode", PetBedException.ErrorCode.LOST_REQUEST_DESCRIPTION_REQUIRED);
     }
 
     // .getIdOrThrow() ----------------------------------------------
@@ -76,12 +71,13 @@ class FoundRequestTest {
     @Test
     void getIdOrThrow_withId_returnsId() {
         // given
-        Long finderId = 123L;
-        String photoUrl = "photo123.jpg";
-        PetType petType = PetType.DOG;
-        Point location = GEOMETRY_FACTORY.createPoint(new Coordinate(50.45, 30.52));
-        String description = "White dog with black spots";
-        FoundRequest foundRequest = FoundRequest.create(finderId, photoUrl, petType, location, description);
+        CreateFoundRequestDTO dto = CreateFoundRequestDTO.builder()
+                .finderId(123L)
+                .photoUrl("photo123.jpg")
+                .petType(PetType.DOG)
+                .location(GEOMETRY_FACTORY.createPoint(new Coordinate(50.45, 30.52)))
+                .build();
+        FoundRequest foundRequest = FoundRequest.create(dto);
 
         // Simulate persisted entity by setting id via reflection
         Long expectedId = 456L;
@@ -97,12 +93,13 @@ class FoundRequestTest {
     @Test
     void getIdOrThrow_withoutId_throwsPetBedException() {
         // given
-        Long finderId = 123L;
-        String photoUrl = "photo123.jpg";
-        PetType petType = PetType.DOG;
-        Point location = GEOMETRY_FACTORY.createPoint(new Coordinate(50.45, 30.52));
-        String description = "White dog with black spots";
-        FoundRequest foundRequest = FoundRequest.create(finderId, photoUrl, petType, location, description);
+        CreateFoundRequestDTO dto = CreateFoundRequestDTO.builder()
+                .finderId(123L)
+                .photoUrl("photo123.jpg")
+                .petType(PetType.DOG)
+                .location(GEOMETRY_FACTORY.createPoint(new Coordinate(50.45, 30.52)))
+                .build();
+        FoundRequest foundRequest = FoundRequest.create(dto);
 
         // when & then
         assertThatThrownBy(foundRequest::getIdOrThrow)

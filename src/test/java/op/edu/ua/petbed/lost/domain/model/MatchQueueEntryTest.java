@@ -6,6 +6,7 @@ import op.edu.ua.petbed.common.model.PetSex;
 import op.edu.ua.petbed.common.model.PetSize;
 import op.edu.ua.petbed.common.model.PetStatus;
 import op.edu.ua.petbed.common.model.PetType;
+import op.edu.ua.petbed.lost.application.dto.CreateFoundRequestDTO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -40,7 +41,14 @@ class MatchQueueEntryTest {
     }
 
     private FoundRequest createFoundRequest(Long id, Long finderId, Point location) {
-        FoundRequest found = FoundRequest.create(finderId, "photo123", PetType.DOG, location, "Brown dog found");
+        CreateFoundRequestDTO dto = CreateFoundRequestDTO.builder()
+                .finderId(finderId)
+                .photoUrl("photo123")
+                .petType(PetType.DOG)
+                .location(location)
+                .breed("Brown dog")
+                .build();
+        FoundRequest found = FoundRequest.create(dto);
         ReflectionTestUtils.setField(found, "id", id);
         return found;
     }

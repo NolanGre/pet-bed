@@ -6,6 +6,7 @@ import op.edu.ua.petbed.common.model.PetSex;
 import op.edu.ua.petbed.common.model.PetSize;
 import op.edu.ua.petbed.common.model.PetStatus;
 import op.edu.ua.petbed.common.model.PetType;
+import op.edu.ua.petbed.lost.application.dto.CreateFoundRequestDTO;
 import op.edu.ua.petbed.lost.domain.model.FoundRequest;
 import op.edu.ua.petbed.lost.domain.model.LostRequest;
 import op.edu.ua.petbed.lost.domain.repository.FoundRequestRepository;
@@ -102,7 +103,14 @@ class MatchingServiceTest {
     }
 
     private static FoundRequest createFoundRequest(Long id, Long finderId, PetType petType, Point location) {
-        FoundRequest request = FoundRequest.create(finderId, "photo123", petType, location, "Brown dog found");
+        CreateFoundRequestDTO dto = CreateFoundRequestDTO.builder()
+                .finderId(finderId)
+                .photoUrl("photo123")
+                .petType(petType)
+                .location(location)
+                .breed("Brown dog")
+                .build();
+        FoundRequest request = FoundRequest.create(dto);
         ReflectionTestUtils.setField(request, "id", id);
         ReflectionTestUtils.setField(request, "createdAt", Instant.now());
         return request;

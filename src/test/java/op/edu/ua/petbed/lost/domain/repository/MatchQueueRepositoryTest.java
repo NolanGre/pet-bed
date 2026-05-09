@@ -5,6 +5,7 @@ import op.edu.ua.petbed.common.model.PetSex;
 import op.edu.ua.petbed.common.model.PetSize;
 import op.edu.ua.petbed.common.model.PetStatus;
 import op.edu.ua.petbed.common.model.PetType;
+import op.edu.ua.petbed.lost.application.dto.CreateFoundRequestDTO;
 import op.edu.ua.petbed.lost.domain.model.FoundRequest;
 import op.edu.ua.petbed.lost.domain.model.LostRequest;
 import op.edu.ua.petbed.lost.domain.model.MatchQueueEntry;
@@ -96,7 +97,14 @@ class MatchQueueRepositoryTest extends PostgresTestContainer {
     private FoundRequest createFoundRequest(Long finderId) {
         GeometryFactory gf = new GeometryFactory();
         Point location = gf.createPoint(new Coordinate(30.0, 50.0));
-        return FoundRequest.create(finderId, "photo_url", PetType.DOG, location, "Found description");
+        CreateFoundRequestDTO dto = CreateFoundRequestDTO.builder()
+                .finderId(finderId)
+                .photoUrl("photo_url")
+                .petType(PetType.DOG)
+                .location(location)
+                .breed("Found description")
+                .build();
+        return FoundRequest.create(dto);
     }
 
     private MatchQueueEntry createMatchQueueEntry(LostRequest lost, FoundRequest found, BigDecimal score) {

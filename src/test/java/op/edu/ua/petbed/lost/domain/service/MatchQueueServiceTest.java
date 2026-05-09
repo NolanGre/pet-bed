@@ -7,6 +7,7 @@ import op.edu.ua.petbed.common.model.PetSize;
 import op.edu.ua.petbed.common.model.PetStatus;
 import op.edu.ua.petbed.common.model.PetType;
 import op.edu.ua.petbed.lost.MatchRecommendationDTO;
+import op.edu.ua.petbed.lost.application.dto.CreateFoundRequestDTO;
 import op.edu.ua.petbed.lost.domain.model.FoundRequest;
 import op.edu.ua.petbed.lost.domain.model.LostRequest;
 import op.edu.ua.petbed.lost.domain.model.MatchQueueEntry;
@@ -68,7 +69,14 @@ class MatchQueueServiceTest {
     }
 
     private FoundRequest createFoundRequest(Long id, Long finderId, Point location) {
-        FoundRequest found = FoundRequest.create(finderId, "photo123", PetType.DOG, location, "Brown dog found");
+        CreateFoundRequestDTO dto = CreateFoundRequestDTO.builder()
+                .finderId(finderId)
+                .photoUrl("photo123")
+                .petType(PetType.DOG)
+                .location(location)
+                .breed("Brown dog")
+                .build();
+        FoundRequest found = FoundRequest.create(dto);
         ReflectionTestUtils.setField(found, "id", id);
         ReflectionTestUtils.setField(found, "createdAt", Instant.now());
         return found;
@@ -330,7 +338,7 @@ class MatchQueueServiceTest {
             assertThat(dto.foundRequestId()).isEqualTo(foundRequestId);
             assertThat(dto.score()).isEqualByComparingTo(score);
             assertThat(dto.photoUrl()).isEqualTo(photoUrl);
-            assertThat(dto.description()).isEqualTo(description);
+            assertThat(dto.breedText()).isEqualTo("Brown dog");
             assertThat(dto.location()).isEqualTo(foundLocation);
             assertThat(dto.foundRequestCreatedAt()).isEqualTo(createdAt);
             assertThat(dto.distanceKm()).isEqualTo(distance);

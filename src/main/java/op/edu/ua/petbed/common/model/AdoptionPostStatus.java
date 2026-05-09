@@ -3,5 +3,9 @@ package op.edu.ua.petbed.common.model;
 public enum AdoptionPostStatus {
     ACTIVE,
     PENDING_CONFIRMATION,
-    COMPLETED
+    COMPLETED;
+
+    public boolean showsResponses() {
+        return this == ACTIVE || this == PENDING_CONFIRMATION;
+    }
 }
