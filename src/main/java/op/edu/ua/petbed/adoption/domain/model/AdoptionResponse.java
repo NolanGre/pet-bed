@@ -89,6 +89,17 @@ public class AdoptionResponse extends AbstractAuditableEntity {
     }
 
     /**
+     * Reactivates a cancelled response to NEW status with updated comment.
+     */
+    public void reactivate(String newComment) {
+        if (status != AdoptionResponseStatus.CANCELLED) {
+            throw new PetBedException("Cannot reactivate non-cancelled response", PetBedException.ErrorCode.ADOPTION_RESPONSE_INVALID_STATUS);
+        }
+        this.status = AdoptionResponseStatus.NEW;
+        this.comment = newComment;
+    }
+
+    /**
      * Final confirmation by the responder.
      */
     public void finalConfirm() {

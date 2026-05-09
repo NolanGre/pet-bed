@@ -35,7 +35,15 @@ public class AdoptionResponseServiceImpl implements AdoptionResponseService {
     @Override
     @Transactional
     public AdoptionResponseDTO create(Long postId, Long responderId, String comment) {
-        if (hasResponded(postId, responderId)) {
+        var existingResponse = adoptionResponseRepository.findByAdoptionPostIdAndResponderId(postId, responderId);
+        if (existingResponse.isPresent()) {
+            AdoptionResponse existing = existingResponse.get();
+            if (existing.getStatus() == op.edu.ua.petbed.adoption.domain.model.AdoptionResponseStatus.CANCELLED) {
+                log.info("Reactivating cancelled adoption response: id={}, postId={}, responderId={}",
+                        existing.getIdOrThrow(), postId, responderId);
+                existing.reactivate(comment);
+                return mapToDTO(adoptionResponseRepository.save(existing));
+            }
             throw new PetBedException("User has already responded to this post",
                     PetBedException.ErrorCode.ADOPTION_RESPONSE_ALREADY_EXISTS);
         }
