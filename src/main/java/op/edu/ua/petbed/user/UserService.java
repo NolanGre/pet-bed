@@ -23,4 +23,10 @@ public interface UserService {
     void incrementAdoptionHistoryOffset(Long userId);
 
     void resetAdoptionHistoryOffset(Long userId);
+
+    int getFosteringHistoryOffset(Long userId);
+
+    void incrementFosteringHistoryOffset(Long userId);
+
+    void resetFosteringHistoryOffset(Long userId);
 }

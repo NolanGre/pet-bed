@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.11.xsd">
+
+    <!-- ==================== FOSTERING POSTS ==================== -->
+
+    <!-- Add status to fostering_posts -->
+    <changeSet id="0013-01-add-status-to-fostering-posts" author="developer">
+        <addColumn tableName="fostering_posts">
+            <column name="status" type="VARCHAR(50)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <sql>ALTER TABLE fostering_posts
+            ADD CONSTRAINT chk_fostering_posts_status
+            CHECK (status IN ('ACTIVE', 'PENDING_CONFIRMATION', 'COMPLETED', 'CANCELLED'));</sql>
+    </changeSet>
+
+    <!-- Add pending_response_id to fostering_posts -->
+    <changeSet id="0013-02-add-pending-response-to-fostering-posts" author="developer">
+        <addColumn tableName="fostering_posts">
+            <column name="pending_response_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add started_at to fostering_posts (when fosterer takes the pet) -->
+    <changeSet id="0013-03-add-started-at-to-fostering-posts" author="developer">
+        <addColumn tableName="fostering_posts">
+            <column name="started_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add temp_owner_id to fostering_posts (the fosterer) -->
+    <changeSet id="0013-04-add-temp-owner-to-fostering-posts" author="developer">
+        <addColumn tableName="fostering_posts">
+            <column name="temp_owner_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <sql>ALTER TABLE fostering_posts
+            ADD CONSTRAINT fk_fostering_posts_temp_owner
+            FOREIGN KEY (temp_owner_id) REFERENCES users(id);</sql>
+    </changeSet>
+
+    <!-- Add expires_at to fostering_posts -->
+    <changeSet id="0013-05-add-expires-at-to-fostering-posts" author="developer">
+        <addColumn tableName="fostering_posts">
+            <column name="expires_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- ==================== FOSTERING RESPONSES ==================== -->
+
+    <!-- Add status to fostering_responses -->
+    <changeSet id="0013-06-add-status-to-fostering-responses" author="developer">
+        <addColumn tableName="fostering_responses">
+            <column name="status" type="VARCHAR(50)" defaultValue="NEW">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <sql>ALTER TABLE fostering_responses
+            ADD CONSTRAINT chk_fostering_responses_status
+            CHECK (status IN ('NEW', 'CONFIRMED_BY_OWNER', 'REJECTED_BY_OWNER', 'FINAL_CONFIRMED', 'CANCELLED'));</sql>
+    </changeSet>
+
+    <!-- Add unique constraint to fostering_responses -->
+    <changeSet id="0013-07-add-unique-constraint-fostering-responses" author="developer">
+        <addUniqueConstraint tableName="fostering_responses"
+                             columnNames="fostering_post_id, user_id"
+                             constraintName="uq_fostering_responses_post_user"/>
+    </changeSet>
+
+    <!-- ==================== INDEXES ==================== -->
+
+    <changeSet id="0013-08-create-fostering-indexes" author="developer">
+        <!-- fostering_posts indexes -->
+        <createIndex tableName="fostering_posts" indexName="idx_fostering_status">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex tableName="fostering_posts" indexName="idx_fostering_expires_at">
+            <column name="expires_at"/>
+        </createIndex>
+
+        <createIndex tableName="fostering_posts" indexName="idx_fostering_temp_owner">
+            <column name="temp_owner_id"/>
+        </createIndex>
+
+        <!-- fostering_responses indexes -->
+        <createIndex tableName="fostering_responses" indexName="idx_fostering_response_status">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

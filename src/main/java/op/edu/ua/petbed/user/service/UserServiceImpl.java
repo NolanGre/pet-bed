@@ -93,6 +93,29 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    @Override
+    public int getFosteringHistoryOffset(Long userId) {
+        return userRepository.findById(userId)
+                .map(User::getFosteringHistoryOffset)
+                .orElse(0);
+    }
+
+    @Override
+    public void incrementFosteringHistoryOffset(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new PetBedException("User not found with internalId: " + userId, PetBedException.ErrorCode.USER_NOT_FOUND));
+        user.setFosteringHistoryOffset(user.getFosteringHistoryOffset() + 1);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void resetFosteringHistoryOffset(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new PetBedException("User not found with internalId: " + userId, PetBedException.ErrorCode.USER_NOT_FOUND));
+        user.setFosteringHistoryOffset(0);
+        userRepository.save(user);
+    }
+
     private UserDTO toDto(User user) {
         return new UserDTO(
                 user.getIdOrThrow(),

@@ -45,6 +45,8 @@ public class AdoptionCompletionService {
 
         petService.updateStatus(post.getPetId(), PetStatus.DEFAULT);
 
+        adoptionPostRepository.delete(post);
+
         log.info("Completed adoption: postId={}, petId={}, newOwnerId={}", post.getIdOrThrow(), post.getPetId(), response.getResponderId());
     }
 }

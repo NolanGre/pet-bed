@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.11.xsd">
+
+    <!-- ==================== CASCADE DELETE ==================== -->
+
+    <!-- fostering_posts -> pets (ON DELETE CASCADE) -->
+    <changeSet id="0014-00-cascade-fostering-posts-pet" author="developer">
+        <sql>
+            ALTER TABLE fostering_posts
+            DROP CONSTRAINT IF EXISTS fk_fostering_posts_pet;
+        </sql>
+        <sql>
+            ALTER TABLE fostering_posts
+            ADD CONSTRAINT fk_fostering_posts_pet
+            FOREIGN KEY (pet_id)
+            REFERENCES pets(id)
+            ON DELETE CASCADE;
+        </sql>
+    </changeSet>
+
+    <!-- fostering_responses -> fostering_posts (ON DELETE CASCADE) -->
+    <changeSet id="0014-01-cascade-fostering-responses" author="developer">
+        <sql>
+            ALTER TABLE fostering_responses
+            DROP CONSTRAINT IF EXISTS fk_fostering_responses_post;
+        </sql>
+        <sql>
+            ALTER TABLE fostering_responses
+            ADD CONSTRAINT fk_fostering_responses_post
+            FOREIGN KEY (fostering_post_id)
+            REFERENCES fostering_posts(id)
+            ON DELETE CASCADE;
+        </sql>
+    </changeSet>
+
+    <!-- fostering_saved_posts -> fostering_posts (ON DELETE CASCADE) -->
+    <changeSet id="0014-02-cascade-fostering-saved-posts" author="developer">
+        <sql>
+            ALTER TABLE fostering_saved_posts
+            DROP CONSTRAINT IF EXISTS fk_fsp_post;
+        </sql>
+        <sql>
+            ALTER TABLE fostering_saved_posts
+            ADD CONSTRAINT fk_fsp_post
+            FOREIGN KEY (post_id)
+            REFERENCES fostering_posts(id)
+            ON DELETE CASCADE;
+        </sql>
+    </changeSet>
+
+    <!-- fostering_view_history -> fostering_posts (ON DELETE CASCADE) -->
+    <changeSet id="0014-03-cascade-fostering-view-history" author="developer">
+        <sql>
+            ALTER TABLE fostering_view_history
+            DROP CONSTRAINT IF EXISTS fk_fvh_post;
+        </sql>
+        <sql>
+            ALTER TABLE fostering_view_history
+            ADD CONSTRAINT fk_fvh_post
+            FOREIGN KEY (post_id)
+            REFERENCES fostering_posts(id)
+            ON DELETE CASCADE;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

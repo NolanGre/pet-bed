@@ -62,6 +62,13 @@ public enum FormType {
     )),
     CREATE_ADOPTION_RESPONSE(List.of(
             FormStep.text("💬 Додайте коментар до вашого відгуку (опціонально)").optional()
+    )),
+    CREATE_FOSTERING_POST(List.of(
+            FormStep.text("💬 Залиште коментар (опціонально)").optional(),
+            FormStep.number("📅 Тривалість перетримки (дні)", i -> i instanceof FormInput.Number(int v) && v > 0)
+    )),
+    CREATE_FOSTERING_RESPONSE(List.of(
+            FormStep.text("💬 Залиште коментар (опціонально)").optional()
     ));
 
     private final List<FormStep> steps;

@@ -75,6 +75,14 @@ public class User extends AbstractAuditableEntity {
         return adoptionHistoryOffset;
     }
 
+    public void setFosteringHistoryOffset(int offset) {
+        this.fosteringHistoryOffset = offset;
+    }
+
+    public int getFosteringHistoryOffset() {
+        return fosteringHistoryOffset;
+    }
+
     public long getIdOrThrow() {
         if (id == null) {
             throw new PetBedException("User is not persisted yet", PetBedException.ErrorCode.USER_NOT_PERSISTED);
