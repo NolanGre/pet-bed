@@ -184,9 +184,8 @@ public class FosteringPostServiceImpl implements FosteringPostService {
     public @Nullable FosteringRecommendationDTO findPreviousFromHistory(Long userId) {
         log.debug("findPreviousFromHistory called for userId={}", userId);
 
-        userService.incrementFosteringHistoryOffset(userId);
         int currentOffset = userService.getFosteringHistoryOffset(userId);
-        log.debug("After increment: offset={}", currentOffset);
+        log.debug("Current offset: {}", currentOffset);
 
         var historyList = fosteringViewHistoryRepository
                 .findByUserIdOrderByViewedAtDesc(userId, PageRequest.of(currentOffset, 1));
@@ -208,6 +207,9 @@ public class FosteringPostServiceImpl implements FosteringPostService {
             return findPreviousFromHistory(userId);
         }
 
+        userService.incrementFosteringHistoryOffset(userId);
+        log.debug("Incremented offset after successful retrieval");
+
         log.debug("Returning post: {}", post.petName());
         return post;
     }
@@ -216,7 +218,10 @@ public class FosteringPostServiceImpl implements FosteringPostService {
     @Transactional(readOnly = true)
     public @Nullable FosteringRecommendationDTO findByIdAsRecommendation(Long postId) {
         var post = fosteringPostRepository.findById(postId).orElse(null);
-        return post != null ? mapToRecommendationDTO(post, null) : null;
+        if (post == null || post.isCompleted()) {
+            return null;
+        }
+        return mapToRecommendationDTO(post, null);
     }
 
     private FosteringPostDTO mapToPostDTO(FosteringPost post) {

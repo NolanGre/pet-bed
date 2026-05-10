@@ -176,9 +176,8 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
     public @Nullable AdoptionRecommendationDTO findPreviousFromHistory(Long userId) {
         log.debug("findPreviousFromHistory called for userId={}", userId);
 
-        userService.incrementAdoptionHistoryOffset(userId);
         int currentOffset = userService.getAdoptionHistoryOffset(userId);
-        log.debug("After increment: offset={}", currentOffset);
+        log.debug("Current offset: {}", currentOffset);
 
         var historyList = adoptionViewHistoryRepository
                 .findByUserIdOrderByViewedAtDesc(userId, PageRequest.of(currentOffset, 1));
@@ -199,6 +198,9 @@ public class AdoptionPostServiceImpl implements AdoptionPostService {
             log.debug("Post not found (deleted), trying next");
             return findPreviousFromHistory(userId);
         }
+
+        userService.incrementAdoptionHistoryOffset(userId);
+        log.debug("Incremented offset after successful retrieval");
 
         log.debug("Returning post: {}", post.petName());
         return post;

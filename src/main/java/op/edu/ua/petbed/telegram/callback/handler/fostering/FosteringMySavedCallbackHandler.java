@@ -1,10 +1,8 @@
 package op.edu.ua.petbed.telegram.callback.handler.fostering;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import op.edu.ua.petbed.fostering.FosteringPostService;
+import op.edu.ua.petbed.fostering.FosteringSavedPostService;
 import op.edu.ua.petbed.common.dto.FosteringPostDTO;
-import op.edu.ua.petbed.fostering.domain.model.FosteringPostStatus;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -22,20 +20,19 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 /**
- * Handler for FOSTERING_MY_POSTS callback - shows list of owner's fostering posts.
+ * Handler for FOSTERING_MY_SAVED callback - shows list of user's saved fostering posts.
  */
 @NullMarked
 @Component
 @RequiredArgsConstructor
-@Slf4j
-public class FosteringMyPostsCallbackHandler implements CallbackHandler {
+public class FosteringMySavedCallbackHandler implements CallbackHandler {
 
-    private final FosteringPostService fosteringPostService;
+    private final FosteringSavedPostService fosteringSavedPostService;
     private final TelegramMessageService messageService;
 
     @Override
     public CallbackId getCallbackId() {
-        return CallbackId.FOSTERING_MY_POSTS;
+        return CallbackId.FOSTERING_MY_SAVED;
     }
 
     @Override
@@ -44,15 +41,15 @@ public class FosteringMyPostsCallbackHandler implements CallbackHandler {
         var callbackData = context.callbackData();
 
         int offset = callbackData.offset() != null ? callbackData.offset() : 0;
-        Page<FosteringPostDTO> posts = fosteringPostService.findAllByOwnerId(userId,
+        Page<FosteringPostDTO> posts = fosteringSavedPostService.findSavedByUserId(userId,
                 PageRequest.of(offset, KeyboardLayout.DEFAULT.pageSize()));
 
         if (posts.isEmpty()) {
-            return messageService.editOrReplace(context, noPostsExistMessage(context));
+            return noSavedPostsMessage(context);
         }
 
         SendMessage message = ResponseBuilder.sendMessage(context.chatId())
-                .text("📋 Ваші оголошення про перетримку:")
+                .text("❤️ Ваші збережені оголошення:")
                 .keyboard(buildKeyboard(context, posts))
                 .build();
 
@@ -68,32 +65,24 @@ public class FosteringMyPostsCallbackHandler implements CallbackHandler {
 
     private Page<CallbackListItem> toPageDto(Page<FosteringPostDTO> posts) {
         return posts.map(post -> new CallbackListItem(
-                CallbackId.FOSTERING_POST_DETAIL,
+                CallbackId.FOSTERING_SAVED_DETAIL,
                 post.id(),
-                getStatusEmoji(post.status()) + " " + post.petName()
+                "❤️ " + post.petName()
         ));
     }
 
-    private SendMessage noPostsExistMessage(CallbackQueryContext context) {
+    private SendMessage noSavedPostsMessage(CallbackQueryContext context) {
         return ResponseBuilder.sendMessage(context.chatId())
                 .text("""
-                        📋 У вас ще немає оголошень про перетримку тварин.
+                        ❤️ У вас немає збережених оголошень.
 
-                        Створіть перше оголошення!
+                        Переглядайте оголошення в розділі "Перетримати тварину"
+                        і зберігайте ті, що вас зацікавили.
                         """)
                 .keyboard(InlineKeyboardBuilder.builder()
-                        .navButtonsFor(CallbackId.FOSTERING_MY_POSTS)
+                        .addButton("🔍 Переглянути оголошення", CallbackId.FOSTERING_GET)
                         .backButtonTo(CallbackId.FOSTERING)
                         .build())
                 .build();
-    }
-
-    private String getStatusEmoji(FosteringPostStatus status) {
-        return switch (status) {
-            case ACTIVE -> "🟢";
-            case PENDING_CONFIRMATION -> "⏳";
-            case COMPLETED -> "✅";
-            case CANCELLED -> "🚫";
-        };
     }
 }

@@ -6,6 +6,7 @@ import op.edu.ua.petbed.fostering.FosteringPostService;
 import op.edu.ua.petbed.fostering.FosteringResponseService;
 import op.edu.ua.petbed.common.dto.FosteringPostDetailDTO;
 import op.edu.ua.petbed.common.dto.FosteringResponseDTO;
+import op.edu.ua.petbed.fostering.domain.model.FosteringPostStatus;
 import op.edu.ua.petbed.telegram.callback.CallbackHandler;
 import op.edu.ua.petbed.telegram.callback.CallbackId;
 import op.edu.ua.petbed.telegram.callback.CallbackQueryContext;
@@ -59,7 +60,7 @@ public class FosteringPostDetailCallbackHandler implements CallbackHandler {
                 PageRequest.of(offset, KeyboardLayout.DEFAULT.pageSize()));
 
         if (responses.isEmpty()) {
-            return noResponsesMessage(context, postId, postDetail);
+            return messageService.editOrReplace(context, noResponsesMessage(context, postId, postDetail));
         }
 
         SendMessage message = ResponseBuilder.sendMessage(context.chatId())
@@ -99,7 +100,7 @@ public class FosteringPostDetailCallbackHandler implements CallbackHandler {
         return text.toString();
     }
 
-    private String formatStatus(op.edu.ua.petbed.fostering.domain.model.FosteringPostStatus status) {
+    private String formatStatus(FosteringPostStatus status) {
         return switch (status) {
             case ACTIVE -> "🟢 Активне";
             case PENDING_CONFIRMATION -> "⏳ Очікує підтвердження";

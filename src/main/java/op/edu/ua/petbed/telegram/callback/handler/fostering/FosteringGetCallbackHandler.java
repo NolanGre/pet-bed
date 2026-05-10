@@ -68,6 +68,7 @@ public class FosteringGetCallbackHandler implements CallbackHandler {
                         Спробуйте пізніше!
                         """)
                 .keyboard(InlineKeyboardBuilder.builder()
+                        .addButton("◀️ Минула анкета", CallbackId.FOSTERING_GET_PREV)
                         .backButtonTo(CallbackId.FOSTERING)
                         .build())
                 .build();
@@ -141,6 +142,7 @@ public class FosteringGetCallbackHandler implements CallbackHandler {
                         isSaved ? CallbackId.FOSTERING_UNSAVE_POST : CallbackId.FOSTERING_SAVE_POST,
                         post.postId())
                 .addButton("✉️ Відгукнутись", CallbackId.FOSTERING_RESPONSE_CREATE, post.postId())
+                .addButton("◀️ Минула", CallbackId.FOSTERING_GET_PREV, post.postId())
                 .addButton("➡️ Наступна", CallbackId.FOSTERING_GET_NEXT, post.postId())
                 .backButtonTo(CallbackId.FOSTERING)
                 .build();

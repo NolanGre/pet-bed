@@ -53,8 +53,6 @@ public class TelegramMessageService {
                 .build();
     }
 
-    //TODO tests
-
     /**
      * When we need to keep last message if we can't edit it.
      */

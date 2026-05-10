@@ -66,6 +66,7 @@ public class FosteringGetNextCallbackHandler implements CallbackHandler {
         return ResponseBuilder.sendMessage(chatId)
                 .text("📭 Наразі немає доступних оголошень.\n\nСпробуйте пізніше!")
                 .keyboard(InlineKeyboardBuilder.builder()
+                        .addButton("◀️ Минула анкета", CallbackId.FOSTERING_GET_PREV)
                         .backButtonTo(CallbackId.FOSTERING)
                         .build())
                 .build();

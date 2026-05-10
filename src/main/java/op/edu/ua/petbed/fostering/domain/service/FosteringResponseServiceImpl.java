@@ -2,11 +2,14 @@ package op.edu.ua.petbed.fostering.domain.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import op.edu.ua.petbed.common.model.PetStatus;
 import op.edu.ua.petbed.fostering.FosteringResponseService;
 import op.edu.ua.petbed.fostering.domain.model.FosteringPost;
 import op.edu.ua.petbed.fostering.domain.model.FosteringResponse;
 import op.edu.ua.petbed.fostering.domain.repository.FosteringPostRepository;
 import op.edu.ua.petbed.fostering.domain.repository.FosteringResponseRepository;
+import op.edu.ua.petbed.fostering.domain.repository.FosteringSavedPostRepository;
+import op.edu.ua.petbed.fostering.domain.repository.FosteringViewHistoryRepository;
 import op.edu.ua.petbed.common.dto.FosteringResponseDTO;
 import op.edu.ua.petbed.common.dto.PetDTO;
 import op.edu.ua.petbed.common.exceptions.PetBedException;
@@ -27,6 +30,8 @@ public class FosteringResponseServiceImpl implements FosteringResponseService {
 
     private final FosteringResponseRepository fosteringResponseRepository;
     private final FosteringPostRepository fosteringPostRepository;
+    private final FosteringSavedPostRepository fosteringSavedPostRepository;
+    private final FosteringViewHistoryRepository fosteringViewHistoryRepository;
     private final PetService petService;
     private final UserService userService;
 
@@ -180,6 +185,11 @@ public class FosteringResponseServiceImpl implements FosteringResponseService {
 
         post.complete(responderId);
         fosteringPostRepository.save(post);
+
+        fosteringSavedPostRepository.deleteByPostId(post.getIdOrThrow());
+        fosteringViewHistoryRepository.deleteByPostId(post.getIdOrThrow());
+
+        petService.updateStatus(post.getPetId(), PetStatus.FOSTERED);
 
         log.info("Fosterer finalized fostering: responseId={}, postId={}, tempOwnerId={}",
                 responseId, post.getIdOrThrow(), responderId);

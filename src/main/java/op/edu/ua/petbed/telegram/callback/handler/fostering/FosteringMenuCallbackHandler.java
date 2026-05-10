@@ -61,6 +61,9 @@ public class FosteringMenuCallbackHandler implements CallbackHandler {
                     if (child == CallbackId.FOSTERING_MY_RESPONSES) {
                         return hasMyResponses;
                     }
+                    if (child == CallbackId.FOSTERING_MY_SAVED) {
+                        return hasMySaved;
+                    }
                     return true;
                 })
                 .backButtonFor(CallbackId.FOSTERING);
