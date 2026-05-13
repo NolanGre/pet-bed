@@ -1,6 +1,6 @@
 services:
   app:
-    build: .
+    image: ghcr.io/nolangre/pet-bed:dev
     container_name: petbed-app
     ports:
       - "8080:8080"
@@ -118,7 +118,6 @@ services:
 
 volumes:
   postgres-data:
-  minio-data:
   prometheus-data:
   grafana-data:
   loki-data:
